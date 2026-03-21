@@ -1,0 +1,348 @@
+// LocalLoop Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
+enum UserRole {
+  STUDENT
+  PROFESSIONAL
+  INTERN
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum ReputationLevel {
+  EXPLORER
+  GUIDE
+  SETTLER
+  CITY_NAVIGATOR
+  LOCAL_MENTOR
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  name            String
+  avatar          String?
+  role            UserRole  @default(STUDENT)
+  gender          Gender?
+  city            String?
+  preferredArea   String?
+  moveMonth       String?
+  budgetMin       Int?
+  budgetMax       Int?
+  isWomenMode     Boolean   @default(false)
+  isOnboarded     Boolean   @default(false)
+  isMentor        Boolean   @default(false)
+  bio             String?
+  phone           String?
+  university      String?
+  company         String?
+  isVerified      Boolean   @default(false)
+  inviteCode      String?   @unique
+  invitedBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  housings        Housing[]
+  housingReviews  HousingReview[]
+  savedHousings   SavedHousing[]
+  communities     CommunityMember[]
+  posts           Post[]
+  comments        Comment[]
+  sentMessages    Message[]     @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  reputation      Reputation?
+  createdEvents   Event[]
+  eventAttendees  EventAttendee[]
+  mentorProfile   MentorProfile?
+
+  @@map("users")
+}
+
+model Reputation {
+  id        String          @id @default(cuid())
+  userId    String          @unique
+  points    Int             @default(0)
+  level     ReputationLevel @default(EXPLORER)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reputations")
+}
+
+model MentorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  expertise       String[]
+  experience      String?
+  availability    String?
+  isApproved      Boolean  @default(false)
+  menteeCount     Int      @default(0)
+  maxMentees      Int      @default(3)
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mentor_profiles")
+}
+
+// ============================================
+// HOUSING
+// ============================================
+
+enum HousingType {
+  PG
+  HOSTEL
+  FLAT
+  SHARED_ROOM
+  SINGLE_ROOM
+}
+
+enum GenderPreference {
+  MALE_ONLY
+  FEMALE_ONLY
+  CO_ED
+  ANY
+}
+
+model Housing {
+  id                String           @id @default(cuid())
+  title             String
+  description       String
+  address           String
+  area              String
+  city              String           @default("Pune")
+  rent              Int
+  deposit           Int?
+  type              HousingType
+  genderPreference  GenderPreference @default(ANY)
+  amenities         String[]
+  images            String[]
+  isVerified        Boolean          @default(false)
+  isWomenFriendly   Boolean          @default(false)
+  safetyRating      Float?
+  contactPhone      String?
+  contactEmail      String?
+  latitude          Float?
+  longitude         Float?
+  availableFrom     DateTime?
+  createdById       String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  createdBy         User             @relation(fields: [createdById], references: [id])
+  reviews           HousingReview[]
+  savedBy           SavedHousing[]
+
+  @@index([city, area])
+  @@index([rent])
+  @@index([type])
+  @@map("housings")
+}
+
+model HousingReview {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5
+  review      String
+  userId      String
+  housingId   String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, housingId])
+  @@map("housing_reviews")
+}
+
+model SavedHousing {
+  id          String   @id @default(cuid())
+  userId      String
+  housingId   String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, housingId])
+  @@map("saved_housings")
+}
+
+// ============================================
+// COMMUNITIES
+// ============================================
+
+enum CommunityType {
+  UNIVERSITY
+  PROFESSIONAL
+  HOMETOWN
+  NEWCOMER_BATCH
+  WOMEN_ONLY
+  GENERAL
+}
+
+enum MemberRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+model Community {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  type        CommunityType
+  city        String         @default("Pune")
+  avatar      String?
+  coverImage  String?
+  isPrivate   Boolean        @default(false)
+  isWomenOnly Boolean        @default(false)
+  memberCount Int            @default(0)
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  members     CommunityMember[]
+  posts       Post[]
+  events      Event[]
+
+  @@index([city, type])
+  @@map("communities")
+}
+
+model CommunityMember {
+  id            String     @id @default(cuid())
+  userId        String
+  communityId   String
+  role          MemberRole @default(MEMBER)
+  joinedAt      DateTime   @default(now())
+
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community     Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@map("community_members")
+}
+
+// ============================================
+// POSTS & COMMENTS
+// ============================================
+
+model Post {
+  id            String    @id @default(cuid())
+  content       String
+  images        String[]
+  communityId   String
+  userId        String
+  likesCount    Int       @default(0)
+  commentsCount Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+
+  @@index([communityId])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  senderId    String
+  receiverId  String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@map("messages")
+}
+
+// ============================================
+// EVENTS
+// ============================================
+
+enum EventType {
+  MEETUP
+  STUDY_GROUP
+  NETWORKING
+  CITY_EXPLORATION
+  WORKSHOP
+  WELCOME
+}
+
+model Event {
+  id            String      @id @default(cuid())
+  title         String
+  description   String
+  type          EventType
+  date          DateTime
+  endDate       DateTime?
+  location      String
+  maxAttendees  Int?
+  communityId   String?
+  createdById   String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  community     Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  createdBy     User        @relation(fields: [createdById], references: [id])
+  attendees     EventAttendee[]
+
+  @@map("events")
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("event_attendees")
+}

@@ -1,0 +1,129 @@
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreatePostDto, CreateCommentDto } from './dto/posts.dto';
+
+@Injectable()
+export class PostsService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(userId: string, dto: CreatePostDto) {
+    // Verify user is a member of the community
+    const membership = await this.prisma.communityMember.findUnique({
+      where: {
+        userId_communityId: { userId, communityId: dto.communityId },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('You must join the community before posting');
+    }
+
+    const post = await this.prisma.post.create({
+      data: {
+        content: dto.content,
+        images: dto.images || [],
+        communityId: dto.communityId,
+        userId,
+      },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+        community: { select: { id: true, name: true } },
+        _count: { select: { comments: true } },
+      },
+    });
+
+    // Award reputation points for posting
+    await this.prisma.reputation.updateMany({
+      where: { userId },
+      data: { points: { increment: 5 } },
+    });
+
+    // Update community post count
+    await this.prisma.community.update({
+      where: { id: dto.communityId },
+      data: { updatedAt: new Date() },
+    });
+
+    return post;
+  }
+
+  async findByCommunity(communityId: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+
+    const [posts, total] = await Promise.all([
+      this.prisma.post.findMany({
+        where: { communityId },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+          community: { select: { id: true, name: true } },
+          comments: {
+            take: 3,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              user: { select: { id: true, name: true, avatar: true } },
+            },
+          },
+          _count: { select: { comments: true } },
+        },
+      }),
+      this.prisma.post.count({ where: { communityId } }),
+    ]);
+
+    return {
+      data: posts,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async addComment(userId: string, postId: string, dto: CreateCommentDto) {
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const comment = await this.prisma.comment.create({
+      data: {
+        content: dto.content,
+        postId,
+        userId,
+      },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    // Update comment count
+    await this.prisma.post.update({
+      where: { id: postId },
+      data: { commentsCount: { increment: 1 } },
+    });
+
+    // Award reputation points for commenting
+    await this.prisma.reputation.updateMany({
+      where: { userId },
+      data: { points: { increment: 7 } },
+    });
+
+    return comment;
+  }
+
+  async getComments(postId: string) {
+    return this.prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+  }
+
+  async deletePost(userId: string, postId: string) {
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+    if (post.userId !== userId) throw new ForbiddenException('Cannot delete other user\'s post');
+
+    await this.prisma.post.delete({ where: { id: postId } });
+    return { message: 'Post deleted' };
+  }
+}
