@@ -4,168 +4,169 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import {
-  Home,
-  Building2,
-  Users,
-  MessageCircle,
-  Calendar,
-  Trophy,
-  User,
-  LogOut,
-  Menu,
-  X,
-  MapPin,
+  Home, Building2, Users, MessageCircle, Bell, User,
+  LogOut, Search, Settings, Globe, Shield,
 } from 'lucide-react';
-import { useState } from 'react';
 
-const navItems = [
+const sidebarItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/housing', label: 'Housing', icon: Building2 },
   { href: '/communities', label: 'Communities', icon: Users },
-  { href: '/events', label: 'Events', icon: Calendar },
+  { href: '/women-only', label: 'Women Only', icon: Shield },
   { href: '/chat', label: 'Chat', icon: MessageCircle },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/profile', label: 'Profile', icon: User },
+];
+
+const mobileNavItems = [
+  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/housing', label: 'Search', icon: Search },
+  { href: '/communities', label: 'Community', icon: Users },
+  { href: '/chat', label: 'Chat', icon: MessageCircle },
+  { href: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!isAuthenticated) return null;
+  if (['/', '/login', '/register'].includes(pathname || '')) return null;
+
+  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <nav className="fixed left-0 top-0 h-full w-[240px] hidden lg:flex flex-col z-50"
-           style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border)' }}>
+      {/* ─── Desktop Sidebar ─── */}
+      <nav style={{
+        position: 'fixed', left: 0, top: 0, height: '100%', width: 220,
+        background: '#fff', borderRight: '1px solid #e5e7ee', zIndex: 50,
+        display: 'flex', flexDirection: 'column',
+      }} className="hidden lg:!flex">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3 px-6 py-6 no-underline">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-               style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-            <MapPin size={22} color="white" />
-          </div>
-          <span className="text-xl font-bold gradient-text">LocalLoop</span>
+        <Link href="/dashboard" style={{ padding: '20px 24px 8px', textDecoration: 'none' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#6366f1', letterSpacing: '-0.02em' }}>LocalLoop</div>
+          <div style={{ fontSize: 9, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginTop: 2 }}>Relocation Concierge</div>
         </Link>
 
         {/* Nav Items */}
-        <div className="flex-1 px-3 py-2 flex flex-col gap-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+        <div style={{ flex: 1, padding: '24px 12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {sidebarItems.map((item) => {
+            const active = isActive(item.href);
             const Icon = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium no-underline transition-all duration-200"
-                style={{
-                  color: isActive ? 'var(--primary-light)' : 'var(--text-secondary)',
-                  background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                }}
-              >
-                <Icon size={20} />
+              <Link key={item.href} href={item.href} style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
+                borderRadius: 12, fontSize: 13, fontWeight: active ? 600 : 500,
+                color: active ? '#6366f1' : '#64748b',
+                background: active ? 'rgba(99,102,241,0.08)' : 'transparent',
+                textDecoration: 'none', position: 'relative', transition: 'all 0.15s',
+              }}>
+                <Icon size={18} />
                 {item.label}
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
-                )}
+                {active && <div style={{
+                  position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+                  width: 3, height: 20, borderRadius: '3px 0 0 3px', background: '#6366f1',
+                }} />}
               </Link>
             );
           })}
         </div>
 
-        {/* User Profile */}
-        <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl no-underline transition-all duration-200"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
-                 style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-              {user?.name?.charAt(0)?.toUpperCase()}
+        {/* User */}
+        <div style={{ padding: '12px', borderTop: '1px solid #e5e7ee' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
+              background: 'rgba(99,102,241,0.1)', color: '#6366f1',
+            }}>{(user?.name || 'P').charAt(0)}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{user?.name || 'Punya'}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>Premium Member</div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.name}</p>
-              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.reputation?.level || 'Explorer'}</p>
-            </div>
-          </Link>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl w-full text-sm mt-1 transition-all duration-200"
-            style={{ color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <LogOut size={18} />
-            Logout
+          </div>
+          <button onClick={logout} style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
+            width: '100%', fontSize: 12, color: '#ef4444', background: 'none',
+            border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', borderRadius: 8,
+          }}>
+            <LogOut size={14} /> Logout
           </button>
         </div>
       </nav>
 
-      {/* Mobile Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 lg:hidden z-50 flex items-center justify-between px-4 py-3"
-           style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-        <Link href="/dashboard" className="flex items-center gap-2 no-underline">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-               style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-            <MapPin size={18} color="white" />
-          </div>
-          <span className="text-lg font-bold gradient-text">LocalLoop</span>
-        </Link>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ color: 'var(--text-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+      {/* ─── Desktop Top Bar ─── */}
+      <div style={{
+        position: 'fixed', top: 0, left: 220, right: 0, height: 52,
+        background: '#fff', borderBottom: '1px solid #e5e7ee', zIndex: 40,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px',
+      }} className="hidden lg:!flex">
+        <div style={{ position: 'relative', width: 320 }}>
+          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input placeholder="Search neighborhoods or streets..." style={{
+            width: '100%', padding: '9px 16px 9px 40px', borderRadius: 10,
+            border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: 14,
+            outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+          }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {[{ href: '/housing', label: 'Housing' }, { href: '/communities', label: 'Communities' }].map((l) => (
+            <Link key={l.href} href={l.href} style={{
+              fontSize: 14, fontWeight: 500, color: isActive(l.href) ? '#6366f1' : '#64748b',
+              textDecoration: isActive(l.href) ? 'underline' : 'none',
+              textUnderlineOffset: 6,
+            }}>{l.label}</Link>
+          ))}
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Globe size={20} /></button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Settings size={20} /></button>
+          <Link href="/onboarding" style={{
+            background: '#6366f1', color: '#fff', padding: '8px 20px',
+            borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+          }}>Relocate Me</Link>
+        </div>
+      </div>
+
+      {/* ─── Mobile Top Bar ─── */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 56,
+        background: '#fff', borderBottom: '1px solid #e5e7ee', zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
+      }} className="lg:!hidden">
+        <Search size={20} style={{ color: '#64748b' }} />
+        <Link href="/dashboard" style={{ fontSize: 18, fontWeight: 800, color: '#6366f1', textDecoration: 'none' }}>LocalLoop</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/notifications"><Bell size={20} style={{ color: '#64748b' }} /></Link>
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
+            background: '#6366f1', color: '#fff',
+          }}>{(user?.name || 'P').charAt(0)}</div>
+        </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)' }} />
-          <div className="absolute top-[60px] left-0 right-0 p-4"
-               style={{ background: 'var(--bg-secondary)' }}
-               onClick={(e) => e.stopPropagation()}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium no-underline"
-                  style={{
-                    color: isActive ? 'var(--primary-light)' : 'var(--text-secondary)',
-                    background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                  }}
-                >
-                  <Icon size={20} />
-                  {item.label}
-                </Link>
-              );
-            })}
-            <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-              <Link
-                href="/profile"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm no-underline"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                <User size={20} />
-                Profile
-              </Link>
-              <button
-                onClick={() => { logout(); setMobileOpen(false); }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-sm"
-                style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <LogOut size={20} />
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ─── Mobile Bottom Nav ─── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, height: 64,
+        background: '#fff', borderTop: '1px solid #e5e7ee', zIndex: 50,
+        display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+        paddingBottom: 'env(safe-area-inset-bottom, 4px)',
+      }} className="lg:!hidden">
+        {mobileNavItems.map((item) => {
+          const active = isActive(item.href);
+          const Icon = item.icon;
+          return (
+            <Link key={item.href} href={item.href} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              color: active ? '#6366f1' : '#94a3b8', fontSize: 10, fontWeight: 500,
+              textDecoration: 'none',
+            }}>
+              <Icon size={20} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
     </>
   );
 }

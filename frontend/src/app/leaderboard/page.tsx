@@ -1,86 +1,234 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { Trophy, Medal, Star, Crown, TrendingUp } from 'lucide-react';
+import { Trophy, Medal, Star, Crown, TrendingUp, MapPin, Flame } from 'lucide-react';
 
-const levelColors: Record<string, string> = {
-  EXPLORER: '#94a3b8', GUIDE: '#06b6d4', SETTLER: '#10b981',
-  CITY_NAVIGATOR: '#f59e0b', LOCAL_MENTOR: '#6366f1',
+/* ── Demo Data ──────────────────────────────────────────── */
+
+const demoLeaderboard = [
+  { rank: 1, userId: 'u1', user: { name: 'Arjun Mehta' }, points: 2450, level: 'LOCAL_MENTOR', city: 'Pune', streak: 14 },
+  { rank: 2, userId: 'u2', user: { name: 'Sneha Kapur' }, points: 1820, level: 'CITY_NAVIGATOR', city: 'Pune', streak: 9 },
+  { rank: 3, userId: 'u3', user: { name: 'Vikram Iyer' }, points: 1500, level: 'CITY_NAVIGATOR', city: 'Pune', streak: 7 },
+  { rank: 4, userId: 'u4', user: { name: 'Priya Menon' }, points: 980, level: 'SETTLER', city: 'Pune', streak: 5 },
+  { rank: 5, userId: 'u5', user: { name: 'Rahul Sharma' }, points: 720, level: 'GUIDE', city: 'Pune', streak: 3 },
+  { rank: 6, userId: 'u6', user: { name: 'Ananya K.' }, points: 650, level: 'GUIDE', city: 'Pune', streak: 2 },
+  { rank: 7, userId: 'u7', user: { name: 'Karthik Nair' }, points: 540, level: 'GUIDE', city: 'Pune', streak: 4 },
+  { rank: 8, userId: 'u8', user: { name: 'Meera Joshi' }, points: 420, level: 'EXPLORER', city: 'Pune', streak: 1 },
+  { rank: 9, userId: 'u9', user: { name: 'Aditya Kale' }, points: 380, level: 'EXPLORER', city: 'Pune', streak: 0 },
+  { rank: 10, userId: 'u10', user: { name: 'Pooja Singh' }, points: 310, level: 'EXPLORER', city: 'Pune', streak: 2 },
+];
+
+const levelConfig: Record<string, { color: string; icon: any; label: string }> = {
+  EXPLORER: { color: '#94a3b8', icon: Star, label: 'Explorer' },
+  GUIDE: { color: '#06b6d4', icon: TrendingUp, label: 'Guide' },
+  SETTLER: { color: '#10b981', icon: Medal, label: 'Settler' },
+  CITY_NAVIGATOR: { color: '#f59e0b', icon: Trophy, label: 'Navigator' },
+  LOCAL_MENTOR: { color: '#6366f1', icon: Crown, label: 'Mentor' },
 };
-const levelIcons: Record<string, any> = {
-  EXPLORER: Star, GUIDE: TrendingUp, SETTLER: Medal,
-  CITY_NAVIGATOR: Trophy, LOCAL_MENTOR: Crown,
-};
+
+const podiumColors = ['#c0c0c0', '#fbbf24', '#cd7f32'];
+const podiumEmojis = ['🥈', '🥇', '🥉'];
+
+const avatarGradients = [
+  'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+  'linear-gradient(135deg, #fde68a, #fbbf24)',
+  'linear-gradient(135deg, #6ee7b7, #34d399)',
+  'linear-gradient(135deg, #93c5fd, #60a5fa)',
+  'linear-gradient(135deg, #fca5a5, #f87171)',
+];
+
+/* ── Leaderboard Page ─────────────────────────────────── */
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getLeaderboard().then(setLeaderboard).catch(console.error).finally(() => setLoading(false));
+    api.getLeaderboard()
+      .then((data) => { if (data?.length > 0) setLeaderboard(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <div className="p-6 lg:p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-2"><Trophy size={24} style={{ color: 'var(--warning)' }} /> Leaderboard</h1>
-      <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Top contributors helping newcomers settle in</p>
+  const data = leaderboard.length > 0 ? leaderboard : demoLeaderboard;
+  const top3 = data.slice(0, 3);
+  const rest = data.slice(3);
 
-      {/* Top 3 Podium */}
-      {leaderboard.length >= 3 && (
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[leaderboard[1], leaderboard[0], leaderboard[2]].map((entry, i) => {
+  // Reorder top 3 for podium: 2nd, 1st, 3rd
+  const podium = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
+
+  return (
+    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px 24px 100px' }}>
+
+      {/* ══════════ Header ══════════ */}
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <h1 style={{
+          fontSize: '28px', fontWeight: 700, color: '#1a1a2e',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+        }}>
+          <Trophy size={28} style={{ color: '#f59e0b' }} />
+          Leaderboard
+        </h1>
+        <p style={{ fontSize: '14px', color: '#94a3b8', marginTop: '6px' }}>
+          Top contributors helping newcomers settle in
+        </p>
+      </div>
+
+      {/* ══════════ Top 3 Podium ══════════ */}
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '32px' }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} style={{ height: '200px', borderRadius: '18px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+          ))}
+        </div>
+      ) : podium.length >= 3 ? (
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1.15fr 1fr',
+          gap: '14px', alignItems: 'flex-end', marginBottom: '32px',
+        }}>
+          {podium.map((entry, i) => {
             const rank = [2, 1, 3][i];
-            const color = rank === 1 ? '#fbbf24' : rank === 2 ? '#c0c0c0' : '#cd7f32';
+            const isFirst = rank === 1;
+            const config = levelConfig[entry.level] || levelConfig.EXPLORER;
             return (
-              <div key={entry?.userId} className={`glass-card p-5 text-center ${rank === 1 ? 'scale-105' : ''}`}
-                   style={{ transform: rank === 1 ? 'scale(1.05)' : 'none' }}>
-                <div className="text-2xl mb-2">{rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}</div>
-                <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-2"
-                     style={{ background: `linear-gradient(135deg, ${color}, ${color}aa)` }}>
-                  {entry?.user?.name?.charAt(0)}
+              <div key={entry.userId} style={{
+                background: isFirst
+                  ? 'linear-gradient(145deg, #fffbeb, #fef3c7)'
+                  : '#fff',
+                borderRadius: '18px', padding: isFirst ? '28px 16px' : '22px 14px',
+                textAlign: 'center',
+                border: isFirst ? '2px solid #fbbf24' : '1px solid #e5e7ee',
+                boxShadow: isFirst ? '0 6px 24px rgba(251,191,36,0.2)' : '0 2px 8px rgba(0,0,0,0.04)',
+                transition: 'all 0.25s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = ''}
+              >
+                <div style={{ fontSize: isFirst ? '32px' : '26px', marginBottom: '10px' }}>
+                  {podiumEmojis[i]}
                 </div>
-                <p className="font-semibold text-sm truncate">{entry?.user?.name}</p>
-                <p className="text-2xl font-bold gradient-text">{entry?.points}</p>
-                <p className="text-xs mt-1" style={{ color: levelColors[entry?.level] || 'var(--text-muted)' }}>{entry?.level?.replace('_', ' ')}</p>
+                <div style={{
+                  width: isFirst ? '64px' : '52px',
+                  height: isFirst ? '64px' : '52px',
+                  borderRadius: '50%', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: isFirst ? '22px' : '18px', fontWeight: 700,
+                  background: avatarGradients[i % avatarGradients.length],
+                  color: '#fff', margin: '0 auto 10px',
+                  border: isFirst ? '3px solid #fbbf24' : '2px solid #e5e7ee',
+                }}>
+                  {entry.user?.name?.charAt(0)}
+                </div>
+                <p style={{
+                  fontSize: isFirst ? '15px' : '14px', fontWeight: 600,
+                  color: '#1a1a2e', marginBottom: '4px',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>{entry.user?.name}</p>
+                <p style={{
+                  fontSize: isFirst ? '28px' : '22px', fontWeight: 800,
+                  background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  lineHeight: 1.2, marginBottom: '4px',
+                }}>{entry.points}</p>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                  fontSize: '11px', fontWeight: 600, color: config.color,
+                }}>
+                  {React.createElement(config.icon, { size: 12 })}
+                  {config.label}
+                </div>
               </div>
             );
           })}
         </div>
-      )}
+      ) : null}
 
-      {/* Full List */}
+      {/* ══════════ Full List ══════════ */}
       {loading ? (
-        <div className="flex flex-col gap-3">{[1,2,3,4,5].map((i) => <div key={i} className="shimmer h-16 rounded-xl" />)}</div>
-      ) : leaderboard.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <Trophy size={48} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
-          <p style={{ color: 'var(--text-muted)' }}>No reputation data yet. Start contributing!</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} style={{ height: '68px', borderRadius: '14px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+          ))}
+        </div>
+      ) : data.length === 0 ? (
+        <div style={{
+          background: '#fff', borderRadius: '18px', padding: '60px 24px',
+          border: '1px solid #e5e7ee', textAlign: 'center',
+        }}>
+          <Trophy size={48} style={{ color: '#e5e7ee', marginBottom: '16px' }} />
+          <p style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '4px' }}>
+            No reputation data yet
+          </p>
+          <p style={{ fontSize: '14px', color: '#94a3b8' }}>Start contributing to earn your spot!</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {leaderboard.map((entry) => {
-            const LevelIcon = levelIcons[entry.level] || Star;
-            const color = levelColors[entry.level] || '#94a3b8';
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {rest.map((entry, idx) => {
+            const config = levelConfig[entry.level] || levelConfig.EXPLORER;
+            const LevelIcon = config.icon;
             return (
-              <div key={entry.userId} className="glass-card p-4 flex items-center gap-4 hover-lift">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                     style={{ background: entry.rank <= 3 ? 'var(--primary)' : 'var(--bg-card)', color: entry.rank <= 3 ? 'white' : 'var(--text-muted)' }}>
-                  {entry.rank}
-                </div>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                     style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-                  {entry.user?.name?.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{entry.user?.name}</p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color }}>
-                    <LevelIcon size={12} /> {entry.level?.replace('_', ' ')}
+              <div key={entry.userId} style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                padding: '14px 18px', borderRadius: '16px',
+                background: '#fff', border: '1px solid #f0f1f5',
+                transition: 'all 0.2s', cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#e5e7ee'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f0f1f5'; e.currentTarget.style.boxShadow = ''; }}
+              >
+                {/* Rank */}
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '10px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '13px', fontWeight: 700, flexShrink: 0,
+                  background: '#f8f9fc', color: '#94a3b8',
+                }}>{entry.rank}</div>
+
+                {/* Avatar */}
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '15px', fontWeight: 700,
+                  background: avatarGradients[(idx + 3) % avatarGradients.length],
+                  color: '#fff', flexShrink: 0,
+                }}>{entry.user?.name?.charAt(0)}</div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '2px' }}>
+                    {entry.user?.name}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      fontSize: '11px', fontWeight: 600, color: config.color,
+                    }}>
+                      <LevelIcon size={12} /> {config.label}
+                    </span>
+                    {entry.streak > 0 && (
+                      <span style={{
+                        display: 'flex', alignItems: 'center', gap: '3px',
+                        fontSize: '10px', fontWeight: 600, color: '#f59e0b',
+                        background: 'rgba(245,158,11,0.08)', padding: '2px 7px',
+                        borderRadius: '6px',
+                      }}>
+                        <Flame size={10} /> {entry.streak}d
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold gradient-text">{entry.points}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>points</p>
+
+                {/* Points */}
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{
+                    fontSize: '18px', fontWeight: 700,
+                    background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>{entry.points}</p>
+                  <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 500 }}>points</p>
                 </div>
               </div>
             );

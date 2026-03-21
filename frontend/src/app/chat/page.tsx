@@ -1,155 +1,445 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { useRouter } from 'next/navigation';
-import { MessageCircle, Send, ArrowLeft, Circle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import {
+  Send, Mic, Smile, Video, Phone, MoreVertical,
+  FileText, Download, MessageCircle, ArrowLeft, Circle,
+  Image as ImageIcon, Paperclip, Check, CheckCheck,
+} from 'lucide-react';
+
+/* ── Demo Data ──────────────────────────────────────────── */
+
+const conversations = [
+  {
+    id: '1', name: 'David Chen', mentor: true,
+    msg: 'Looking forward to our coffee ch...', time: '12:45 PM', unread: 2,
+    online: true, initials: 'DC',
+    avatarGrad: 'linear-gradient(135deg, #818cf8, #6366f1)',
+  },
+  {
+    id: '2', name: 'Berlin Tech Nomads', group: true,
+    msg: 'Sarah: Does anyone know a good coworki...', time: '8:12 AM', unread: 0,
+    initials: 'BT',
+    avatarGrad: 'linear-gradient(135deg, #6ee7b7, #10b981)',
+  },
+  {
+    id: '3', name: 'Elena Rodriguez',
+    msg: 'That rental contract looks solid. Go for it!', time: 'YESTERDAY', unread: 0,
+    initials: 'ER',
+    avatarGrad: 'linear-gradient(135deg, #fca5a5, #f87171)',
+  },
+  {
+    id: '4', name: 'Skyview Residency', pg: true,
+    msg: 'Payment received for September. Welcome!', time: 'AUG 14', unread: 0,
+    initials: 'SR',
+    avatarGrad: 'linear-gradient(135deg, #93c5fd, #60a5fa)',
+  },
+  {
+    id: '5', name: 'Priya Kapoor', mentor: false,
+    msg: 'Found a great gym near Wakad!', time: 'AUG 10', unread: 0,
+    initials: 'PK',
+    avatarGrad: 'linear-gradient(135deg, #fde68a, #fbbf24)',
+  },
+];
+
+const chatMessages = [
+  {
+    id: 1,
+    text: 'Hi Alex! I reviewed the apartment options you sent over for Lisbon. The one in Arroios looks great for digital nomads—lots of cafes and fast internet.',
+    mine: false, time: '12:42 PM',
+  },
+  {
+    id: 2,
+    text: "That's what I was thinking! Is the commute to the tech hub area manageable from there?",
+    mine: true, time: '12:44 PM', read: true,
+  },
+  {
+    id: 3,
+    text: "Absolutely. It's just 3 stops on the green line. Looking forward to our coffee chat about Lisbon housing! ☕",
+    mine: false, time: '12:45 PM',
+  },
+];
+
+/* ── Chat Page ─────────────────────────────────────────── */
 
 export default function ChatPage() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuthStore();
-  const router = useRouter();
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [selectedPartner, setSelectedPartner] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [selected, setSelected] = useState<string | null>('1');
+  const [messages, setMessages] = useState(chatMessages);
   const [newMsg, setNewMsg] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('All');
+  const [typing, setTyping] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) { router.push('/login'); return; }
-    if (isAuthenticated) {
-      api.getConversations().then(setConversations).catch(console.error).finally(() => setLoading(false));
-    }
-  }, [isAuthenticated, authLoading, router]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const selectConversation = async (partner: any) => {
-    setSelectedPartner(partner);
-    try {
-      const res = await api.getMessages(partner.id);
-      setMessages(res.data || []);
-    } catch (err) { console.error(err); }
-  };
+  const conv = conversations.find((c) => c.id === selected);
 
-  const sendMessage = async (e: React.FormEvent) => {
+  const send = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMsg.trim() || !selectedPartner) return;
-    // Optimistically add message
-    const tempMsg = { id: Date.now(), content: newMsg, senderId: user?.id, sender: { name: user?.name }, createdAt: new Date().toISOString() };
-    setMessages((prev) => [...prev, tempMsg]);
+    if (!newMsg.trim()) return;
+    setMessages((p) => [
+      ...p,
+      {
+        id: Date.now(),
+        text: newMsg,
+        mine: true,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        read: false,
+      },
+    ]);
     setNewMsg('');
-    // Note: In production, this would use WebSocket. REST fallback for now.
+
+    // Simulate typing indicator
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      setMessages((p) => [
+        ...p,
+        {
+          id: Date.now() + 1,
+          text: 'Thanks for sharing! I\'ll look into that. 😊',
+          mine: false,
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    }, 2500);
   };
 
-  if (authLoading || loading) {
-    return <div className="p-6 lg:p-8"><div className="shimmer h-96 rounded-xl" /></div>;
-  }
+  const tabs = ['All', 'Mentors', 'Groups', 'PGs'];
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl" style={{ height: 'calc(100vh - 60px)' }}>
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6"><MessageCircle size={24} style={{ color: 'var(--primary)' }} /> Messages</h1>
+    <div style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
 
-      <div className="glass-card flex overflow-hidden" style={{ height: 'calc(100% - 80px)' }}>
-        {/* Sidebar */}
-        <div className="w-80 flex-shrink-0 flex flex-col" style={{ borderRight: '1px solid var(--border)' }}>
-          <div className="p-4" style={{ borderBottom: '1px solid var(--border)' }}>
-            <h3 className="font-semibold text-sm">Conversations</h3>
+      {/* ══════════ CONVERSATIONS LIST ══════════ */}
+      <div className={`${selected ? 'hidden md:flex' : 'flex'}`} style={{
+        width: 360, flexShrink: 0, flexDirection: 'column',
+        borderRight: '1px solid #e5e7ee', background: '#fff',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '22px 22px 18px' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a2e', marginBottom: 18 }}>Messages</h2>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {tabs.map((t) => (
+              <button key={t} onClick={() => setTab(t)} style={{
+                padding: '7px 18px', borderRadius: 22, fontSize: 13, fontWeight: 500,
+                border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                background: tab === t ? '#6366f1' : 'transparent',
+                color: tab === t ? '#fff' : '#64748b',
+                transition: 'all 0.15s',
+              }}>{t}</button>
+            ))}
           </div>
-          <div className="flex-1 overflow-auto">
-            {conversations.length === 0 ? (
-              <div className="p-6 text-center">
-                <MessageCircle size={32} className="mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No conversations yet</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Start chatting with mentors or community members</p>
-              </div>
-            ) : (
-              conversations.map((conv) => (
-                <button key={conv.partner.id} onClick={() => selectConversation(conv.partner)}
-                        className="w-full flex items-center gap-3 p-4 text-left transition-all"
-                        style={{
-                          background: selectedPartner?.id === conv.partner.id ? 'rgba(99,102,241,0.1)' : 'transparent',
-                          border: 'none', cursor: 'pointer', color: 'var(--text-primary)',
-                          borderBottom: '1px solid var(--border)',
-                        }}>
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                         style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-                      {conv.partner.name?.charAt(0)}
-                    </div>
-                    {conv.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                           style={{ background: 'var(--danger)', color: 'white' }}>
-                        {conv.unreadCount}
-                      </div>
+        </div>
+
+        {/* Conversation List */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {conversations.map((c) => {
+            const isActive = selected === c.id;
+            return (
+              <button key={c.id} onClick={() => setSelected(c.id)} style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+                width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
+                borderLeft: isActive ? '3px solid #6366f1' : '3px solid transparent',
+                transition: 'all 0.12s',
+              }}>
+                {/* Avatar */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
+                    background: c.pg ? 'rgba(99,102,241,0.1)' : c.avatarGrad,
+                    color: c.pg ? '#6366f1' : '#fff',
+                  }}>{c.initials}</div>
+                  {c.online && (
+                    <div style={{
+                      position: 'absolute', bottom: 1, right: 1, width: 13, height: 13,
+                      borderRadius: '50%', background: '#10b981', border: '2.5px solid #fff',
+                    }} />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{c.name}</span>
+                    {c.mentor && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, color: '#6366f1',
+                        background: 'rgba(99,102,241,0.1)', padding: '2px 7px',
+                        borderRadius: 5, textTransform: 'uppercase' as const, letterSpacing: '0.02em',
+                      }}>MENTOR</span>
+                    )}
+                    {c.group && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, color: '#10b981',
+                        background: 'rgba(16,185,129,0.1)', padding: '2px 7px',
+                        borderRadius: 5, textTransform: 'uppercase' as const, letterSpacing: '0.02em',
+                      }}>GROUP</span>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{conv.partner.name}</p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{conv.lastMessage?.content}</p>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedPartner ? (
-            <>
-              <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                <button onClick={() => setSelectedPartner(null)} className="lg:hidden" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
-                     style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-                  {selectedPartner.name?.charAt(0)}
+                  <p style={{
+                    fontSize: 12, color: '#94a3b8', overflow: 'hidden',
+                    textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, margin: 0,
+                  }}>{c.msg}</p>
                 </div>
-                <div>
-                  <p className="font-semibold text-sm">{selectedPartner.name}</p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--success)' }}>
-                    <Circle size={6} fill="currentColor" /> Online
-                  </div>
+
+                {/* Time + Badge */}
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+                  gap: 6, flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 500, color: '#94a3b8' }}>{c.time}</span>
+                  {c.unread > 0 && (
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '50%', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 700, background: '#6366f1', color: '#fff',
+                    }}>{c.unread}</div>
+                  )}
                 </div>
-              </div>
-
-              <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
-                {messages.map((msg) => {
-                  const isMe = msg.senderId === user?.id;
-                  return (
-                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className="max-w-[70%] p-3 rounded-2xl text-sm"
-                           style={{
-                             background: isMe ? 'var(--primary)' : 'var(--bg-secondary)',
-                             color: isMe ? 'white' : 'var(--text-primary)',
-                             borderBottomRightRadius: isMe ? '4px' : '16px',
-                             borderBottomLeftRadius: isMe ? '16px' : '4px',
-                           }}>
-                        {msg.content}
-                        <div className="text-[10px] mt-1 opacity-60 text-right">
-                          {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <form onSubmit={sendMessage} className="p-4 flex gap-3" style={{ borderTop: '1px solid var(--border)' }}>
-                <input className="input-field flex-1 text-sm" placeholder="Type a message..." value={newMsg} onChange={(e) => setNewMsg(e.target.value)} />
-                <button type="submit" className="btn-primary px-4" disabled={!newMsg.trim()}>
-                  <Send size={16} />
-                </button>
-              </form>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center flex-col">
-              <MessageCircle size={48} style={{ color: 'var(--text-muted)' }} />
-              <p className="mt-3 font-medium" style={{ color: 'var(--text-muted)' }}>Select a conversation</p>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Choose someone to start chatting</p>
-            </div>
-          )}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      {/* ══════════ CHAT AREA ══════════ */}
+      <div className={`${!selected ? 'hidden md:flex' : 'flex'}`} style={{
+        flex: 1, flexDirection: 'column', background: '#f8f9fc',
+      }}>
+        {conv ? (
+          <>
+            {/* ── Chat Header ── */}
+            <div style={{
+              padding: '14px 22px', display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', background: '#fff',
+              borderBottom: '1px solid #e5e7ee',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <button onClick={() => setSelected(null)} className="md:hidden" style={{
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
+                }}>
+                  <ArrowLeft size={20} />
+                </button>
+                <div style={{
+                  width: 42, height: 42, borderRadius: '50%', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
+                  background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+                  color: '#fff',
+                }}>{conv.initials}</div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a2e' }}>{conv.name}</span>
+                    {conv.mentor && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, color: '#6366f1',
+                        background: 'rgba(99,102,241,0.1)', padding: '3px 8px',
+                        borderRadius: 5, textTransform: 'uppercase' as const,
+                      }}>TOP MENTOR</span>
+                    )}
+                  </div>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    fontSize: 12, color: conv.online ? '#10b981' : '#94a3b8',
+                  }}>
+                    <div style={{
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: conv.online ? '#10b981' : '#cbd5e1',
+                    }} />
+                    {conv.online ? 'Active now' : 'Last seen recently'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[Video, Phone, MoreVertical].map((Icon, i) => (
+                  <button key={i} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+                    padding: 8, borderRadius: 10, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f1f5'; e.currentTarget.style.color = '#64748b'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+                  ><Icon size={20} /></button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Messages ── */}
+            <div style={{
+              flex: 1, overflow: 'auto', padding: '20px 24px',
+              display: 'flex', flexDirection: 'column', gap: 16,
+            }}>
+              {/* Date separator */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: '#94a3b8', background: '#fff',
+                  padding: '5px 18px', borderRadius: 24, border: '1px solid #e5e7ee',
+                  letterSpacing: '0.04em',
+                }}>TODAY</span>
+              </div>
+
+              {messages.map((m) => (
+                <div key={m.id} style={{
+                  display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start',
+                  gap: 10, animation: 'fadeIn 0.3s ease',
+                }}>
+                  {/* Other person's avatar */}
+                  {!m.mine && (
+                    <div style={{
+                      width: 34, height: 34, borderRadius: '50%', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
+                      background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+                      color: '#fff', alignSelf: 'flex-end', flexShrink: 0,
+                    }}>{conv.initials?.charAt(0)}</div>
+                  )}
+                  <div style={{ maxWidth: '65%' }}>
+                    <div style={{
+                      padding: '14px 18px', fontSize: 14, lineHeight: 1.55,
+                      background: m.mine
+                        ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
+                        : '#fff',
+                      color: m.mine ? '#fff' : '#1a1a2e',
+                      borderRadius: m.mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      border: m.mine ? 'none' : '1px solid #f0f1f5',
+                      boxShadow: m.mine
+                        ? '0 2px 8px rgba(99,102,241,0.25)'
+                        : '0 1px 3px rgba(0,0,0,0.04)',
+                    }}>{m.text}</div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      fontSize: 10, color: '#94a3b8', marginTop: 5,
+                      justifyContent: m.mine ? 'flex-end' : 'flex-start',
+                    }}>
+                      {m.time}
+                      {m.mine && m.read && (
+                        <CheckCheck size={12} style={{ color: '#6366f1' }} />
+                      )}
+                      {m.mine && !m.read && (
+                        <Check size={12} style={{ color: '#94a3b8' }} />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* File attachment */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
+                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff',
+                  borderRadius: '18px 18px 4px 18px',
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+                }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 10, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.2)',
+                  }}><FileText size={20} /></div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Lisbon_Nomad_Guide.pdf</div>
+                    <div style={{ fontSize: 11, opacity: 0.75 }}>2.4 MB • PDF DOCUMENT</div>
+                  </div>
+                  <button style={{
+                    background: 'rgba(255,255,255,0.15)', border: 'none',
+                    borderRadius: 8, padding: 6, cursor: 'pointer', color: '#fff',
+                  }}>
+                    <Download size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Typing indicator */}
+              {typing && (
+                <div style={{ display: 'flex', gap: 10, animation: 'fadeIn 0.3s ease' }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: '50%', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
+                    background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+                    color: '#fff', alignSelf: 'flex-end', flexShrink: 0,
+                  }}>{conv.initials?.charAt(0)}</div>
+                  <div style={{
+                    padding: '14px 20px', background: '#fff', borderRadius: '18px 18px 18px 4px',
+                    border: '1px solid #f0f1f5', display: 'flex', gap: 4, alignItems: 'center',
+                  }}>
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} style={{
+                        width: 8, height: 8, borderRadius: '50%', background: '#94a3b8',
+                        animation: `typingBounce 1.4s infinite ${i * 0.15}s`,
+                      }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div ref={endRef} />
+            </div>
+
+            {/* ── Input Bar ── */}
+            <form onSubmit={send} style={{
+              padding: '14px 22px', display: 'flex', alignItems: 'center', gap: 12,
+              background: '#fff', borderTop: '1px solid #e5e7ee',
+            }}>
+              <button type="button" style={{
+                background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+                padding: 4, borderRadius: 8, transition: 'color 0.15s',
+              }}><Mic size={20} /></button>
+              <button type="button" style={{
+                background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+                padding: 4, borderRadius: 8, transition: 'color 0.15s',
+              }}><Smile size={20} /></button>
+              <input
+                value={newMsg}
+                onChange={(e) => setNewMsg(e.target.value)}
+                placeholder={`Write a message to ${conv.name.split(' ')[0]}...`}
+                style={{
+                  flex: 1, background: '#f8f9fc', border: '1px solid #e5e7ee',
+                  borderRadius: 14, padding: '11px 18px', fontSize: 14,
+                  outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7ee'}
+              />
+              <button type="submit" disabled={!newMsg.trim()} style={{
+                width: 42, height: 42, borderRadius: '50%', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', border: 'none',
+                cursor: newMsg.trim() ? 'pointer' : 'default',
+                background: newMsg.trim()
+                  ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
+                  : '#e5e7ee',
+                color: '#fff',
+                boxShadow: newMsg.trim() ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
+                transition: 'all 0.2s',
+              }}><Send size={16} /></button>
+            </form>
+          </>
+        ) : (
+          /* Empty state */
+          <div style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column',
+          }}>
+            <div style={{
+              width: 90, height: 90, borderRadius: 24, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(99,102,241,0.08)', marginBottom: 18,
+            }}>
+              <MessageCircle size={40} style={{ color: '#6366f1' }} />
+            </div>
+            <p style={{ fontWeight: 600, fontSize: 20, color: '#1a1a2e', marginBottom: 4 }}>Select a conversation</p>
+            <p style={{ fontSize: 14, color: '#94a3b8' }}>Choose someone to start chatting</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Typing animation keyframes ── */}
+      <style>{`
+        @keyframes typingBounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
