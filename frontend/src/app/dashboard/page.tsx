@@ -13,6 +13,7 @@ import {
 
 /* ── Demo Data ───────────────────────────────────────────── */
 
+
 const recommendedCards = [
   {
     id: 'r1',
@@ -168,14 +169,14 @@ export default function DashboardPage() {
       <div style={{ padding: '32px' }}>
         <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
-          {[1,2,3].map(i => <div key={i} style={{ height: '140px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />)}
+          {[1, 2, 3].map(i => <div key={i} style={{ height: '140px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '28px' }}>
           <div>
-            {[1,2].map(i => <div key={i} style={{ height: '200px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
+            {[1, 2].map(i => <div key={i} style={{ height: '200px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
           </div>
           <div>
-            {[1,2,3].map(i => <div key={i} style={{ height: '120px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
+            {[1, 2, 3].map(i => <div key={i} style={{ height: '120px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
           </div>
         </div>
       </div>
@@ -230,8 +231,8 @@ export default function DashboardPage() {
                     color: '#fff', cursor: 'pointer', transition: 'all 0.25s',
                     minHeight: '145px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(99,102,241,0.35)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(99,102,241,0.35)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                   >
                     <div style={{
                       width: '46px', height: '46px', borderRadius: '13px',
@@ -269,8 +270,8 @@ export default function DashboardPage() {
                   border: '1px solid #e5e7ee', textDecoration: 'none', color: '#1a1a2e',
                   transition: 'all 0.25s', flexShrink: 0,
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
                   <div style={{
                     height: '165px', backgroundImage: `url(${h.img})`,
@@ -330,8 +331,8 @@ export default function DashboardPage() {
                     border: '1px solid #f0f1f5', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}
                   >
                     {/* Author */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
@@ -439,8 +440,8 @@ export default function DashboardPage() {
                   padding: '12px 14px', borderRadius: '14px', background: '#f8f9fc',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f0f1f5'}
-                onMouseLeave={e => e.currentTarget.style.background = '#f8f9fc'}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f0f1f5'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#f8f9fc'}
                 >
                   {/* Date Box */}
                   <div style={{
@@ -517,8 +518,8 @@ export default function DashboardPage() {
                     borderRadius: 12, background: '#fff', textDecoration: 'none',
                     color: '#1a1a2e', transition: 'all 0.15s', border: '1px solid #e5e7ee',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = action.color; e.currentTarget.style.boxShadow = `0 2px 8px ${action.color}20`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7ee'; e.currentTarget.style.boxShadow = 'none'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = action.color; e.currentTarget.style.boxShadow = `0 2px 8px ${action.color}20`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7ee'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     <div style={{
                       width: 34, height: 34, borderRadius: 10, display: 'flex',
