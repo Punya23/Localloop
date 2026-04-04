@@ -9,6 +9,8 @@ import { PostsModule } from './posts/posts.module';
 import { ChatModule } from './chat/chat.module';
 import { ReputationModule } from './reputation/reputation.module';
 import { EventsModule } from './events/events.module';
+import { AdminModule } from './admin/admin.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { EventsModule } from './events/events.module';
     ChatModule,
     ReputationModule,
     EventsModule,
+    AdminModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

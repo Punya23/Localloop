@@ -10,58 +10,6 @@ import {
   Sparkles, ArrowRight, Eye,
 } from 'lucide-react';
 
-/* ── Demo Data ──────────────────────────────────────────── */
-
-const imgs = [
-  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=500&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=500&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=500&h=350&fit=crop',
-];
-
-const demo = [
-  {
-    id: '1', title: 'Skyline Residency', area: 'Phase 1, Hinjewadi', city: 'Pune',
-    rent: 18500, badge: 'verified', beds: 1, baths: 1, sqm: 45,
-    womenSafe: true, proximity: '0.5 km to IT Park', type: '1 BHK',
-    managedBy: null, amenities: ['WiFi', 'Power Backup'],
-  },
-  {
-    id: '2', title: 'Green Terrace PG', area: 'Marunji, Hinjewadi', city: 'Pune',
-    rent: 9000, badge: 'women', beds: 0, baths: 1, sqm: 0,
-    womenSafe: true, proximity: 'Near IT Hub', type: 'Twin Sharing',
-    managedBy: null, amenities: ['Free WiFi', 'Meals Included'],
-    available: true, sharing: true,
-  },
-  {
-    id: '3', title: 'The Heritage Suites', area: 'Phase 3, Hinjewadi', city: 'Pune',
-    rent: 25000, badge: 'verified', beds: 2, baths: 2, sqm: 85,
-    womenSafe: false, proximity: '1.2 km to Mall', type: '2 BHK Semi-Furnished',
-    managedBy: 'Professional Concierge', amenities: ['Gym', 'Pool', 'Parking'],
-  },
-  {
-    id: '4', title: 'Sunflower Heights', area: 'Wakad', city: 'Pune',
-    rent: 15000, badge: 'superhost', beds: 1, baths: 1, sqm: 52,
-    womenSafe: false, proximity: '0.8 km to Metro', type: '1 BHK Furnished',
-    managedBy: null, amenities: ['AC', 'Geyser', 'Parking'],
-  },
-  {
-    id: '5', title: 'Orchid Women PG', area: 'Baner', city: 'Pune',
-    rent: 8500, badge: 'women', beds: 0, baths: 1, sqm: 0,
-    womenSafe: true, proximity: 'Near Baner Road', type: 'Triple Sharing',
-    managedBy: null, amenities: ['Free WiFi', 'Tiffin Service'],
-    available: true, sharing: true,
-  },
-  {
-    id: '6', title: 'Urban Nest Studio', area: 'Balewadi', city: 'Pune',
-    rent: 20000, badge: 'verified', beds: 1, baths: 1, sqm: 38,
-    womenSafe: false, proximity: '0.3 km to Stadium', type: 'Studio Apartment',
-    managedBy: 'Nest Property Management', amenities: ['Smart Lock', 'Laundry'],
-  },
-];
-
 /* ── Badge Component ──────────────────────────────────── */
 
 function Badge({ type }: { type: string }) {
@@ -115,13 +63,54 @@ export default function HousingPage() {
   const [budget, setBudget] = useState(30000);
   const [loading, setLoading] = useState(true);
   const [area, setArea] = useState('Hinjewadi, Pune');
+  const [housingType, setHousingType] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [mobileFilters, setMobileFilters] = useState(false);
 
   useEffect(() => {
-    api.getHousings().then((r) => { if (r?.data?.length) setData(r.data); }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    // Pass filter params to API so server-side can narrow
+    const params: Record<string, string | number> = {};
+    if (area && area !== 'All') {
+      params.area = area.split(',')[0]?.trim();
+    }
+    params.budgetMax = budget;
+    if (pref === 'Women Only') params.isWomenFriendly = 'true';
+    if (housingType) params.type = housingType;
+    api.getHousings(params).then((r) => { if (r?.data?.length) setData(r.data); else setData([]); }).catch(() => {}).finally(() => setLoading(false));
+  }, [area, budget, pref, housingType]);
 
-  const listings = data.length > 0 ? data : demo;
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const allListings = data;
+
+  // ── Client-side filtering (backup for demo data + search) ──
+  const listings = allListings.filter((h: any) => {
+    const rent = h.rent || 0;
+    if (rent > budget) return false;
+    if (verified && h.badge !== 'verified' && h.isVerified !== true && h.badge !== 'women' && h.isWomenFriendly !== true) return false;
+    if (pref === 'Women Only' && !h.womenSafe && h.badge !== 'women' && h.isWomenFriendly !== true) return false;
+    if (pref === 'Mixed' && (h.womenSafe || h.badge === 'women')) return false;
+    if (area && area !== 'All') {
+      const areaName = area.split(',')[0]?.trim().toLowerCase();
+      const hArea = (h.area || '').toLowerCase();
+      if (areaName && !hArea.includes(areaName)) return false;
+    }
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      const matchTitle = (h.title || '').toLowerCase().includes(q);
+      const matchArea = (h.area || '').toLowerCase().includes(q);
+      const matchDesc = (h.description || '').toLowerCase().includes(q);
+      if (!matchTitle && !matchArea && !matchDesc) return false;
+    }
+    return true;
+  });
+
   const toggleSave = (id: string) => setSaved((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
@@ -134,7 +123,22 @@ export default function HousingPage() {
         overflowY: 'auto', height: 'calc(100vh - 52px)', position: 'sticky', top: 52,
       }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e', marginBottom: 4 }}>Filters</h2>
-        <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 28 }}>Tailor your relocation search</p>
+        <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>Tailor your relocation search</p>
+
+        {/* Search */}
+        <div style={{ marginBottom: 20, position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by title, area..."
+            style={{
+              width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12,
+              border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: 14,
+              color: '#1a1a2e', fontFamily: 'Inter, sans-serif', outline: 'none',
+            }}
+          />
+        </div>
 
         {/* Target Area */}
         <div style={{ marginBottom: 28 }}>
@@ -150,6 +154,7 @@ export default function HousingPage() {
                 outline: 'none', cursor: 'pointer',
               }}
             >
+              <option value="All">All Areas</option>
               <option>Hinjewadi, Pune</option>
               <option>Wakad, Pune</option>
               <option>Baner, Pune</option>
@@ -190,6 +195,31 @@ export default function HousingPage() {
           </div>
         </div>
 
+        {/* Housing Type */}
+        <div style={{ marginBottom: 28 }}>
+          <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 8 }}>Housing Type</label>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={housingType}
+              onChange={(e) => setHousingType(e.target.value)}
+              style={{
+                width: '100%', padding: '11px 36px 11px 14px', borderRadius: 12,
+                border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: 14,
+                color: '#1a1a2e', appearance: 'none' as const, fontFamily: 'Inter, sans-serif',
+                outline: 'none', cursor: 'pointer',
+              }}
+            >
+              <option value="">All Types</option>
+              <option value="PG">PG</option>
+              <option value="HOSTEL">Hostel</option>
+              <option value="FLAT">Flat</option>
+              <option value="SHARED_ROOM">Shared Room</option>
+              <option value="SINGLE_ROOM">Single Room</option>
+            </select>
+            <ChevronDown size={14} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+          </div>
+        </div>
+
         {/* Verified Toggle */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
@@ -212,13 +242,13 @@ export default function HousingPage() {
           </button>
         </div>
 
-        <button onClick={() => { setPref('All'); setVerified(true); setBudget(30000); }} style={{
+        <button onClick={() => { setPref('All'); setVerified(true); setBudget(30000); setArea('All'); setHousingType(''); setSearchQuery(''); }} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           width: '100%', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 500,
           color: '#64748b', background: '#f8f9fc', border: '1px solid #e5e7ee',
           cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
         }}>
-          <RotateCcw size={14} /> Reset Filters
+          <RotateCcw size={14} /> Reset All Filters
         </button>
       </div>
 
@@ -294,7 +324,7 @@ export default function HousingPage() {
             gap: 20,
           }}>
             {listings.map((h: any, i: number) => {
-              const img = imgs[i % imgs.length];
+              const img = (h.images && h.images.length > 0) ? h.images[0] : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=350&fit=crop';
               const badge = h.badge || 'verified';
               const isSaved = saved.has(h.id);
               return (

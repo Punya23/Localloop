@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ChatService {
   constructor(private prisma: PrismaService) {}
+
+  // ════════════ 1-TO-1 CHAT ════════════
 
   async getConversations(userId: string) {
     // Get all unique conversation partners
@@ -90,5 +92,59 @@ export class ChatService {
       data: messages,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  // ════════════ COMMUNITY GROUP CHAT ════════════
+
+  async getCommunityMessages(communityId: string, page = 1, limit = 50) {
+    const community = await this.prisma.community.findUnique({ where: { id: communityId } });
+    if (!community) throw new NotFoundException('Community not found');
+
+    const skip = (page - 1) * limit;
+
+    const [messages, total] = await Promise.all([
+      this.prisma.communityMessage.findMany({
+        where: { communityId },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+        },
+      }),
+      this.prisma.communityMessage.count({ where: { communityId } }),
+    ]);
+
+    return {
+      data: messages,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async sendCommunityMessage(userId: string, communityId: string, content: string) {
+    // Verify community exists
+    const community = await this.prisma.community.findUnique({ where: { id: communityId } });
+    if (!community) throw new NotFoundException('Community not found');
+
+    // Verify user is a member (or it's non-private)
+    if (community.isPrivate) {
+      const membership = await this.prisma.communityMember.findUnique({
+        where: { userId_communityId: { userId, communityId } },
+      });
+      if (!membership) throw new ForbiddenException('You must be a member to chat');
+    }
+
+    const message = await this.prisma.communityMessage.create({
+      data: {
+        content,
+        communityId,
+        userId,
+      },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    return message;
   }
 }

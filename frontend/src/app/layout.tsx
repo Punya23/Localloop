@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import AuthProvider from "@/components/AuthProvider";
+import LayoutShell from "@/components/LayoutShell";
 
 export const metadata: Metadata = {
   title: "LocalLoop — Your Relocation Companion",
@@ -23,10 +24,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          <Navbar />
-          <main className="lg:ml-[220px] min-h-screen pt-[56px] pb-[72px] lg:pt-[52px] lg:pb-0">
+          <LayoutShell>
             {children}
-          </main>
+          </LayoutShell>
         </AuthProvider>
       </body>
     </html>

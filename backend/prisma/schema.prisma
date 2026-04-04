@@ -35,9 +35,16 @@ enum ReputationLevel {
   LOCAL_MENTOR
 }
 
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
+  id              String   @id @default(cuid())
+  email           String?  @unique
   password        String
   name            String
   avatar          String?
@@ -50,16 +57,42 @@ model User {
   budgetMax       Int?
   isWomenMode     Boolean   @default(false)
   isOnboarded     Boolean   @default(false)
-  isMentor        Boolean   @default(false)
+  isMentor        Boolean  @default(false)
   bio             String?
-  phone           String?
+  phone           String?  @unique
   university      String?
   company         String?
   isVerified      Boolean   @default(false)
-  inviteCode      String?   @unique
+  inviteCode      String?  @unique
   invitedBy       String?
+  referralCode    String?  @unique
+  preferences     Json?
+  welcomeEmailSent Boolean  @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  // ── ML-Ready Extended Profile Fields ──
+  interests       String[]           // hobbies/interests for friend matching
+  foodPreference  String?            // veg, non-veg, vegan, eggetarian
+  workSchedule    String?            // morning, day, night, flexible
+  languages       String[]           // spoken languages
+  lifestyle       String?            // early_bird, night_owl, social, introvert
+  transportMode   String?            // own_vehicle, public, walking, cab
+  smoking         String?            // yes, no, occasionally
+  drinking        String?            // yes, no, occasionally
+  petFriendly     Boolean?
+  ageRange        String?            // 18-22, 23-27, 28-32, 33+
+  hometown        String?            // for hometown community matching
+  courseOrDept    String?            // course/department for student matching
+  monthlyIncome   String?            // income bracket for expense prediction
+
+  // ── Verification Fields ──
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  idProofUrl      String?            // uploaded ID proof file URL
+  idProofType     String?            // aadhaar, pan, passport, college_id
+  verificationNotes String?          // admin notes on verification
+  verifiedAt      DateTime?
+  verifiedBy      String?            // admin user ID who verified
 
   // Relations
   housings        Housing[]
@@ -74,6 +107,10 @@ model User {
   createdEvents   Event[]
   eventAttendees  EventAttendee[]
   mentorProfile   MentorProfile?
+  communityMessages CommunityMessage[]
+  bookings        HousingBooking[]
+  mentorships     Mentorship[]      @relation("Mentee")
+  mentoring       Mentorship[]      @relation("Mentor")
 
   @@map("users")
 }
@@ -151,6 +188,7 @@ model Housing {
   createdBy         User             @relation(fields: [createdById], references: [id])
   reviews           HousingReview[]
   savedBy           SavedHousing[]
+  bookings          HousingBooking[]
 
   @@index([city, area])
   @@index([rent])
@@ -224,6 +262,7 @@ model Community {
   members     CommunityMember[]
   posts       Post[]
   events      Event[]
+  communityMessages CommunityMessage[]
 
   @@index([city, type])
   @@map("communities")
@@ -345,4 +384,73 @@ model EventAttendee {
 
   @@unique([userId, eventId])
   @@map("event_attendees")
+}
+
+// ============================================
+// COMMUNITY MESSAGES (Group Chat)
+// ============================================
+
+model CommunityMessage {
+  id            String    @id @default(cuid())
+  content       String
+  communityId   String
+  userId        String
+  createdAt     DateTime  @default(now())
+
+  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, createdAt])
+  @@map("community_messages")
+}
+
+// ════════════ HOUSING BOOKINGS ════════════
+
+model HousingBooking {
+  id          String   @id @default(cuid())
+  status      BookingStatus @default(PENDING)
+  moveInDate  DateTime
+  months      Int      @default(1)
+  visitDate   DateTime?
+  message     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+  housingId   String
+
+  @@map("housing_bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// ════════════ MENTORSHIPS ════════════
+
+model Mentorship {
+  id          String   @id @default(cuid())
+  status      MentorshipStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mentee      User     @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
+  menteeId    String
+  mentor      User     @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentorId    String
+
+  @@map("mentorships")
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  DECLINED
 }

@@ -12,43 +12,6 @@ import {
   Heart, ChevronLeft, ChevronRight, CheckCircle2,
 } from 'lucide-react';
 
-/* ── Demo Data ──────────────────────────────────────────── */
-
-const demoHousings: Record<string, any> = {
-  '1': {
-    id: '1', title: 'Skyline Residency', area: 'Phase 1, Hinjewadi', city: 'Pune',
-    rent: 18500, deposit: 55000, type: 'APARTMENT', description: 'A spacious, well-maintained 1 BHK in the heart of Hinjewadi Phase 1. Walking distance to major IT parks including Infosys and Wipro campuses. The apartment features modern interiors, ample natural light, and a fully equipped kitchen. The residential complex includes 24/7 security, a gym, and a swimming pool.',
-    amenities: ['WiFi', 'Power Backup', 'Parking', 'Gym', 'Swimming Pool', '24/7 Security', 'CCTV', 'Lift'],
-    isVerified: true, isWomenFriendly: true, beds: 1, baths: 1, sqft: 550,
-    avgRating: 4.3, contactPhone: '+91 98765 43210', contactEmail: 'skyline@homes.in',
-    createdBy: { name: 'Rahul Properties' },
-    images: [
-      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&h=500&fit=crop',
-    ],
-    reviews: [
-      { id: 'r1', user: { name: 'Priya Kapoor' }, rating: 5, review: 'Amazing location! Just 5 minutes walk to the IT park. The security is top-notch and management is very responsive.' },
-      { id: 'r2', user: { name: 'Aditya Nair' }, rating: 4, review: 'Great value for money. The gym and pool are well-maintained. Only downside is occasional water pressure issues.' },
-      { id: 'r3', user: { name: 'Sneha K.' }, rating: 4, review: 'Safe and clean. I particularly appreciate the women-only floor option and the responsive maintenance team.' },
-    ],
-  },
-  '2': {
-    id: '2', title: 'Green Terrace PG', area: 'Marunji, Hinjewadi', city: 'Pune',
-    rent: 9000, deposit: 9000, type: 'PG', description: 'A comfortable women-only PG with twin sharing rooms. Includes free WiFi, three meals a day, and housekeeping. Located near the IT Hub with easy access to public transport. Perfect for working professionals who want a hassle-free living experience.',
-    amenities: ['Free WiFi', 'Meals Included', 'Laundry', 'Housekeeping', 'Hot Water', 'Power Backup'],
-    isVerified: false, isWomenFriendly: true, beds: 0, baths: 1, sqft: 0,
-    avgRating: 4.0, contactPhone: '+91 87654 32109',
-    createdBy: { name: 'Green Living Spaces' },
-    images: [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800&h=500&fit=crop',
-    ],
-    reviews: [
-      { id: 'r1', user: { name: 'Meera Joshi' }, rating: 4, review: 'Clean and well-managed. The food quality is consistent and the staff is friendly.' },
-    ],
-  },
-};
 
 const amenityIcons: Record<string, any> = {
   'WiFi': Wifi, 'Free WiFi': Wifi, 'Parking': Car, 'Power Backup': Zap,
@@ -70,6 +33,12 @@ export default function HousingDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+
+  // Inquiry state (Phase 9)
+  const [inquiryMsg, setInquiryMsg] = useState('Hi, I am interested in this property. Is it still available?');
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const [sendingInquiry, setSendingInquiry] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -97,6 +66,27 @@ export default function HousingDetailPage() {
     api.saveHousing(id).catch(() => {});
   };
 
+  const handleInquiry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      alert('Please log in to send a message to the owner.');
+      router.push('/login');
+      return;
+    }
+    if (!inquiryMsg.trim()) return;
+
+    setSendingInquiry(true);
+    try {
+      await api.sendHousingInquiry(id, inquiryMsg);
+      setInquirySent(true);
+      setShowInquiryForm(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to send inquiry');
+    } finally {
+      setSendingInquiry(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
@@ -107,7 +97,7 @@ export default function HousingDetailPage() {
     );
   }
 
-  const h = housing || demoHousings[id] || demoHousings['1'];
+  const h = housing; if (!h) return <div style={{textAlign: 'center', padding: '100px'}}>Property not found</div>;
   const images = h.images || [
     'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=500&fit=crop',
   ];
@@ -440,18 +430,52 @@ export default function HousingDetailPage() {
                 </a>
               )}
 
-              <button style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                width: '100%', padding: '13px', borderRadius: '14px', fontSize: '14px', fontWeight: 600,
-                background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.4)'}
-              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.3)'}
-              >
-                <MessageCircle size={16} /> Send Message
-              </button>
+              {inquirySent ? (
+                <div style={{
+                  padding: '14px', borderRadius: '14px', background: 'rgba(16,185,129,0.1)',
+                  color: '#10b981', fontSize: '14px', fontWeight: 600, textAlign: 'center', marginTop: '6px',
+                }}>
+                  <CheckCircle2 size={18} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} />
+                  Message Sent
+                </div>
+              ) : showInquiryForm ? (
+                <form onSubmit={handleInquiry} style={{ marginTop: '10px' }}>
+                  <textarea
+                    rows={4}
+                    value={inquiryMsg}
+                    onChange={(e) => setInquiryMsg(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7ee',
+                      background: '#f8f9fc', fontSize: '13px', outline: 'none', color: '#1a1a2e',
+                      fontFamily: 'Inter, sans-serif', resize: 'none', marginBottom: '8px',
+                    }}
+                    required
+                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" onClick={() => setShowInquiryForm(false)} style={{
+                      flex: 1, padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                      background: '#f8f9fc', color: '#475569', border: '1px solid #e5e7ee', cursor: 'pointer',
+                    }}>Cancel</button>
+                    <button type="submit" disabled={sendingInquiry} style={{
+                      flex: 2, padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                      background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                    }}>{sendingInquiry ? 'Sending...' : 'Send to Owner'}</button>
+                  </div>
+                </form>
+              ) : (
+                <button onClick={() => setShowInquiryForm(true)} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  width: '100%', padding: '13px', borderRadius: '14px', fontSize: '14px', fontWeight: 600,
+                  background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif', marginTop: '6px',
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.4)'}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.3)'}
+                >
+                  <MessageCircle size={16} /> Send Message
+                </button>
+              )}
             </div>
 
             <div style={{

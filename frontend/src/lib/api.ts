@@ -48,7 +48,7 @@ class ApiClient {
 
   // Auth
   async register(data: { name: string; email: string; password: string }) {
-    return this.request<{ user: any; token: string }>('/auth/register', {
+    return this.request<{ user: any; token: string; welcomeMessage: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -86,6 +86,18 @@ class ApiClient {
 
   async getDashboard() {
     return this.request<any>('/users/dashboard');
+  }
+
+  // Verification
+  async uploadIdProof(data: { idProofUrl: string; idProofType: string }) {
+    return this.request<any>('/users/verify/upload', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getVerificationStatus() {
+    return this.request<any>('/users/verify/status');
   }
 
   // Housing
@@ -210,6 +222,170 @@ class ApiClient {
   async getLeaderboard(city?: string) {
     const query = city ? `?city=${city}` : '';
     return this.request<any>(`/reputation/leaderboard${query}`);
+  }
+
+  // ════════════ ADMIN ════════════
+
+  async getAdminDashboard() {
+    return this.request<any>('/admin/dashboard');
+  }
+
+  async getAdminUsers(page = 1, limit = 20, search?: string) {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    return this.request<any>(`/admin/users?${params}`);
+  }
+
+  async getAdminUserDetail(userId: string) {
+    return this.request<any>(`/admin/users/${userId}`);
+  }
+
+  async getPendingVerifications() {
+    return this.request<any>('/admin/verifications/pending');
+  }
+
+  async verifyUserAdmin(userId: string, approved: boolean, notes?: string) {
+    return this.request<any>(`/admin/verifications/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ approved, notes }),
+    });
+  }
+
+  async getAdminHousings(page = 1, limit = 20) {
+    return this.request<any>(`/admin/housings?page=${page}&limit=${limit}`);
+  }
+
+  async verifyHousingAdmin(housingId: string, verified: boolean) {
+    return this.request<any>(`/admin/housings/${housingId}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ verified }),
+    });
+  }
+
+  async adminCreateHousing(data: any) {
+    return this.request<any>('/admin/housings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPendingMentors() {
+    return this.request<any>('/admin/mentors/pending');
+  }
+
+  async approveMentorAdmin(profileId: string, approved: boolean) {
+    return this.request<any>(`/admin/mentors/${profileId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ approved }),
+    });
+  }
+
+  async makeUserAdmin(userId: string) {
+    return this.request<any>(`/admin/users/${userId}/make-admin`, {
+      method: 'PATCH',
+    });
+  }
+
+  // ════════════ FIND PEOPLE ════════════
+
+  async searchUsers(params?: Record<string, string | number>) {
+    const queryString = params
+      ? '?' + new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
+      : '';
+    return this.request<any>(`/users/search${queryString}`);
+  }
+
+  // ════════════ HOUSING INQUIRY ════════════
+
+  async sendHousingInquiry(housingId: string, message: string) {
+    return this.request<any>(`/users/housing-inquiry/${housingId}`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  // ════════════ CLOUDINARY UPLOAD ════════════
+
+  async uploadImage(file: File, folder: string = 'general'): Promise<{ url: string; publicId: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/upload/image`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new Error(error.message || 'Upload failed');
+    }
+
+    return response.json();
+  }
+
+  async uploadImages(files: File[], folder: string = 'general'): Promise<{ images: { url: string; publicId: string }[] }> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    formData.append('folder', folder);
+
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/upload/images`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new Error(error.message || 'Upload failed');
+    }
+
+    return response.json();
+  }
+
+  // ════════════ ADMIN MESSAGES ════════════
+
+  async getAdminMessages(page = 1, limit = 20) {
+    return this.request<any>(`/admin/messages?page=${page}&limit=${limit}`);
+  }
+
+  // ════════════ HOUSING MANAGEMENT (Admin) ════════════
+
+  async adminUpdateHousing(housingId: string, data: any) {
+    return this.request<any>(`/admin/housings/${housingId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminDeleteHousing(housingId: string) {
+    return this.request<any>(`/admin/housings/${housingId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ════════════ COMMUNITY GROUP CHAT ════════════
+
+  async getCommunityMessages(communityId: string, page = 1) {
+    return this.request<any>(`/chat/community/${communityId}?page=${page}`);
+  }
+
+  async sendCommunityMessage(communityId: string, content: string) {
+    return this.request<any>(`/chat/community/${communityId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
   }
 }
 

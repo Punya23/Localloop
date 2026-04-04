@@ -5,35 +5,45 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import {
   Home, Building2, Users, MessageCircle, Bell, User,
-  LogOut, Search, Settings, Globe, Shield,
+  LogOut, Search, Settings, Globe, Shield, LayoutDashboard,
+  UserSearch, Calendar,
 } from 'lucide-react';
-
-const sidebarItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/housing', label: 'Housing', icon: Building2 },
-  { href: '/communities', label: 'Communities', icon: Users },
-  { href: '/women-only', label: 'Women Only', icon: Shield },
-  { href: '/chat', label: 'Chat', icon: MessageCircle },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/profile', label: 'Profile', icon: User },
-];
-
-const mobileNavItems = [
-  { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/housing', label: 'Search', icon: Search },
-  { href: '/communities', label: 'Community', icon: Users },
-  { href: '/chat', label: 'Chat', icon: MessageCircle },
-  { href: '/profile', label: 'Profile', icon: User },
-];
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
 
+  // Don't show navbar on public pages or when not authenticated
   if (!isAuthenticated) return null;
   if (['/', '/login', '/register'].includes(pathname || '')) return null;
 
   const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
+  const isFemale = user?.gender === 'FEMALE';
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Build sidebar items dynamically based on user role/gender
+  const sidebarItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/housing', label: 'Housing', icon: Building2 },
+    { href: '/people', label: 'Find People', icon: UserSearch },
+    { href: '/communities', label: 'Communities', icon: Users },
+    { href: '/events', label: 'Events', icon: Calendar },
+    // Only show Women Only for verified female users
+    ...(isFemale ? [{ href: '/women-only', label: 'Women Only', icon: Shield }] : []),
+    { href: '/chat', label: 'Chat', icon: MessageCircle },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
+    { href: '/profile', label: 'Profile', icon: User },
+    // Show admin panel for admin users
+    ...(isAdmin ? [{ href: '/admin', label: 'Admin Panel', icon: LayoutDashboard }] : []),
+  ];
+
+  const mobileNavItems = [
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/housing', label: 'Housing', icon: Building2 },
+    { href: '/people', label: 'People', icon: UserSearch },
+    { href: '/communities', label: 'Groups', icon: Users },
+    { href: '/profile', label: 'Profile', icon: User },
+  ];
 
   return (
     <>
@@ -73,17 +83,32 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* User */}
+        {/* User + Verification Badge */}
         <div style={{ padding: '12px', borderTop: '1px solid #e5e7ee' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px' }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
               background: 'rgba(99,102,241,0.1)', color: '#6366f1',
-            }}>{(user?.name || 'P').charAt(0)}</div>
+            }}>{(user?.name || 'U').charAt(0)}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{user?.name || 'Punya'}</div>
-              <div style={{ fontSize: 11, color: '#94a3b8' }}>Premium Member</div>
+              <div style={{
+                fontSize: 14, fontWeight: 600, color: '#1a1a2e',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}>
+                {user?.name || 'User'}
+                {user?.isVerified && (
+                  <span style={{
+                    width: 14, height: 14, borderRadius: '50%', background: '#10b981',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 8, color: '#fff', flexShrink: 0,
+                  }}>✓</span>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                {isAdmin ? 'Admin' : user?.isVerified ? 'Verified' : 'Unverified'}
+              </div>
             </div>
           </div>
           <button onClick={logout} style={{
@@ -120,10 +145,12 @@ export default function Navbar() {
           ))}
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Globe size={20} /></button>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Settings size={20} /></button>
-          <Link href="/onboarding" style={{
-            background: '#6366f1', color: '#fff', padding: '8px 20px',
-            borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-          }}>Relocate Me</Link>
+          {!user?.isOnboarded && (
+            <Link href="/onboarding" style={{
+              background: '#6366f1', color: '#fff', padding: '8px 20px',
+              borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            }}>Complete Profile</Link>
+          )}
         </div>
       </div>
 
@@ -141,7 +168,7 @@ export default function Navbar() {
             width: 32, height: 32, borderRadius: '50%', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
             background: '#6366f1', color: '#fff',
-          }}>{(user?.name || 'P').charAt(0)}</div>
+          }}>{(user?.name || 'U').charAt(0)}</div>
         </div>
       </nav>
 

@@ -44,6 +44,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { event: 'registered', data: { success: true } };
   }
 
+  // ════════════ 1-TO-1 MESSAGING ════════════
+
   @SubscribeMessage('send_message')
   async handleMessage(
     @MessageBody() data: { senderId: string; receiverId: string; content: string },
@@ -96,5 +98,60 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     return { success: true };
+  }
+
+  // ════════════ COMMUNITY GROUP CHAT ════════════
+
+  @SubscribeMessage('join_community')
+  handleJoinCommunity(
+    @MessageBody() data: { communityId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.join(`community_${data.communityId}`);
+    return { event: 'joined_community', data: { communityId: data.communityId } };
+  }
+
+  @SubscribeMessage('leave_community')
+  handleLeaveCommunity(
+    @MessageBody() data: { communityId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.leave(`community_${data.communityId}`);
+    return { event: 'left_community', data: { communityId: data.communityId } };
+  }
+
+  @SubscribeMessage('send_community_message')
+  async handleCommunityMessage(
+    @MessageBody() data: { userId: string; communityId: string; content: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    // Save to database
+    const message = await this.prisma.communityMessage.create({
+      data: {
+        content: data.content,
+        communityId: data.communityId,
+        userId: data.userId,
+      },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    // Broadcast to all members in the community room
+    this.server.to(`community_${data.communityId}`).emit('community_message', message);
+
+    return message;
+  }
+
+  @SubscribeMessage('community_typing')
+  handleCommunityTyping(
+    @MessageBody() data: { userId: string; communityId: string; isTyping: boolean; userName: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.to(`community_${data.communityId}`).emit('community_user_typing', {
+      userId: data.userId,
+      userName: data.userName,
+      isTyping: data.isTyping,
+    });
   }
 }

@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { MapPin, Building2, Users, Shield, Star, ArrowRight, Sparkles, Heart } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 const features = [
   { icon: Building2, title: 'Verified Housing', desc: 'Curated PG, hostel & flat listings with reviews and safety ratings.', color: '#6366f1' },
@@ -21,22 +19,7 @@ const stats = [
 ];
 
 export default function LandingPage() {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-        <div className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
@@ -60,10 +43,18 @@ export default function LandingPage() {
             <span className="text-2xl font-bold gradient-text">LocalLoop</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="btn-secondary text-sm no-underline">Log In</Link>
-            <Link href="/register" className="btn-primary text-sm no-underline flex items-center gap-2">
-              Get Started <ArrowRight size={16} />
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/dashboard" className="btn-primary text-sm no-underline flex items-center gap-2">
+                Go to Dashboard <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="btn-secondary text-sm no-underline">Log In</Link>
+                <Link href="/register" className="btn-primary text-sm no-underline flex items-center gap-2">
+                  Get Started <ArrowRight size={16} />
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 

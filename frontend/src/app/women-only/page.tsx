@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 import {
   Shield, MapPin, Heart, Search, CheckCircle2, BedDouble,
   Bath, Users, Calendar, Lock, Sparkles,
@@ -27,12 +28,50 @@ const womenEvents = [
 ];
 
 export default function WomenOnlyPage() {
+  const { user, isReady, accessDenied, denyReason } = useAuthGuard({
+    requireGender: 'FEMALE',
+    requireVerified: true,
+  });
+  
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('Hinjewadi');
+  // Show loading spinner while checking auth
+  if (!isReady) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+      </div>
+    );
+  }
 
-  const toggleSave = (id: string) => {
-    setSavedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  };
+  // Show access denied if not verified female
+  if (accessDenied) {
+    return (
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '40px' }}>
+          <Shield size={48} style={{ color: '#ec4899', margin: '0 auto 16px' }} />
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>Access Restricted</h1>
+          <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '24px', lineHeight: 1.5 }}>
+            {denyReason || 'This sanctuary is exclusive to verified female users.'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link href="/profile/verify" style={{
+              display: 'block', padding: '12px', background: '#ec4899', color: '#fff',
+              borderRadius: '12px', textDecoration: 'none', fontWeight: 600, fontSize: '14px',
+            }}>
+              Verify My Identity
+            </Link>
+            <Link href="/dashboard" style={{
+              display: 'block', padding: '12px', background: '#f8f9fc', color: '#64748b',
+              borderRadius: '12px', textDecoration: 'none', fontWeight: 600, fontSize: '14px', border: '1px solid #e5e7ee',
+            }}>
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px' }}>
@@ -76,19 +115,6 @@ export default function WomenOnlyPage() {
         </button>
       </div>
 
-      {/* Filter Pills */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto' }}>
-        {['Budget', 'Area', 'Gender', 'Verified'].map((f, i) => (
-          <button key={f} style={{
-            padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 500,
-            cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
-            border: i === 0 ? 'none' : '1px solid #e5e7ee',
-            background: i === 0 ? '#6366f1' : '#fff',
-            color: i === 0 ? '#fff' : '#64748b',
-          }}>{f}</button>
-        ))}
-      </div>
-
       {/* Housing Section */}
       <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
         <Shield size={18} style={{ color: '#10b981' }} /> Women-Safe Housing
@@ -114,7 +140,7 @@ export default function WomenOnlyPage() {
               }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} /> WOMEN SAFE
               </div>
-              <button onClick={() => toggleSave(h.id)} style={{
+              <button onClick={() => setSavedIds((p) => { const n = new Set(p); n.has(h.id) ? n.delete(h.id) : n.add(h.id); return n; })} style={{
                 position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.9)',
                 border: 'none', borderRadius: '8px', width: '32px', height: '32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
@@ -147,31 +173,14 @@ export default function WomenOnlyPage() {
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} /> Available Now
                   </span>
                 )}
-                {h.users && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ display: 'flex' }}>
-                      {[0,1,2].map(i => <div key={i} style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2px solid #fff', background: `hsl(${i*60+250}, 60%, 70%)`, marginLeft: i > 0 ? '-8px' : 0 }} />)}
-                    </div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>+{h.users}</span>
-                  </div>
-                )}
                 <Link href={`/housing/${h.id}`} style={{
                   padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
                   background: '#6366f1', color: '#fff', textDecoration: 'none',
-                }}>{h.type?.includes('Sharing') ? 'Contact' : 'View Details'}</Link>
+                }}>View Details</Link>
               </div>
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Map View */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <button style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '28px',
-          fontSize: '14px', fontWeight: 600, background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
-          boxShadow: '0 4px 14px rgba(99,102,241,0.3)', fontFamily: 'Inter, sans-serif',
-        }}><MapPin size={16} /> Map View</button>
       </div>
 
       {/* Women Communities */}
@@ -235,23 +244,6 @@ export default function WomenOnlyPage() {
             }}>RSVP</button>
           </div>
         ))}
-      </div>
-
-      {/* Safety Tips */}
-      <div style={{
-        borderRadius: '20px', padding: '24px', background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-        border: '1px solid #fbbf24',
-      }}>
-        <h3 style={{ fontWeight: 700, marginBottom: '12px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Shield size={18} /> Safety Tips for Women Relocators
-        </h3>
-        <ul style={{ fontSize: '14px', color: '#78350f', listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <li>✓ Always verify your landlord/PG owner through official documents</li>
-          <li>✓ Visit the location during daytime and check the neighborhood</li>
-          <li>✓ Share your new address with trusted contacts</li>
-          <li>✓ Join local women&apos;s groups for community support</li>
-          <li>✓ Report suspicious listings to our verification team</li>
-        </ul>
       </div>
     </div>
   );

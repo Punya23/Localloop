@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuthStore } from '@/lib/store';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 import { api } from '@/lib/api';
 import {
   Building2, Users, Calendar, ArrowRight, TrendingUp,
@@ -38,34 +38,9 @@ const recommendedCards = [
   },
 ];
 
-const trendingHousing = [
-  {
-    id: 't1', title: 'Skyline Residency', area: 'Phase 1, Hinjewadi', rent: 18500,
-    badge: 'VERIFIED', badgeColor: '#6366f1', type: '1 BHK',
-    img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&h=300&fit=crop',
-  },
-  {
-    id: 't2', title: 'Green Terrace PG', area: 'Marunji, Hinjewadi', rent: 9000,
-    badge: 'WOMEN SAFE', badgeColor: '#10b981', type: 'Twin Sharing',
-    img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=300&fit=crop',
-  },
-  {
-    id: 't3', title: 'Urban Nest Studio', area: 'Balewadi', rent: 20000,
-    badge: 'SUPERHOST', badgeColor: '#f59e0b', type: 'Studio',
-    img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&h=300&fit=crop',
-  },
-  {
-    id: 't4', title: 'Orchid PG', area: 'Baner', rent: 8500,
-    badge: 'NEW LISTING', badgeColor: '#06b6d4', type: 'Triple Sharing',
-    img: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=500&h=300&fit=crop',
-  },
-];
 
-const localMeetups = [
-  { id: 'm1', month: 'MAR', day: '25', title: 'Newcomer Mixer', venue: 'Blue Ridge Café', time: '6:00 PM', attendees: 28 },
-  { id: 'm2', month: 'MAR', day: '28', title: 'Techies Who Trek', venue: 'Sinhagad Fort', time: '5:00 AM', attendees: 15 },
-  { id: 'm3', month: 'APR', day: '02', title: 'Women in Tech', venue: 'Koregaon Park Hub', time: '4:00 PM', attendees: 42 },
-];
+
+
 
 const localityScores = [
   { label: 'Safety', score: 85, color: '#10b981' },
@@ -74,26 +49,7 @@ const localityScores = [
   { label: 'Nightlife', score: 58, color: '#ec4899' },
 ];
 
-const communityFeed = [
-  {
-    id: 'f1', user: 'Rahul Verma', role: 'Software Engineer @ TCS', timeAgo: '2h ago',
-    avatar: 'R', community: 'Pune Movers',
-    text: "Anyone moved to Phase 3 recently? How's the traffic during the rains? Thinking of taking a flat near Megapolis. 🌧️",
-    likes: 24, comments: 8,
-  },
-  {
-    id: 'f2', user: 'Sneha Kapur', role: 'UX Designer', timeAgo: '5h ago',
-    avatar: 'S', community: 'Food Lovers',
-    text: 'Found an amazing Tiffin service near Phase 1. Healthy, home-cooked, and super affordable. Check out "Mom\'s Kitchen". 🍲',
-    likes: 156, comments: 42,
-  },
-  {
-    id: 'f3', user: 'Aditya Kale', role: 'Product Manager @ Infosys', timeAgo: '1d ago',
-    avatar: 'A', community: 'IT Hub Workers',
-    text: 'Pro tip: The 7:45 AM shuttle from Wakad to IT Park avoids all traffic. Been using it for 3 months now. Game changer! 🚌',
-    likes: 89, comments: 23,
-  },
-];
+
 
 const rentTrendData = [
   { month: 'Oct', rent: 12200 },
@@ -147,20 +103,30 @@ function MiniChart({ data }: { data: { month: string; rent: number }[] }) {
 /* ── Dashboard Component ─────────────────────────────────── */
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, isReady } = useAuthGuard({ requireOnboarded: true });
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    api.getDashboard().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
-  }, []);
+    if (isReady && user) {
+      api.getDashboard().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
+    }
+  }, [isReady, user]);
 
   const toggleLike = (id: string) => {
     setLikedPosts(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const userName = (user?.name || 'Punya').split(' ')[0];
+  if (!isReady || !user) {
+    return (
+      <div style={{ padding: '32px' }}>
+        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
+      </div>
+    );
+  }
+
+  const userName = (user?.name || 'User').split(' ')[0];
   const userArea = user?.preferredArea || 'Hinjewadi';
   const moveMonth = user?.moveMonth || 'May';
 
@@ -226,10 +192,10 @@ export default function DashboardPage() {
               {recommendedCards.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <div key={card.id} style={{
+                  <Link key={card.id} href={card.id === 'r1' ? '/housing' : card.id === 'r2' ? '/communities' : '/people'} style={{
                     background: card.gradient, borderRadius: '18px', padding: '24px 20px',
                     color: '#fff', cursor: 'pointer', transition: 'all 0.25s',
-                    minHeight: '145px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                    minHeight: '145px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none'
                   }}
                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(99,102,241,0.35)'; }}
                     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
@@ -246,7 +212,7 @@ export default function DashboardPage() {
                       <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px' }}>{card.title}</h3>
                       <p style={{ fontSize: '12px', opacity: 0.85 }}>{card.subtitle}</p>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -264,7 +230,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {trendingHousing.map((h) => (
+              {data?.recommendedHousing?.map((h: any) => (
                 <Link key={h.id} href={`/housing/${h.id}`} style={{
                   minWidth: '260px', background: '#fff', borderRadius: '18px', overflow: 'hidden',
                   border: '1px solid #e5e7ee', textDecoration: 'none', color: '#1a1a2e',
@@ -274,15 +240,15 @@ export default function DashboardPage() {
                   onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
                   <div style={{
-                    height: '165px', backgroundImage: `url(${h.img})`,
+                    height: '165px', backgroundImage: `url(${(h.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&h=300&fit=crop')})`,
                     backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
                   }}>
                     <div style={{
                       position: 'absolute', top: '10px', left: '10px',
                       padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-                      background: h.badgeColor, color: '#fff', textTransform: 'uppercase',
+                      background: (h.isWomenFriendly ? '#10b981' : '#6366f1'), color: '#fff', textTransform: 'uppercase',
                       letterSpacing: '0.04em', backdropFilter: 'blur(4px)',
-                    }}>{h.badge}</div>
+                    }}>{(h.isWomenFriendly ? 'WOMEN SAFE' : 'VERIFIED')}</div>
                     <div style={{
                       position: 'absolute', bottom: '10px', left: '10px',
                       background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: 6,
@@ -323,7 +289,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {communityFeed.map((post, idx) => {
+              {data?.recentPosts?.map((post: any, idx: number) => {
                 const isLiked = likedPosts.has(post.id);
                 return (
                   <div key={post.id} style={{
@@ -341,17 +307,17 @@ export default function DashboardPage() {
                         alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700,
                         background: avatarGradients[idx % avatarGradients.length],
                         color: '#fff', flexShrink: 0,
-                      }}>{post.avatar}</div>
+                      }}>{post.user?.name?.charAt(0) || "U"}</div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{post.user}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{post.user?.name}</p>
                         <p style={{ fontSize: '12px', color: '#94a3b8' }}>
-                          in <span style={{ color: '#6366f1', fontWeight: 500 }}>{post.community}</span> • {post.timeAgo}
+                          in <span style={{ color: '#6366f1', fontWeight: 500 }}>{post.community?.name}</span> • {new Date(post.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     {/* Text */}
                     <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.65', marginBottom: '16px' }}>
-                      {post.text}
+                      {post.content}
                     </p>
                     {/* Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -365,14 +331,14 @@ export default function DashboardPage() {
                         }}
                       >
                         <Heart size={16} fill={isLiked ? '#ef4444' : 'none'} />
-                        {post.likes + (isLiked ? 1 : 0)}
+                        {post.likesCount + (isLiked ? 1 : 0)}
                       </button>
-                      <button style={{
+                      <Link href={`/communities/${post.community?.id}`} style={{
                         display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500,
-                        color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                        color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', textDecoration: 'none'
                       }}>
-                        <MessageSquare size={16} /> {post.comments} Comments
-                      </button>
+                        <MessageSquare size={16} /> {post._count?.comments || 0} Comments
+                      </Link>
                       <button style={{
                         background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', marginLeft: 'auto',
                       }}>
@@ -434,7 +400,9 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {localMeetups.map((m) => (
+              {data?.upcomingEvents?.map((m: any) => { 
+ const d = new Date(m.date);
+ return (
                 <div key={m.id} style={{
                   display: 'flex', alignItems: 'center', gap: '14px',
                   padding: '12px 14px', borderRadius: '14px', background: '#f8f9fc',
@@ -449,22 +417,23 @@ export default function DashboardPage() {
                     border: '1px solid #e5e7ee', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.month}</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e' }}>{m.day}</span>
+                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{d.toLocaleString("en-US", {month: "short"}).toUpperCase()}</span>
+                    <span style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e' }}>{d.getDate()}</span>
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '3px' }}>{m.title}</p>
-                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>{m.venue} • {m.time}</p>
+                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>{m.location} • {d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</p>
                   </div>
                   <div style={{
                     fontSize: 10, fontWeight: 600, color: '#6366f1',
                     background: 'rgba(99,102,241,0.08)', padding: '3px 8px',
                     borderRadius: 8, whiteSpace: 'nowrap',
                   }}>
-                    {m.attendees} going
+                    {(m._count?.attendees || 0)} going
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           </div>
 

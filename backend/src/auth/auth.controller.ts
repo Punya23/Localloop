@@ -21,6 +21,12 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('seed-database')
+  @ApiOperation({ summary: 'Seed the database dynamically bypassing Prisma external limits' })
+  seedDatabase() {
+    return this.authService.seedDatabase();
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

@@ -10,40 +10,6 @@ import {
   Image as ImageIcon, Send, Smile,
 } from 'lucide-react';
 
-/* ── Demo Data ──────────────────────────────────────────── */
-
-const demoCommunities = [
-  { id: 'c1', name: 'PCU Students', desc: 'Connect with peers from Pune City University for study groups and exam prep.', members: '1.2K', icon: '🎓', color: '#6366f1' },
-  { id: 'c2', name: 'Developers Hub', desc: 'Local tech meetups, hackathons, job opportunities, and project collaborations.', members: '850', icon: '💻', color: '#06b6d4' },
-  { id: 'c3', name: 'Women Relocators', desc: 'Safe spaces and support networks for women moving to a new city.', members: '620', icon: '🛡️', color: '#ec4899' },
-  { id: 'c4', name: 'Fitness & Outdoors', desc: 'Weekend treks, gym buddies, running groups, and healthy living tips.', members: '430', icon: '🏃', color: '#10b981' },
-];
-
-const demoDiscussions = [
-  {
-    id: 'd1', user: 'Rahul Sharma', avatar: 'R', community: 'Pune Movers', from: 'Mumbai', timeAgo: '2h ago',
-    text: 'Anyone know the best shared cab services from Wakad to BKC for daily commute? Looking for something reliable.',
-    likes: 24, comments: 12, hasImage: false, liked: false,
-  },
-  {
-    id: 'd2', user: 'Ananya K.', avatar: 'A', community: 'Developers', from: '', timeAgo: '5h ago',
-    text: 'React Meetup next Saturday!\nHosting a small get-together at Blue Tokai, Balewadi High Street. DM for invite link.',
-    likes: 58, comments: 42, hasImage: true,
-    imageUrl: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=300&fit=crop',
-    liked: false,
-  },
-  {
-    id: 'd3', user: 'Vikram Iyer', avatar: 'V', community: 'PCU Students', from: '', timeAgo: '8h ago',
-    text: 'Does the library stay open until 10 PM during exam weeks or is it still 8 PM?',
-    likes: 8, comments: 5, hasImage: false, liked: false,
-  },
-  {
-    id: 'd4', user: 'Priya Menon', avatar: 'P', community: 'Women Relocators', from: 'Chennai', timeAgo: '12h ago',
-    text: 'Just moved to Baner last week! Any recommendations for safe evening walking routes? Also looking for a gym with women-only hours.',
-    likes: 35, comments: 18, hasImage: false, liked: false,
-  },
-];
-
 /* ── Avatar Colors ──────────────────────────────────── */
 
 const avatarGradients = [
@@ -126,7 +92,7 @@ export default function CommunitiesPage() {
           <Link href="#" style={{ fontSize: '13px', fontWeight: 600, color: '#6366f1', textDecoration: 'none' }}>See All</Link>
         </div>
         <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '8px' }}>
-          {demoCommunities.map((c) => {
+          {communities.map((c) => {
             const joined = joinedCommunities.has(c.id);
             return (
               <div key={c.id} style={{
@@ -179,7 +145,7 @@ export default function CommunitiesPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {demoDiscussions.map((disc, idx) => {
+          {([] as any[]).map((disc, idx) => {
             const isLiked = likedPosts.has(disc.id);
             const isSaved = savedPosts.has(disc.id);
             return (

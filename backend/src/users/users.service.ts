@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { OnboardingDto, UpdateProfileDto } from './dto/users.dto';
+import { OnboardingDto, UpdateProfileDto, UploadIdProofDto } from './dto/users.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,20 @@ export class UsersService {
         company: dto.company,
         bio: dto.bio,
         phone: dto.phone,
+        // ML-Ready extended fields
+        interests: dto.interests || [],
+        foodPreference: dto.foodPreference,
+        workSchedule: dto.workSchedule,
+        languages: dto.languages || [],
+        lifestyle: dto.lifestyle,
+        transportMode: dto.transportMode,
+        smoking: dto.smoking,
+        drinking: dto.drinking,
+        petFriendly: dto.petFriendly,
+        ageRange: dto.ageRange,
+        hometown: dto.hometown,
+        courseOrDept: dto.courseOrDept,
+        monthlyIncome: dto.monthlyIncome,
         isOnboarded: true,
       },
       include: {
@@ -79,6 +94,35 @@ export class UsersService {
 
     const { password, ...result } = user;
     return result;
+  }
+
+  async uploadIdProof(userId: string, dto: UploadIdProofDto) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        idProofUrl: dto.idProofUrl,
+        idProofType: dto.idProofType,
+        verificationStatus: 'PENDING',
+      },
+    });
+
+    const { password, ...result } = user;
+    return { ...result, message: 'ID proof uploaded. Pending admin verification.' };
+  }
+
+  async getVerificationStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        verificationStatus: true,
+        idProofType: true,
+        verificationNotes: true,
+        verifiedAt: true,
+        isVerified: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   async getDashboard(userId: string) {
@@ -193,6 +237,128 @@ export class UsersService {
         totalCommunities: cityStats.totalCommunities,
         totalUsers: cityStats.totalUsers,
       },
+    };
+  }
+
+  // ════════════ FIND PEOPLE (PUBLIC USER SEARCH) ════════════
+
+  async searchUsers(currentUserId: string, page = 1, limit = 20, filters?: {
+    city?: string;
+    role?: string;
+    gender?: string;
+    interests?: string;
+    search?: string;
+  }) {
+    const skip = (page - 1) * limit;
+    const where: Prisma.UserWhereInput = {
+      isOnboarded: true,
+      id: { not: currentUserId }, // Exclude self
+    };
+
+    if (filters?.city) {
+      where.city = { contains: filters.city, mode: 'insensitive' };
+    }
+    if (filters?.role) {
+      where.role = filters.role as any;
+    }
+    if (filters?.gender) {
+      where.gender = filters.gender as any;
+    }
+    if (filters?.interests) {
+      where.interests = { hasSome: filters.interests.split(',') };
+    }
+    if (filters?.search) {
+      where.OR = [
+        { name: { contains: filters.search, mode: 'insensitive' } },
+        { university: { contains: filters.search, mode: 'insensitive' } },
+        { company: { contains: filters.search, mode: 'insensitive' } },
+        { hometown: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          // Only public-safe fields — NO password, NO email
+          id: true,
+          name: true,
+          avatar: true,
+          role: true,
+          gender: true,
+          city: true,
+          preferredArea: true,
+          university: true,
+          company: true,
+          bio: true,
+          interests: true,
+          languages: true,
+          lifestyle: true,
+          foodPreference: true,
+          isVerified: true,
+          isMentor: true,
+          hometown: true,
+          courseOrDept: true,
+          reputation: { select: { points: true, level: true } },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  // ════════════ HOUSING INQUIRY (ROUTES TO OWNER + ADMIN) ════════════
+
+  async sendHousingInquiry(userId: string, housingId: string, message: string) {
+    const housing = await this.prisma.housing.findUnique({
+      where: { id: housingId },
+      select: { id: true, title: true, createdById: true },
+    });
+    if (!housing) throw new NotFoundException('Housing not found');
+
+    // Find an admin user to route the message to
+    const admin = await this.prisma.user.findFirst({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+
+    const results = [];
+
+    // 1. Message to PG owner
+    if (housing.createdById) {
+      const ownerMsg = await this.prisma.message.create({
+        data: {
+          content: `[Housing Inquiry: ${housing.title}] ${message}`,
+          senderId: userId,
+          receiverId: housing.createdById,
+        },
+      });
+      results.push({ to: 'owner', messageId: ownerMsg.id });
+    }
+
+    // 2. Message to admin dashboard
+    if (admin && admin.id !== housing.createdById) {
+      const adminMsg = await this.prisma.message.create({
+        data: {
+          content: `[Housing Inquiry: ${housing.title}] ${message}`,
+          senderId: userId,
+          receiverId: admin.id,
+        },
+      });
+      results.push({ to: 'admin', messageId: adminMsg.id });
+    }
+
+    return {
+      success: true,
+      message: 'Inquiry sent to property owner and admin',
+      results,
     };
   }
 }

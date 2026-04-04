@@ -1,204 +1,348 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { io, Socket } from 'socket.io-client';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 import {
   Send, Mic, Smile, Video, Phone, MoreVertical,
-  FileText, Download, MessageCircle, ArrowLeft, Circle,
-  Image as ImageIcon, Paperclip, Check, CheckCheck,
+  MessageCircle, ArrowLeft, Check, CheckCheck,
+  Plus, Search, X,
 } from 'lucide-react';
 
-/* ── Demo Data ──────────────────────────────────────────── */
+/* ── Inner component that reads searchParams ── */
+function ChatInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
 
-const conversations = [
-  {
-    id: '1', name: 'David Chen', mentor: true,
-    msg: 'Looking forward to our coffee ch...', time: '12:45 PM', unread: 2,
-    online: true, initials: 'DC',
-    avatarGrad: 'linear-gradient(135deg, #818cf8, #6366f1)',
-  },
-  {
-    id: '2', name: 'Berlin Tech Nomads', group: true,
-    msg: 'Sarah: Does anyone know a good coworki...', time: '8:12 AM', unread: 0,
-    initials: 'BT',
-    avatarGrad: 'linear-gradient(135deg, #6ee7b7, #10b981)',
-  },
-  {
-    id: '3', name: 'Elena Rodriguez',
-    msg: 'That rental contract looks solid. Go for it!', time: 'YESTERDAY', unread: 0,
-    initials: 'ER',
-    avatarGrad: 'linear-gradient(135deg, #fca5a5, #f87171)',
-  },
-  {
-    id: '4', name: 'Skyview Residency', pg: true,
-    msg: 'Payment received for September. Welcome!', time: 'AUG 14', unread: 0,
-    initials: 'SR',
-    avatarGrad: 'linear-gradient(135deg, #93c5fd, #60a5fa)',
-  },
-  {
-    id: '5', name: 'Priya Kapoor', mentor: false,
-    msg: 'Found a great gym near Wakad!', time: 'AUG 10', unread: 0,
-    initials: 'PK',
-    avatarGrad: 'linear-gradient(135deg, #fde68a, #fbbf24)',
-  },
-];
-
-const chatMessages = [
-  {
-    id: 1,
-    text: 'Hi Alex! I reviewed the apartment options you sent over for Lisbon. The one in Arroios looks great for digital nomads—lots of cafes and fast internet.',
-    mine: false, time: '12:42 PM',
-  },
-  {
-    id: 2,
-    text: "That's what I was thinking! Is the commute to the tech hub area manageable from there?",
-    mine: true, time: '12:44 PM', read: true,
-  },
-  {
-    id: 3,
-    text: "Absolutely. It's just 3 stops on the green line. Looking forward to our coffee chat about Lisbon housing! ☕",
-    mine: false, time: '12:45 PM',
-  },
-];
-
-/* ── Chat Page ─────────────────────────────────────────── */
-
-export default function ChatPage() {
-  const [selected, setSelected] = useState<string | null>('1');
-  const [messages, setMessages] = useState(chatMessages);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState('');
   const [tab, setTab] = useState('All');
-  const [typing, setTyping] = useState(false);
+  const [typingState, setTypingState] = useState(false);
+
+  // New conversation modal
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [userResults, setUserResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const endRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const selectedRef = useRef<string | null>(null);
+  // Map of userId -> name for users we start conversations with
+  const pendingNamesRef = useRef<Record<string, string>>({});
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
 
-  const conv = conversations.find((c) => c.id === selected);
+  /* ── Fetch existing conversations ── */
+  const fetchConversations = async () => {
+    try {
+      const convs = await api.getConversations();
+      const myCommsObj = await api.getMyCommunities();
+      const myComms = Array.isArray(myCommsObj) ? myCommsObj : (myCommsObj?.data || []);
+
+      const grads = [
+        'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+        'linear-gradient(135deg, #93c5fd, #60a5fa)',
+        'linear-gradient(135deg, #fca5a5, #f87171)',
+        'linear-gradient(135deg, #fcd34d, #f59e0b)',
+      ];
+
+      const mappedDirect = convs.map((c: any, i: number) => ({
+        id: c.partner.id,
+        name: c.partner.name,
+        group: false,
+        msg: c.lastMessage?.content || 'Start a conversation',
+        unread: c.unreadCount || 0,
+        initials: c.partner.name?.substring(0, 2).toUpperCase() || 'U',
+        avatarGrad: grads[i % grads.length],
+        online: false,
+      }));
+
+      const mappedGroups = myComms.map((c: any, i: number) => {
+        const comm = c.community || c;
+        return {
+          id: comm.id,
+          name: comm.name,
+          group: true,
+          msg: 'Group chat',
+          unread: 0,
+          initials: comm.name?.substring(0, 2).toUpperCase() || 'G',
+          avatarGrad: 'linear-gradient(135deg, #6ee7b7, #10b981)',
+        };
+      });
+
+      setConversations([...mappedDirect, ...mappedGroups]);
+      return [...mappedDirect, ...mappedGroups];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  };
+
+  /* ── Handle ?userId deep-link from people page ── */
+  useEffect(() => {
+    const paramUserId = searchParams.get('userId');
+    const paramName = searchParams.get('name');
+
+    if (!paramUserId || !user) return;
+
+    // Store the name in case this user isn't in conversations yet
+    if (paramName) {
+      pendingNamesRef.current[paramUserId] = decodeURIComponent(paramName);
+    }
+
+    // Load conversations first, then check if this user is already there
+    fetchConversations().then((convs) => {
+      const exists = convs.find((c: any) => c.id === paramUserId);
+      if (!exists && paramName) {
+        // Inject a placeholder conversation so chat opens immediately
+        const placeholder = {
+          id: paramUserId,
+          name: decodeURIComponent(paramName),
+          group: false,
+          msg: 'Start a conversation',
+          unread: 0,
+          initials: decodeURIComponent(paramName).substring(0, 2).toUpperCase(),
+          avatarGrad: 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+          online: false,
+        };
+        setConversations((prev) => {
+          if (prev.find((c) => c.id === paramUserId)) return prev;
+          return [placeholder, ...prev];
+        });
+      }
+      setSelected(paramUserId);
+      // Remove query params from URL
+      router.replace('/chat');
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (user) fetchConversations();
+  }, [user]);
+
+  /* ── Socket.io setup ── */
+  useEffect(() => {
+    if (!user) return;
+    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const baseUrl = url.replace('/api', '');
+    const s = io(`${baseUrl}/chat`, { autoConnect: true });
+
+    s.on('connect', () => { s.emit('register', { userId: user.id }); });
+
+    s.on('receive_message', (msg: any) => {
+      const cur = selectedRef.current;
+      setMessages((prev) => {
+        if (!cur || (cur !== msg.senderId && cur !== msg.receiverId)) return prev;
+        if (prev.find((m) => m.id === msg.id)) return prev;
+        return [...prev, { ...msg, mine: false, text: msg.content, time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+      });
+      fetchConversations();
+    });
+
+    s.on('message_sent', (msg: any) => {
+      const cur = selectedRef.current;
+      setMessages((prev) => {
+        if (!cur || (cur !== msg.senderId && cur !== msg.receiverId)) return prev;
+        if (prev.find((m) => m.id === msg.id)) return prev;
+        return [...prev, { ...msg, mine: true, text: msg.content, time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+      });
+      fetchConversations();
+    });
+
+    s.on('community_message', (msg: any) => {
+      const cur = selectedRef.current;
+      setMessages((prev) => {
+        if (cur !== msg.communityId) return prev;
+        if (prev.find((m) => m.id === msg.id)) return prev;
+        return [...prev, { ...msg, mine: msg.userId === user.id, text: msg.content, time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+      });
+      fetchConversations();
+    });
+
+    s.on('user_typing', (data: any) => {
+      if (selectedRef.current === data.userId) setTypingState(data.isTyping);
+    });
+
+    socketRef.current = s;
+    return () => { s.disconnect(); };
+  }, [user]);
+
+  /* ── Load messages when conversation selected ── */
+  useEffect(() => {
+    if (!selected || !user) return;
+    const conv = conversations.find((c) => c.id === selected);
+    if (!conv) return;
+
+    const loadMsgs = async () => {
+      try {
+        if (conv.group) {
+          socketRef.current?.emit('join_community', { communityId: conv.id });
+          const res = await api.getCommunityMessages(conv.id);
+          setMessages(res.data.map((m: any) => ({
+            ...m, mine: m.userId === user.id, text: m.content,
+            time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          })));
+        } else {
+          socketRef.current?.emit('mark_read', { userId: user.id, senderId: conv.id });
+          const res = await api.getMessages(conv.id);
+          setMessages(res.data.map((m: any) => ({
+            ...m, mine: m.senderId === user.id, text: m.content,
+            time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            read: m.isRead,
+          })));
+          setTimeout(fetchConversations, 500);
+        }
+      } catch (e) {
+        setMessages([]); // new conversation = empty messages
+      }
+    };
+    loadMsgs();
+
+    return () => {
+      const c2 = conversations.find((c) => c.id === selected);
+      if (c2?.group) socketRef.current?.emit('leave_community', { communityId: c2.id });
+    };
+  }, [selected, user]);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typingState]);
+
+  /* ── User search for new conversation ── */
+  useEffect(() => {
+    if (!userSearch.trim()) { setUserResults([]); return; }
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.searchUsers({ search: userSearch, limit: 10 });
+        setUserResults(res.data || []);
+      } catch { setUserResults([]); }
+      setSearchLoading(false);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [userSearch]);
+
+  const startConversation = (u: any) => {
+    pendingNamesRef.current[u.id] = u.name;
+    setConversations((prev) => {
+      if (prev.find((c) => c.id === u.id)) return prev;
+      return [{
+        id: u.id, name: u.name, group: false,
+        msg: 'Start a conversation', unread: 0,
+        initials: u.name?.substring(0, 2).toUpperCase() || 'U',
+        avatarGrad: 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+        online: false,
+      }, ...prev];
+    });
+    setSelected(u.id);
+    setShowNewChat(false);
+    setUserSearch('');
+    setUserResults([]);
+  };
+
+  /* ── Send message ── */
+  const activeConv = conversations.find((c) => c.id === selected);
 
   const send = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMsg.trim()) return;
-    setMessages((p) => [
-      ...p,
-      {
-        id: Date.now(),
-        text: newMsg,
-        mine: true,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        read: false,
-      },
-    ]);
+    if (!newMsg.trim() || !user || !activeConv) return;
+    if (activeConv.group) {
+      socketRef.current?.emit('send_community_message', { userId: user.id, communityId: activeConv.id, content: newMsg });
+    } else {
+      socketRef.current?.emit('send_message', { senderId: user.id, receiverId: activeConv.id, content: newMsg });
+    }
     setNewMsg('');
-
-    // Simulate typing indicator
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((p) => [
-        ...p,
-        {
-          id: Date.now() + 1,
-          text: 'Thanks for sharing! I\'ll look into that. 😊',
-          mine: false,
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    }, 2500);
+    socketRef.current?.emit('typing', { senderId: user.id, receiverId: activeConv.id, isTyping: false });
   };
 
-  const tabs = ['All', 'Mentors', 'Groups', 'PGs'];
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMsg(e.target.value);
+    if (!activeConv || activeConv.group) return;
+    socketRef.current?.emit('typing', { senderId: user?.id, receiverId: activeConv.id, isTyping: e.target.value.length > 0 });
+  };
+
+  const tabs = ['All', 'Direct', 'Groups'];
+  const filteredConvs = conversations.filter((c) => {
+    if (tab === 'Groups') return c.group;
+    if (tab === 'Direct') return !c.group;
+    return true;
+  });
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
 
-      {/* ══════════ CONVERSATIONS LIST ══════════ */}
-      <div className={`${selected ? 'hidden md:flex' : 'flex'}`} style={{
-        width: 360, flexShrink: 0, flexDirection: 'column',
+      {/* ══════════ CONVERSATIONS SIDEBAR ══════════ */}
+      <div style={{
+        width: 340, flexShrink: 0, flexDirection: 'column', display: selected ? 'none' : 'flex',
         borderRight: '1px solid #e5e7ee', background: '#fff',
-      }}>
-        {/* Header */}
-        <div style={{ padding: '22px 22px 18px' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a2e', marginBottom: 18 }}>Messages</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
+      }} className="md-always-flex">
+        <div style={{ padding: '20px 18px 14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e', margin: 0 }}>Messages</h2>
+            <button
+              onClick={() => setShowNewChat(true)}
+              title="New Conversation"
+              style={{
+                width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = ''; }}
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
             {tabs.map((t) => (
               <button key={t} onClick={() => setTab(t)} style={{
-                padding: '7px 18px', borderRadius: 22, fontSize: 13, fontWeight: 500,
+                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
                 border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                background: tab === t ? '#6366f1' : 'transparent',
-                color: tab === t ? '#fff' : '#64748b',
-                transition: 'all 0.15s',
+                background: tab === t ? '#6366f1' : '#f0f1f5',
+                color: tab === t ? '#fff' : '#64748b', transition: 'all 0.15s',
               }}>{t}</button>
             ))}
           </div>
         </div>
 
-        {/* Conversation List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {conversations.map((c) => {
+          {filteredConvs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', color: '#94a3b8' }}>
+              <MessageCircle size={32} style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 14, fontWeight: 500 }}>No conversations yet</p>
+              <p style={{ fontSize: 12, marginTop: 4 }}>Tap + to start a new chat</p>
+            </div>
+          ) : filteredConvs.map((c) => {
             const isActive = selected === c.id;
             return (
-              <button key={c.id} onClick={() => setSelected(c.id)} style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+              <button key={c.id} onClick={() => { setSelected(c.id); setMessages([]); }} style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px',
                 width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
                 borderLeft: isActive ? '3px solid #6366f1' : '3px solid transparent',
-                transition: 'all 0.12s',
+                transition: 'all 0.1s',
               }}>
-                {/* Avatar */}
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{
-                    width: 48, height: 48, borderRadius: '50%', display: 'flex',
+                    width: 46, height: 46, borderRadius: '50%', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
-                    background: c.pg ? 'rgba(99,102,241,0.1)' : c.avatarGrad,
-                    color: c.pg ? '#6366f1' : '#fff',
+                    background: c.avatarGrad, color: '#fff',
                   }}>{c.initials}</div>
-                  {c.online && (
-                    <div style={{
-                      position: 'absolute', bottom: 1, right: 1, width: 13, height: 13,
-                      borderRadius: '50%', background: '#10b981', border: '2.5px solid #fff',
-                    }} />
-                  )}
+                  {c.online && <div style={{ position: 'absolute', bottom: 1, right: 1, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2.5px solid #fff' }} />}
                 </div>
-
-                {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{c.name}</span>
-                    {c.mentor && (
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, color: '#6366f1',
-                        background: 'rgba(99,102,241,0.1)', padding: '2px 7px',
-                        borderRadius: 5, textTransform: 'uppercase' as const, letterSpacing: '0.02em',
-                      }}>MENTOR</span>
-                    )}
-                    {c.group && (
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, color: '#10b981',
-                        background: 'rgba(16,185,129,0.1)', padding: '2px 7px',
-                        borderRadius: 5, textTransform: 'uppercase' as const, letterSpacing: '0.02em',
-                      }}>GROUP</span>
-                    )}
+                    {c.group && <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '1px 6px', borderRadius: 4 }}>GROUP</span>}
                   </div>
-                  <p style={{
-                    fontSize: 12, color: '#94a3b8', overflow: 'hidden',
-                    textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, margin: 0,
-                  }}>{c.msg}</p>
+                  <p style={{ fontSize: 12, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.msg}</p>
                 </div>
-
-                {/* Time + Badge */}
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-                  gap: 6, flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: 10, fontWeight: 500, color: '#94a3b8' }}>{c.time}</span>
-                  {c.unread > 0 && (
-                    <div style={{
-                      width: 22, height: 22, borderRadius: '50%', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, background: '#6366f1', color: '#fff',
-                    }}>{c.unread}</div>
-                  )}
-                </div>
+                {c.unread > 0 && <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: '#6366f1', color: '#fff', flexShrink: 0 }}>{c.unread}</div>}
               </button>
             );
           })}
@@ -206,240 +350,167 @@ export default function ChatPage() {
       </div>
 
       {/* ══════════ CHAT AREA ══════════ */}
-      <div className={`${!selected ? 'hidden md:flex' : 'flex'}`} style={{
-        flex: 1, flexDirection: 'column', background: '#f8f9fc',
-      }}>
-        {conv ? (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f8f9fc', minWidth: 0 }}>
+        {activeConv ? (
           <>
-            {/* ── Chat Header ── */}
-            <div style={{
-              padding: '14px 22px', display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', background: '#fff',
-              borderBottom: '1px solid #e5e7ee',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <button onClick={() => setSelected(null)} className="md:hidden" style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
-                }}>
-                  <ArrowLeft size={20} />
-                </button>
-                <div style={{
-                  width: 42, height: 42, borderRadius: '50%', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
-                  background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
-                  color: '#fff',
-                }}>{conv.initials}</div>
+            {/* Header */}
+            <div style={{ padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderBottom: '1px solid #e5e7ee' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><ArrowLeft size={20} /></button>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, background: activeConv.avatarGrad, color: '#fff' }}>{activeConv.initials}</div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a2e' }}>{conv.name}</span>
-                    {conv.mentor && (
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, color: '#6366f1',
-                        background: 'rgba(99,102,241,0.1)', padding: '3px 8px',
-                        borderRadius: 5, textTransform: 'uppercase' as const,
-                      }}>TOP MENTOR</span>
-                    )}
-                  </div>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    fontSize: 12, color: conv.online ? '#10b981' : '#94a3b8',
-                  }}>
-                    <div style={{
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: conv.online ? '#10b981' : '#cbd5e1',
-                    }} />
-                    {conv.online ? 'Active now' : 'Last seen recently'}
-                  </div>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e', margin: 0 }}>{activeConv.name}</p>
+                  {typingState && <p style={{ fontSize: 11, color: '#10b981', margin: 0 }}>typing…</p>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 4 }}>
                 {[Video, Phone, MoreVertical].map((Icon, i) => (
-                  <button key={i} style={{
-                    background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
-                    padding: 8, borderRadius: 10, transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f1f5'; e.currentTarget.style.color = '#64748b'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
-                  ><Icon size={20} /></button>
+                  <button key={i} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 8, borderRadius: 10 }}><Icon size={18} /></button>
                 ))}
               </div>
             </div>
 
-            {/* ── Messages ── */}
-            <div style={{
-              flex: 1, overflow: 'auto', padding: '20px 24px',
-              display: 'flex', flexDirection: 'column', gap: 16,
-            }}>
-              {/* Date separator */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 600, color: '#94a3b8', background: '#fff',
-                  padding: '5px 18px', borderRadius: 24, border: '1px solid #e5e7ee',
-                  letterSpacing: '0.04em',
-                }}>TODAY</span>
-              </div>
-
+            {/* Messages */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {messages.length === 0 && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: '#94a3b8' }}>
+                  <MessageCircle size={36} style={{ opacity: 0.4 }} />
+                  <p style={{ fontSize: 14, fontWeight: 500 }}>No messages yet</p>
+                  <p style={{ fontSize: 12 }}>Say hi to {activeConv.name}! 👋</p>
+                </div>
+              )}
               {messages.map((m) => (
-                <div key={m.id} style={{
-                  display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start',
-                  gap: 10, animation: 'fadeIn 0.3s ease',
-                }}>
-                  {/* Other person's avatar */}
+                <div key={m.id} style={{ display: 'flex', justifyContent: m.mine ? 'flex-end' : 'flex-start', gap: 8 }}>
                   {!m.mine && (
-                    <div style={{
-                      width: 34, height: 34, borderRadius: '50%', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-                      background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
-                      color: '#fff', alignSelf: 'flex-end', flexShrink: 0,
-                    }}>{conv.initials?.charAt(0)}</div>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: activeConv.avatarGrad, color: '#fff', alignSelf: 'flex-end', flexShrink: 0 }}>
+                      {(m.user?.name || m.sender?.name || activeConv.name)?.charAt(0)}
+                    </div>
                   )}
                   <div style={{ maxWidth: '65%' }}>
+                    {!m.mine && activeConv.group && (
+                      <p style={{ fontSize: 10, fontWeight: 600, color: '#64748b', marginBottom: 3, marginLeft: 4 }}>{m.user?.name}</p>
+                    )}
                     <div style={{
-                      padding: '14px 18px', fontSize: 14, lineHeight: 1.55,
-                      background: m.mine
-                        ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
-                        : '#fff',
+                      padding: '12px 16px', fontSize: 14, lineHeight: 1.55,
+                      background: m.mine ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#fff',
                       color: m.mine ? '#fff' : '#1a1a2e',
                       borderRadius: m.mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                       border: m.mine ? 'none' : '1px solid #f0f1f5',
-                      boxShadow: m.mine
-                        ? '0 2px 8px rgba(99,102,241,0.25)'
-                        : '0 1px 3px rgba(0,0,0,0.04)',
                     }}>{m.text}</div>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      fontSize: 10, color: '#94a3b8', marginTop: 5,
-                      justifyContent: m.mine ? 'flex-end' : 'flex-start',
-                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#94a3b8', marginTop: 4, justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
                       {m.time}
-                      {m.mine && m.read && (
-                        <CheckCheck size={12} style={{ color: '#6366f1' }} />
-                      )}
-                      {m.mine && !m.read && (
-                        <Check size={12} style={{ color: '#94a3b8' }} />
-                      )}
+                      {m.mine && m.read && <CheckCheck size={12} style={{ color: '#6366f1' }} />}
+                      {m.mine && !m.read && <Check size={12} />}
                     </div>
                   </div>
                 </div>
               ))}
-
-              {/* File attachment */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff',
-                  borderRadius: '18px 18px 4px 18px',
-                  boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
-                }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 10, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(255,255,255,0.2)',
-                  }}><FileText size={20} /></div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Lisbon_Nomad_Guide.pdf</div>
-                    <div style={{ fontSize: 11, opacity: 0.75 }}>2.4 MB • PDF DOCUMENT</div>
-                  </div>
-                  <button style={{
-                    background: 'rgba(255,255,255,0.15)', border: 'none',
-                    borderRadius: 8, padding: 6, cursor: 'pointer', color: '#fff',
-                  }}>
-                    <Download size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Typing indicator */}
-              {typing && (
-                <div style={{ display: 'flex', gap: 10, animation: 'fadeIn 0.3s ease' }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: '50%', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-                    background: conv.avatarGrad || 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
-                    color: '#fff', alignSelf: 'flex-end', flexShrink: 0,
-                  }}>{conv.initials?.charAt(0)}</div>
-                  <div style={{
-                    padding: '14px 20px', background: '#fff', borderRadius: '18px 18px 18px 4px',
-                    border: '1px solid #f0f1f5', display: 'flex', gap: 4, alignItems: 'center',
-                  }}>
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} style={{
-                        width: 8, height: 8, borderRadius: '50%', background: '#94a3b8',
-                        animation: `typingBounce 1.4s infinite ${i * 0.15}s`,
-                      }} />
-                    ))}
+              {typingState && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: activeConv.avatarGrad, color: '#fff', alignSelf: 'flex-end', flexShrink: 0 }}>{activeConv.initials.charAt(0)}</div>
+                  <div style={{ padding: '12px 18px', background: '#fff', borderRadius: '18px 18px 18px 4px', border: '1px solid #f0f1f5', display: 'flex', gap: 4, alignItems: 'center' }}>
+                    {[0, 1, 2].map((i) => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#94a3b8', animation: `typingBounce 1.4s infinite ${i * 0.15}s` }} />)}
                   </div>
                 </div>
               )}
-
               <div ref={endRef} />
             </div>
 
-            {/* ── Input Bar ── */}
-            <form onSubmit={send} style={{
-              padding: '14px 22px', display: 'flex', alignItems: 'center', gap: 12,
-              background: '#fff', borderTop: '1px solid #e5e7ee',
-            }}>
-              <button type="button" style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
-                padding: 4, borderRadius: 8, transition: 'color 0.15s',
-              }}><Mic size={20} /></button>
-              <button type="button" style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
-                padding: 4, borderRadius: 8, transition: 'color 0.15s',
-              }}><Smile size={20} /></button>
+            {/* Input */}
+            <form onSubmit={send} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, background: '#fff', borderTop: '1px solid #e5e7ee' }}>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><Mic size={19} /></button>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><Smile size={19} /></button>
               <input
-                value={newMsg}
-                onChange={(e) => setNewMsg(e.target.value)}
-                placeholder={`Write a message to ${conv.name.split(' ')[0]}...`}
-                style={{
-                  flex: 1, background: '#f8f9fc', border: '1px solid #e5e7ee',
-                  borderRadius: 14, padding: '11px 18px', fontSize: 14,
-                  outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7ee'}
+                value={newMsg} onChange={handleTyping}
+                placeholder={`Message ${activeConv.name}…`}
+                style={{ flex: 1, background: '#f8f9fc', border: '1px solid #e5e7ee', borderRadius: 14, padding: '10px 16px', fontSize: 14, outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif' }}
               />
-              <button type="submit" disabled={!newMsg.trim()} style={{
-                width: 42, height: 42, borderRadius: '50%', display: 'flex',
-                alignItems: 'center', justifyContent: 'center', border: 'none',
-                cursor: newMsg.trim() ? 'pointer' : 'default',
-                background: newMsg.trim()
-                  ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
-                  : '#e5e7ee',
-                color: '#fff',
-                boxShadow: newMsg.trim() ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
-                transition: 'all 0.2s',
-              }}><Send size={16} /></button>
+              <button type="submit" disabled={!newMsg.trim()} style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: newMsg.trim() ? 'pointer' : 'default', background: newMsg.trim() ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#e5e7ee', color: '#fff', transition: 'all 0.15s' }}>
+                <Send size={15} />
+              </button>
             </form>
           </>
         ) : (
-          /* Empty state */
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexDirection: 'column',
-          }}>
-            <div style={{
-              width: 90, height: 90, borderRadius: 24, display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(99,102,241,0.08)', marginBottom: 18,
-            }}>
-              <MessageCircle size={40} style={{ color: '#6366f1' }} />
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(99,102,241,0.08)', marginBottom: 16 }}>
+              <MessageCircle size={36} style={{ color: '#6366f1' }} />
             </div>
-            <p style={{ fontWeight: 600, fontSize: 20, color: '#1a1a2e', marginBottom: 4 }}>Select a conversation</p>
-            <p style={{ fontSize: 14, color: '#94a3b8' }}>Choose someone to start chatting</p>
+            <p style={{ fontWeight: 600, fontSize: 18, color: '#1a1a2e', marginBottom: 4 }}>Select a conversation</p>
+            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>Or start a new one</p>
+            <button
+              onClick={() => setShowNewChat(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: '#6366f1', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}
+            >
+              <Plus size={16} /> New Conversation
+            </button>
           </div>
         )}
       </div>
 
-      {/* ── Typing animation keyframes ── */}
+      {/* ══════════ NEW CONVERSATION MODAL ══════════ */}
+      {showNewChat && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowNewChat(false)}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: 420, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a2e', margin: 0 }}>New Conversation</h3>
+              <button onClick={() => setShowNewChat(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={20} /></button>
+            </div>
+
+            <div style={{ position: 'relative', marginBottom: 14 }}>
+              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                autoFocus
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search people by name or company…"
+                style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1px solid #e5e7ee', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#f8f9fc', color: '#1a1a2e', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {searchLoading && <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Searching…</p>}
+              {!searchLoading && userSearch && userResults.length === 0 && (
+                <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>No users found</p>
+              )}
+              {!searchLoading && !userSearch && (
+                <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '20px 0' }}>Type a name to search for people</p>
+              )}
+              {userResults.map((u: any) => (
+                <button key={u.id} onClick={() => startConversation(u)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+                  background: '#f8f9fc', border: '1px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  textAlign: 'left', transition: 'all 0.15s',
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f1f5'; e.currentTarget.style.borderColor = '#c7d2fe'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fc'; e.currentTarget.style.borderColor = 'transparent'; }}
+                >
+                  <div style={{ width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)', color: '#fff', flexShrink: 0 }}>
+                    {(u.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', margin: 0 }}>{u.name}</p>
+                    <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>{u.company || u.university || u.city || ''}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
-        @keyframes typingBounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-          40% { transform: translateY(-6px); opacity: 1; }
-        }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-5px); opacity: 1; } }
+        @media (min-width: 768px) { .md-always-flex { display: flex !important; } }
       `}</style>
     </div>
+  );
+}
+
+/* ── Page wrapper with Suspense (required for useSearchParams) ── */
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: '#94a3b8' }}>Loading…</div>}>
+      <ChatInner />
+    </Suspense>
   );
 }
