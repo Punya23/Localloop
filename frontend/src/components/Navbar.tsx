@@ -1,17 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import {
   Home, Building2, Users, MessageCircle, Bell, User,
   LogOut, Search, Settings, Globe, Shield, LayoutDashboard,
-  UserSearch, Calendar,
+  UserSearch, Calendar, Menu, X
 } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Don't show navbar on public pages or when not authenticated
   if (!isAuthenticated) return null;
@@ -47,25 +49,37 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ─── Desktop Sidebar ─── */}
+      {/* ─── Mobile Menu Override Overlay ─── */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/40 z-[55] backdrop-blur-sm transition-all"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* ─── Sidebar (Desktop & Mobile Drawer) ─── */}
       <nav style={{
         position: 'fixed', left: 0, top: 0, height: '100%', width: 220,
-        background: '#fff', borderRight: '1px solid #e5e7ee', zIndex: 50,
-        display: 'flex', flexDirection: 'column',
-      }} className="hidden lg:!flex">
+        background: '#fff', borderRight: '1px solid #e5e7ee', zIndex: 60,
+      }} className={`flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        {/* Mobile Close Button */}
+        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden absolute top-4 right-4 p-2 text-slate-500">
+          <X size={20} />
+        </button>
+
         {/* Logo */}
-        <Link href="/dashboard" style={{ padding: '20px 24px 8px', textDecoration: 'none' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#6366f1', letterSpacing: '-0.02em' }}>LocalLoop</div>
+        <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} style={{ padding: '20px 24px 8px', textDecoration: 'none', display: 'block' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#6366f1', letterSpacing: '-0.02em', marginTop: '10px' }}>LocalLoop</div>
           <div style={{ fontSize: 9, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginTop: 2 }}>Relocation Concierge</div>
         </Link>
 
         {/* Nav Items */}
-        <div style={{ flex: 1, padding: '24px 12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ flex: 1, padding: '24px 12px 12px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {sidebarItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href} style={{
+              <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
                 borderRadius: 12, fontSize: 13, fontWeight: active ? 600 : 500,
                 color: active ? '#6366f1' : '#64748b',
@@ -89,7 +103,7 @@ export default function Navbar() {
             <div style={{
               width: 36, height: 36, borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
-              background: 'rgba(99,102,241,0.1)', color: '#6366f1',
+              background: 'rgba(99,102,241,0.1)', color: '#6366f1', flexShrink: 0,
             }}>{(user?.name || 'U').charAt(0)}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
@@ -111,7 +125,7 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-          <button onClick={logout} style={{
+          <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
             width: '100%', fontSize: 12, color: '#ef4444', background: 'none',
             border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', borderRadius: 8,
@@ -160,19 +174,21 @@ export default function Navbar() {
         background: '#fff', borderBottom: '1px solid #e5e7ee', zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
       }} className="lg:!hidden">
-        <Search size={20} style={{ color: '#64748b' }} />
-        <Link href="/dashboard" style={{ fontSize: 18, fontWeight: 800, color: '#6366f1', textDecoration: 'none' }}>LocalLoop</Link>
+        <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500">
+          <Menu size={22} />
+        </button>
+        <Link href="/dashboard" style={{ fontSize: 18, fontWeight: 800, color: '#6366f1', textDecoration: 'none', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>LocalLoop</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/notifications"><Bell size={20} style={{ color: '#64748b' }} /></Link>
-          <div style={{
+          <Link href="/profile" style={{
             width: 32, height: 32, borderRadius: '50%', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-            background: '#6366f1', color: '#fff',
-          }}>{(user?.name || 'U').charAt(0)}</div>
+            background: '#6366f1', color: '#fff', textDecoration: 'none'
+          }}>{(user?.name || 'U').charAt(0)}</Link>
         </div>
       </nav>
 
-      {/* ─── Mobile Bottom Nav ─── */}
+      {/* ─── Mobile Bottom Nav (Optional overlay navigation layer) ─── */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, height: 64,
         background: '#fff', borderTop: '1px solid #e5e7ee', zIndex: 50,
