@@ -383,7 +383,13 @@ export default function ProfilePage() {
       )}
 
       {/* ══════════ Floating Compose Button ══════════ */}
-      <button className="lg:hidden" style={{
+      <button className="lg:hidden" 
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/communities';
+          }
+        }}
+        style={{
         position: 'fixed', bottom: 80, right: 20, width: 56, height: 56,
         borderRadius: '50%', background: '#6366f1', color: '#fff',
         border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',

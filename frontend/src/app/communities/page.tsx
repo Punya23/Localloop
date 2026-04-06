@@ -323,7 +323,14 @@ export default function CommunitiesPage() {
       </div>
 
       {/* ══════════ Floating New Post FAB ══════════ */}
-      <button style={{
+      <button 
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            alert('Please select a specific community to create a post!');
+          }
+        }}
+        style={{
         position: 'fixed', bottom: 80, right: 20, width: 56, height: 56,
         borderRadius: '50%', background: '#6366f1', color: '#fff', border: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',

@@ -507,6 +507,11 @@ export default function DashboardPage() {
 
       {/* ═══════════ FAB Button ═══════════ */}
       <button
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/communities';
+          }
+        }}
         style={{
           position: 'fixed', bottom: '32px', right: '32px', width: '56px', height: '56px',
           borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e, #2d2d4e)',
