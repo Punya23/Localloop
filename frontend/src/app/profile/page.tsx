@@ -303,7 +303,7 @@ export default function ProfilePage() {
       {activeTab === 'Posts' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg-primary)', border: '1px dashed #c4b5fd', textAlign: 'center', cursor: 'pointer' }} onClick={() => router.push('/communities')}>
-             <p style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: 600 }}>+ Write a new Post / Blog in Communities</p>
+            <p style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: 600 }}>+ Write a new Post / Blog in Communities</p>
           </div>
           {p.posts?.map((post: any) => (
             <div key={post.id} style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '16px', border: '1px solid var(--border-light)', cursor: 'pointer' }} onClick={() => router.push(`/communities/${post.community?.id}`)}>
@@ -324,7 +324,7 @@ export default function ProfilePage() {
       {activeTab === 'Reviews' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg-primary)', border: '1px dashed #fcd34d', textAlign: 'center', cursor: 'pointer' }} onClick={() => router.push('/housing')}>
-             <p style={{ fontSize: '14px', color: 'var(--warning)', fontWeight: 600 }}>+ Review a PG / Accommodation</p>
+            <p style={{ fontSize: '14px', color: 'var(--warning)', fontWeight: 600 }}>+ Review a PG / Accommodation</p>
           </div>
           {p.housingReviews?.map((review: any) => (
             <div key={review.id} style={{
@@ -355,9 +355,9 @@ export default function ProfilePage() {
               border: '1px solid var(--border-light)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               cursor: 'pointer', transition: 'all 0.2s',
             }}
-            onClick={() => router.push(`/housing/${item.housing?.id}`)}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d4d6de'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
+              onClick={() => router.push(`/housing/${item.housing?.id}`)}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d4d6de'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
             >
               <div style={{
                 width: 80, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
@@ -383,21 +383,21 @@ export default function ProfilePage() {
       )}
 
       {/* ══════════ Floating Compose / Edit Button ══════════ */}
-      <button className="lg:hidden" 
+      <button className="lg:hidden"
         onClick={() => {
           if (typeof window !== 'undefined') {
             window.location.href = '/onboarding';
           }
         }}
         style={{
-        position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
-        borderRadius: '50%', background: 'var(--primary)', color: '#fff',
-        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
-        transition: 'transform 0.2s',
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = ''}
+          position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
+          borderRadius: '50%', background: 'var(--primary)', color: '#fff',
+          border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
+          transition: 'transform 0.2s',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = ''}
       >
         <Pencil size={20} />
       </button>
