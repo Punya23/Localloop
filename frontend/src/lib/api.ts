@@ -409,6 +409,58 @@ class ApiClient {
       body: JSON.stringify({ optionIndex }),
     });
   }
+
+  // ════════════ AI / ML ════════════
+
+  async getAIRecommendations(limit = 10) {
+    return this.request<any>(`/ai/recommendations/housing?limit=${limit}`);
+  }
+
+  async getSimilarHousings(housingId: string) {
+    return this.request<any>(`/ai/recommendations/housing/${housingId}/similar`);
+  }
+
+  async getPriceIntelligence(city = 'Pune') {
+    return this.request<any>(`/ai/price-intelligence?city=${city}`);
+  }
+
+  async getAreaPriceDetail(area: string, city = 'Pune') {
+    return this.request<any>(`/ai/price-intelligence/area/${encodeURIComponent(area)}?city=${city}`);
+  }
+
+  async getDealScore(housingId: string) {
+    return this.request<any>(`/ai/price-intelligence/deal-score/${housingId}`);
+  }
+
+  async getAIMatches(type: 'friends' | 'roommates' = 'friends', limit = 10) {
+    return this.request<any>(`/ai/match/people?type=${type}&limit=${limit}`);
+  }
+
+  async sendAIChatMessage(message: string) {
+    return this.request<any>('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async getAIChatHistory() {
+    return this.request<any>('/ai/chat/history');
+  }
+
+  async clearAIChatHistory() {
+    return this.request<any>('/ai/chat/history', { method: 'DELETE' });
+  }
+
+  async trackHousingView(housingId: string, duration?: number) {
+    return this.request<any>('/ai/track/view', {
+      method: 'POST',
+      body: JSON.stringify({ housingId, duration }),
+    });
+  }
+
+  async getAIInsights() {
+    return this.request<any>('/ai/insights');
+  }
 }
 
 export const api = new ApiClient();

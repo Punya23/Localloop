@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import Navbar from './Navbar';
+import AIChatbot from './AIChatbot';
 
 // Pages where we hide navbar and don't apply sidebar margins
 const PUBLIC_PATHS = ['/', '/login', '/register', '/onboarding'];
@@ -23,6 +24,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       >
         {children}
       </main>
+      {showNavbar && <AIChatbot />}
     </>
   );
 }
+

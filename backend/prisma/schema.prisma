@@ -113,6 +113,8 @@ model User {
   mentoring       Mentorship[]      @relation("Mentor")
   createdPolls    CommunityPoll[]
   pollVotes       PollVote[]
+  chatMessages    ChatMessage[]
+  housingViews    HousingView[]
 
   @@map("users")
 }
@@ -191,6 +193,7 @@ model Housing {
   reviews           HousingReview[]
   savedBy           SavedHousing[]
   bookings          HousingBooking[]
+  views             HousingView[]
 
   @@index([city, area])
   @@index([rent])
@@ -486,4 +489,37 @@ enum MentorshipStatus {
   ACTIVE
   COMPLETED
   DECLINED
+}
+
+// ============================================
+// AI / ML DATA
+// ============================================
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" or "assistant"
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_chat_messages")
+}
+
+model HousingView {
+  id        String   @id @default(cuid())
+  userId    String
+  housingId String
+  viewedAt  DateTime @default(now())
+  duration  Int?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing   Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([housingId])
+  @@map("housing_views")
 }

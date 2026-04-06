@@ -11,6 +11,7 @@ import { ReputationModule } from './reputation/reputation.module';
 import { EventsModule } from './events/events.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UploadModule } from './upload/upload.module';
     EventsModule,
     AdminModule,
     UploadModule,
+    AiModule,
   ],
 })
 export class AppModule {}
