@@ -5,10 +5,10 @@ import { MapPin, Building2, Users, Shield, Star, ArrowRight, Sparkles, Heart } f
 import { useAuthStore } from '@/lib/store';
 
 const features = [
-  { icon: Building2, title: 'Verified Housing', desc: 'Curated PG, hostel & flat listings with reviews and safety ratings.', color: '#6366f1' },
-  { icon: Users, title: 'Community Groups', desc: 'Connect with university peers, professionals & newcomer batches.', color: '#06b6d4' },
+  { icon: Building2, title: 'Verified Housing', desc: 'Curated PG, hostel & flat listings with reviews and safety ratings.', color: 'var(--primary)' },
+  { icon: Users, title: 'Community Groups', desc: 'Connect with university peers, professionals & newcomer batches.', color: 'var(--accent)' },
   { icon: Shield, title: 'Women Mode', desc: 'Women-only communities, safety tags & verified women mentors.', color: '#ec4899' },
-  { icon: Star, title: 'Mentor System', desc: 'Get guidance from experienced locals who\'ve been through it.', color: '#f59e0b' },
+  { icon: Star, title: 'Mentor System', desc: 'Get guidance from experienced locals who\'ve been through it.', color: 'var(--warning)' },
 ];
 
 const stats = [

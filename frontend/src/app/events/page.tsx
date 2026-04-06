@@ -11,10 +11,10 @@ import {
 /* ── Demo Data ──────────────────────────────────────────── */
 
 const typeConfig: Record<string, { color: string; icon: any; label: string }> = {
-  MEETUP: { color: '#6366f1', icon: Coffee, label: 'Meetup' },
-  STUDY_GROUP: { color: '#06b6d4', icon: BookOpen, label: 'Study Group' },
-  NETWORKING: { color: '#10b981', icon: Laptop, label: 'Networking' },
-  CITY_EXPLORATION: { color: '#f59e0b', icon: Mountain, label: 'City Exploration' },
+  MEETUP: { color: 'var(--primary)', icon: Coffee, label: 'Meetup' },
+  STUDY_GROUP: { color: 'var(--accent)', icon: BookOpen, label: 'Study Group' },
+  NETWORKING: { color: 'var(--success)', icon: Laptop, label: 'Networking' },
+  CITY_EXPLORATION: { color: 'var(--warning)', icon: Mountain, label: 'City Exploration' },
   WORKSHOP: { color: '#ec4899', icon: Sparkles, label: 'Workshop' },
   WELCOME: { color: '#8b5cf6', icon: PartyPopper, label: 'Welcome' },
 };
@@ -118,13 +118,13 @@ export default function EventsPage() {
       }}>
         <div>
           <h1 style={{
-            fontSize: '28px', fontWeight: 700, color: '#1a1a2e',
+            fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)',
             display: 'flex', alignItems: 'center', gap: '10px',
           }}>
-            <Calendar size={26} style={{ color: '#6366f1' }} />
+            <Calendar size={26} style={{ color: 'var(--primary)' }} />
             Events & Meetups
           </h1>
-          <p style={{ fontSize: '14px', color: '#94a3b8', marginTop: '4px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Meet people, learn new skills, and explore the city together
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function EventsPage() {
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 22px',
             borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', border: 'none',
-            background: '#6366f1', color: '#fff',
+            background: 'var(--primary)', color: '#fff',
             boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
           }}>
             <Plus size={16} /> Create Event
@@ -150,8 +150,8 @@ export default function EventsPage() {
           <button key={f} onClick={() => setActiveFilter(f)} style={{
             padding: '8px 18px', borderRadius: '24px', fontSize: '13px', fontWeight: 500,
             cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
-            border: activeFilter === f ? 'none' : '1px solid #e5e7ee',
-            background: activeFilter === f ? '#6366f1' : '#fff',
+            border: activeFilter === f ? 'none' : '1px solid var(--border)',
+            background: activeFilter === f ? 'var(--primary)' : '#fff',
             color: activeFilter === f ? '#fff' : '#64748b',
             transition: 'all 0.15s',
             boxShadow: activeFilter === f ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
@@ -162,14 +162,14 @@ export default function EventsPage() {
       {/* ══════════ Create Event Form ══════════ */}
       {creating && (
         <div style={{
-          background: '#fff', borderRadius: '18px', padding: '24px',
-          border: '1px solid #e5e7ee', marginBottom: '24px',
+          background: 'var(--bg-card)', borderRadius: '18px', padding: '24px',
+          border: '1px solid var(--border)', marginBottom: '24px',
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Create Event</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Create Event</h3>
             <button onClick={() => setCreating(false)} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
             }}><X size={20} /></button>
           </div>
           <form onSubmit={handleCreate}>
@@ -178,17 +178,17 @@ export default function EventsPage() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
                 style={{
-                  padding: '11px 16px', borderRadius: '12px', border: '1px solid #e5e7ee',
-                  background: '#f8f9fc', fontSize: '14px', outline: 'none',
-                  fontFamily: 'Inter, sans-serif', color: '#1a1a2e',
+                  padding: '11px 16px', borderRadius: '12px', border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)', fontSize: '14px', outline: 'none',
+                  fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)',
                 }}
               />
               <select value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
                 style={{
-                  padding: '11px 16px', borderRadius: '12px', border: '1px solid #e5e7ee',
-                  background: '#f8f9fc', fontSize: '14px', outline: 'none',
-                  fontFamily: 'Inter, sans-serif', color: '#1a1a2e', appearance: 'none' as const,
+                  padding: '11px 16px', borderRadius: '12px', border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)', fontSize: '14px', outline: 'none',
+                  fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)', appearance: 'none' as const,
                 }}
               >
                 {Object.entries(typeConfig).map(([key, val]) => (
@@ -199,18 +199,18 @@ export default function EventsPage() {
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
                 required
                 style={{
-                  padding: '11px 16px', borderRadius: '12px', border: '1px solid #e5e7ee',
-                  background: '#f8f9fc', fontSize: '14px', outline: 'none',
-                  fontFamily: 'Inter, sans-serif', color: '#1a1a2e',
+                  padding: '11px 16px', borderRadius: '12px', border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)', fontSize: '14px', outline: 'none',
+                  fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)',
                 }}
               />
               <input placeholder="Location" value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
                 required
                 style={{
-                  padding: '11px 16px', borderRadius: '12px', border: '1px solid #e5e7ee',
-                  background: '#f8f9fc', fontSize: '14px', outline: 'none',
-                  fontFamily: 'Inter, sans-serif', color: '#1a1a2e',
+                  padding: '11px 16px', borderRadius: '12px', border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)', fontSize: '14px', outline: 'none',
+                  fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)',
                 }}
               />
               <textarea placeholder="Description" value={form.description} rows={2}
@@ -218,8 +218,8 @@ export default function EventsPage() {
                 required
                 style={{
                   gridColumn: '1 / -1', padding: '11px 16px', borderRadius: '12px',
-                  border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: '14px',
-                  outline: 'none', fontFamily: 'Inter, sans-serif', color: '#1a1a2e',
+                  border: '1px solid var(--border)', background: 'var(--bg-primary)', fontSize: '14px',
+                  outline: 'none', fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)',
                   resize: 'none',
                 }}
               />
@@ -227,12 +227,12 @@ export default function EventsPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
               <button type="button" onClick={() => setCreating(false)} style={{
                 padding: '10px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                background: '#fff', color: '#64748b', border: '1px solid #e5e7ee',
+                background: 'var(--bg-card)', color: '#64748b', border: '1px solid var(--border)',
                 cursor: 'pointer', fontFamily: 'Inter, sans-serif',
               }}>Cancel</button>
               <button type="submit" style={{
                 padding: '10px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                background: '#6366f1', color: '#fff', border: 'none',
+                background: 'var(--primary)', color: '#fff', border: 'none',
                 cursor: 'pointer', fontFamily: 'Inter, sans-serif',
               }}>Create Event</button>
             </div>
@@ -244,7 +244,7 @@ export default function EventsPage() {
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {[1, 2, 3].map((i) => (
-            <div key={i} style={{ height: '320px', borderRadius: '18px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ height: '320px', borderRadius: '18px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
           ))}
         </div>
       ) : (
@@ -260,8 +260,8 @@ export default function EventsPage() {
 
             return (
               <div key={event.id} style={{
-                background: '#fff', borderRadius: '18px', overflow: 'hidden',
-                border: '1px solid #e5e7ee', transition: 'all 0.25s',
+                background: 'var(--bg-card)', borderRadius: '18px', overflow: 'hidden',
+                border: '1px solid var(--border)', transition: 'all 0.25s',
                 display: 'flex', flexDirection: 'column',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.08)'; }}
@@ -287,7 +287,7 @@ export default function EventsPage() {
                       <span style={{ fontSize: '9px', fontWeight: 700, color: config.color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         {eventDate.toLocaleDateString('en-US', { month: 'short' })}
                       </span>
-                      <span style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>
+                      <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
                         {eventDate.getDate()}
                       </span>
                     </div>
@@ -316,18 +316,18 @@ export default function EventsPage() {
                         background: `${config.color}10`, color: config.color,
                       }}><EventIcon size={13} />{config.label}</span>
                       {event.community && (
-                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                           in {event.community.name}
                         </span>
                       )}
                     </div>
                   )}
 
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '6px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
                     {event.title}
                   </h3>
                   <p style={{
-                    fontSize: '13px', color: '#94a3b8', marginBottom: '14px',
+                    fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px',
                     lineHeight: 1.5, flex: 1,
                     display: '-webkit-box', WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
@@ -336,19 +336,19 @@ export default function EventsPage() {
                   {/* Event Details */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748b' }}>
-                      <Clock size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                      <Clock size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                       {eventDate.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} • {eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748b' }}>
-                      <MapPin size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                      <MapPin size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                       {event.location}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748b' }}>
-                      <Users size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                      <Users size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                       <span>{count}{event.maxAttendees ? ` / ${event.maxAttendees}` : ''} attending</span>
                       {spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5 && (
                         <span style={{
-                          fontSize: '10px', fontWeight: 700, color: '#ef4444',
+                          fontSize: '10px', fontWeight: 700, color: 'var(--danger)',
                           background: 'rgba(239,68,68,0.08)', padding: '2px 8px', borderRadius: '6px',
                         }}>
                           {spotsLeft} spots left!
@@ -361,12 +361,12 @@ export default function EventsPage() {
                   {event.maxAttendees && (
                     <div style={{
                       width: '100%', height: '4px', borderRadius: '2px',
-                      background: '#f0f1f5', marginBottom: '14px', overflow: 'hidden',
+                      background: 'var(--border-light)', marginBottom: '14px', overflow: 'hidden',
                     }}>
                       <div style={{
                         width: `${Math.min(100, (count / event.maxAttendees) * 100)}%`,
                         height: '100%', borderRadius: '2px',
-                        background: isFull ? '#ef4444' : config.color,
+                        background: isFull ? 'var(--danger)' : config.color,
                         transition: 'width 0.5s ease',
                       }} />
                     </div>
@@ -381,14 +381,14 @@ export default function EventsPage() {
                       fontSize: '13px', fontWeight: 600, cursor: isFull && !isAttended ? 'not-allowed' : 'pointer',
                       fontFamily: 'Inter, sans-serif', border: 'none',
                       background: isAttended
-                        ? '#f0f1f5'
+                        ? 'var(--border-light)'
                         : isFull
-                          ? '#f8f9fc'
+                          ? 'var(--bg-primary)'
                           : config.color,
                       color: isAttended
                         ? '#64748b'
                         : isFull
-                          ? '#94a3b8'
+                          ? 'var(--text-muted)'
                           : '#fff',
                       transition: 'all 0.15s',
                     }}
@@ -405,14 +405,14 @@ export default function EventsPage() {
       {/* Empty State */}
       {!loading && filteredEvents.length === 0 && (
         <div style={{
-          background: '#fff', borderRadius: '18px', padding: '60px 24px',
-          border: '1px solid #e5e7ee', textAlign: 'center',
+          background: 'var(--bg-card)', borderRadius: '18px', padding: '60px 24px',
+          border: '1px solid var(--border)', textAlign: 'center',
         }}>
-          <Calendar size={48} style={{ color: '#e5e7ee', marginBottom: '16px' }} />
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e', marginBottom: '6px' }}>
+          <Calendar size={48} style={{ color: 'var(--border)', marginBottom: '16px' }} />
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
             No events found
           </h3>
-          <p style={{ fontSize: '14px', color: '#94a3b8' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
             Try a different filter or create your own event!
           </p>
         </div>

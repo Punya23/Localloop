@@ -39,7 +39,7 @@ export default function WomenOnlyPage() {
   if (!isReady) {
     return (
       <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
       </div>
     );
   }
@@ -50,8 +50,8 @@ export default function WomenOnlyPage() {
       <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', maxWidth: '400px', padding: '40px' }}>
           <Shield size={48} style={{ color: '#ec4899', margin: '0 auto 16px' }} />
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>Access Restricted</h1>
-          <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '24px', lineHeight: 1.5 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Access Restricted</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: 1.5 }}>
             {denyReason || 'This sanctuary is exclusive to verified female users.'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -62,8 +62,8 @@ export default function WomenOnlyPage() {
               Verify My Identity
             </Link>
             <Link href="/dashboard" style={{
-              display: 'block', padding: '12px', background: '#f8f9fc', color: '#64748b',
-              borderRadius: '12px', textDecoration: 'none', fontWeight: 600, fontSize: '14px', border: '1px solid #e5e7ee',
+              display: 'block', padding: '12px', background: 'var(--bg-primary)', color: '#64748b',
+              borderRadius: '12px', textDecoration: 'none', fontWeight: 600, fontSize: '14px', border: '1px solid var(--border)',
             }}>
               Return to Dashboard
             </Link>
@@ -78,27 +78,27 @@ export default function WomenOnlyPage() {
       {/* Hero Banner */}
       <div style={{
         borderRadius: '20px', padding: '28px', marginBottom: '24px', position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(135deg, #ede9fe, #e0e7ff, #dbeafe)', border: '1px solid #e5e7ee',
+        background: 'linear-gradient(135deg, #ede9fe, #e0e7ff, #dbeafe)', border: '1px solid var(--border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <Shield size={20} style={{ color: '#6366f1' }} />
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#6366f1' }}>WOMEN ONLY</span>
+          <Shield size={20} style={{ color: 'var(--primary)' }} />
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>WOMEN ONLY</span>
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>
-          Safe Spaces, <span style={{ color: '#6366f1' }}>Verified Homes</span>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+          Safe Spaces, <span style={{ color: 'var(--primary)' }}>Verified Homes</span>
         </h1>
-        <p style={{ fontSize: '14px', color: '#475569' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
           All listings verified for safety. Women-only communities and events curated just for you.
         </p>
         <div style={{ display: 'flex', gap: '16px', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <CheckCircle2 size={14} style={{ color: '#10b981' }} /> Safety Verified
+            <CheckCircle2 size={14} style={{ color: 'var(--success)' }} /> Safety Verified
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Lock size={14} style={{ color: '#6366f1' }} /> Women-Only Access
+            <Lock size={14} style={{ color: 'var(--primary)' }} /> Women-Only Access
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Sparkles size={14} style={{ color: '#f59e0b' }} /> Curated Picks
+            <Sparkles size={14} style={{ color: 'var(--warning)' }} /> Curated Picks
           </span>
         </div>
       </div>
@@ -106,25 +106,25 @@ export default function WomenOnlyPage() {
       {/* Search */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
         <div style={{ flex: 1, position: 'relative' }}>
-          <MapPin size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <MapPin size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search location..."
-            style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: '12px', border: '1px solid #e5e7ee', fontSize: '14px', outline: 'none', fontFamily: 'Inter, sans-serif', color: '#1a1a2e', background: '#fff' }} />
+            style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '14px', outline: 'none', fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
         </div>
-        <button style={{ background: '#fff', border: '1px solid #e5e7ee', borderRadius: '12px', padding: '10px', cursor: 'pointer', color: '#64748b' }}>
+        <button style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px', cursor: 'pointer', color: '#64748b' }}>
           <Search size={18} />
         </button>
       </div>
 
       {/* Housing Section */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Shield size={18} style={{ color: '#10b981' }} /> Women-Safe Housing
+      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <Shield size={18} style={{ color: 'var(--success)' }} /> Women-Safe Housing
       </h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
         {womenHousing.map((h) => (
           <div key={h.id} style={{
-            background: '#fff', borderRadius: '16px', overflow: 'hidden',
-            border: '1px solid #e5e7ee', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden',
+            border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}>
             <div style={{
               height: '200px', backgroundImage: `url(${h.img})`, backgroundSize: 'cover',
@@ -136,17 +136,17 @@ export default function WomenOnlyPage() {
               <div style={{
                 position: 'absolute', top: h.verified ? '40px' : '12px', left: '12px', display: 'flex', alignItems: 'center', gap: '4px',
                 background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '6px',
-                fontSize: '11px', fontWeight: 600, color: '#10b981',
+                fontSize: '11px', fontWeight: 600, color: 'var(--success)',
               }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} /> WOMEN SAFE
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }} /> WOMEN SAFE
               </div>
               <button onClick={() => setSavedIds((p) => { const n = new Set(p); n.has(h.id) ? n.delete(h.id) : n.add(h.id); return n; })} style={{
                 position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.9)',
                 border: 'none', borderRadius: '8px', width: '32px', height: '32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                color: savedIds.has(h.id) ? '#6366f1' : '#94a3b8',
+                color: savedIds.has(h.id) ? 'var(--primary)' : 'var(--text-muted)',
               }}>
-                <Heart size={16} fill={savedIds.has(h.id) ? '#6366f1' : 'none'} />
+                <Heart size={16} fill={savedIds.has(h.id) ? 'var(--primary)' : 'none'} />
               </button>
               <div style={{
                 position: 'absolute', bottom: '12px', left: '12px', padding: '4px 10px',
@@ -156,10 +156,10 @@ export default function WomenOnlyPage() {
             </div>
             <div style={{ padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a2e' }}>{h.title}</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{h.title}</h3>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#6366f1' }}>₹{h.rent?.toLocaleString()}</span>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{h.type?.includes('Sharing') ? ' / sharing' : ' / month'}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary)' }}>₹{h.rent?.toLocaleString()}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.type?.includes('Sharing') ? ' / sharing' : ' / month'}</span>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
@@ -169,13 +169,13 @@ export default function WomenOnlyPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {h.available && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: '#10b981' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} /> Available Now
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--success)' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }} /> Available Now
                   </span>
                 )}
                 <Link href={`/housing/${h.id}`} style={{
                   padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                  background: '#6366f1', color: '#fff', textDecoration: 'none',
+                  background: 'var(--primary)', color: '#fff', textDecoration: 'none',
                 }}>View Details</Link>
               </div>
             </div>
@@ -184,14 +184,14 @@ export default function WomenOnlyPage() {
       </div>
 
       {/* Women Communities */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Users size={18} style={{ color: '#6366f1' }} /> Women-Only Communities
+      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <Users size={18} style={{ color: 'var(--primary)' }} /> Women-Only Communities
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
         {womenCommunities.map((c) => (
           <div key={c.id} style={{
-            display: 'flex', alignItems: 'center', gap: '16px', background: '#fff',
-            borderRadius: '16px', padding: '16px', border: '1px solid #e5e7ee',
+            display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)',
+            borderRadius: '16px', padding: '16px', border: '1px solid var(--border)',
           }}>
             <div style={{
               width: '48px', height: '48px', borderRadius: '12px', display: 'flex',
@@ -201,15 +201,15 @@ export default function WomenOnlyPage() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a2e' }}>{c.name}</h3>
-                <Lock size={12} style={{ color: '#94a3b8' }} />
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</h3>
+                <Lock size={12} style={{ color: 'var(--text-muted)' }} />
               </div>
-              <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>{c.desc}</p>
-              <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, marginTop: '4px' }}>{c.members} members</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{c.desc}</p>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>{c.members} members</p>
             </div>
             <button style={{
               padding: '8px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
-              background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+              background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', flexShrink: 0,
             }}>Join</button>
           </div>
@@ -217,17 +217,17 @@ export default function WomenOnlyPage() {
       </div>
 
       {/* Women Events */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Calendar size={18} style={{ color: '#f59e0b' }} /> Upcoming Women-Only Events
+      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <Calendar size={18} style={{ color: 'var(--warning)' }} /> Upcoming Women-Only Events
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
         {womenEvents.map((e) => (
           <div key={e.id} style={{
-            background: '#fff', borderRadius: '16px', padding: '16px',
-            border: '1px solid #e5e7ee',
+            background: 'var(--bg-card)', borderRadius: '16px', padding: '16px',
+            border: '1px solid var(--border)',
           }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a2e', marginBottom: '6px' }}>{e.title}</h3>
-            <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#94a3b8' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>{e.title}</h3>
+            <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Calendar size={12} /> {new Date(e.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
               </span>
@@ -240,7 +240,7 @@ export default function WomenOnlyPage() {
             </div>
             <button style={{
               marginTop: '12px', padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-              background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
             }}>RSVP</button>
           </div>
         ))}

@@ -20,11 +20,11 @@ const demoLeaderboard = [
 ];
 
 const levelConfig: Record<string, { color: string; icon: any; label: string }> = {
-  EXPLORER: { color: '#94a3b8', icon: Star, label: 'Explorer' },
-  GUIDE: { color: '#06b6d4', icon: TrendingUp, label: 'Guide' },
-  SETTLER: { color: '#10b981', icon: Medal, label: 'Settler' },
-  CITY_NAVIGATOR: { color: '#f59e0b', icon: Trophy, label: 'Navigator' },
-  LOCAL_MENTOR: { color: '#6366f1', icon: Crown, label: 'Mentor' },
+  EXPLORER: { color: 'var(--text-muted)', icon: Star, label: 'Explorer' },
+  GUIDE: { color: 'var(--accent)', icon: TrendingUp, label: 'Guide' },
+  SETTLER: { color: 'var(--success)', icon: Medal, label: 'Settler' },
+  CITY_NAVIGATOR: { color: 'var(--warning)', icon: Trophy, label: 'Navigator' },
+  LOCAL_MENTOR: { color: 'var(--primary)', icon: Crown, label: 'Mentor' },
 };
 
 const podiumColors = ['#c0c0c0', '#fbbf24', '#cd7f32'];
@@ -64,13 +64,13 @@ export default function LeaderboardPage() {
       {/* ══════════ Header ══════════ */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <h1 style={{
-          fontSize: '28px', fontWeight: 700, color: '#1a1a2e',
+          fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
         }}>
-          <Trophy size={28} style={{ color: '#f59e0b' }} />
+          <Trophy size={28} style={{ color: 'var(--warning)' }} />
           Leaderboard
         </h1>
-        <p style={{ fontSize: '14px', color: '#94a3b8', marginTop: '6px' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '6px' }}>
           Top contributors helping newcomers settle in
         </p>
       </div>
@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '32px' }}>
           {[1, 2, 3].map((i) => (
-            <div key={i} style={{ height: '200px', borderRadius: '18px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ height: '200px', borderRadius: '18px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
           ))}
         </div>
       ) : podium.length >= 3 ? (
@@ -98,7 +98,7 @@ export default function LeaderboardPage() {
                   : '#fff',
                 borderRadius: '18px', padding: isFirst ? '28px 16px' : '22px 14px',
                 textAlign: 'center',
-                border: isFirst ? '2px solid #fbbf24' : '1px solid #e5e7ee',
+                border: isFirst ? '2px solid #fbbf24' : '1px solid var(--border)',
                 boxShadow: isFirst ? '0 6px 24px rgba(251,191,36,0.2)' : '0 2px 8px rgba(0,0,0,0.04)',
                 transition: 'all 0.25s',
               }}
@@ -116,18 +116,18 @@ export default function LeaderboardPage() {
                   fontSize: isFirst ? '22px' : '18px', fontWeight: 700,
                   background: avatarGradients[i % avatarGradients.length],
                   color: '#fff', margin: '0 auto 10px',
-                  border: isFirst ? '3px solid #fbbf24' : '2px solid #e5e7ee',
+                  border: isFirst ? '3px solid #fbbf24' : '2px solid var(--border)',
                 }}>
                   {entry.user?.name?.charAt(0)}
                 </div>
                 <p style={{
                   fontSize: isFirst ? '15px' : '14px', fontWeight: 600,
-                  color: '#1a1a2e', marginBottom: '4px',
+                  color: 'var(--text-primary)', marginBottom: '4px',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{entry.user?.name}</p>
                 <p style={{
                   fontSize: isFirst ? '28px' : '22px', fontWeight: 800,
-                  background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                  background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   lineHeight: 1.2, marginBottom: '4px',
@@ -149,19 +149,19 @@ export default function LeaderboardPage() {
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} style={{ height: '68px', borderRadius: '14px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ height: '68px', borderRadius: '14px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
           ))}
         </div>
       ) : data.length === 0 ? (
         <div style={{
-          background: '#fff', borderRadius: '18px', padding: '60px 24px',
-          border: '1px solid #e5e7ee', textAlign: 'center',
+          background: 'var(--bg-card)', borderRadius: '18px', padding: '60px 24px',
+          border: '1px solid var(--border)', textAlign: 'center',
         }}>
-          <Trophy size={48} style={{ color: '#e5e7ee', marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '4px' }}>
+          <Trophy size={48} style={{ color: 'var(--border)', marginBottom: '16px' }} />
+          <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
             No reputation data yet
           </p>
-          <p style={{ fontSize: '14px', color: '#94a3b8' }}>Start contributing to earn your spot!</p>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Start contributing to earn your spot!</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -172,18 +172,18 @@ export default function LeaderboardPage() {
               <div key={entry.userId} style={{
                 display: 'flex', alignItems: 'center', gap: '14px',
                 padding: '14px 18px', borderRadius: '16px',
-                background: '#fff', border: '1px solid #f0f1f5',
+                background: 'var(--bg-card)', border: '1px solid var(--border-light)',
                 transition: 'all 0.2s', cursor: 'pointer',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#e5e7ee'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f0f1f5'; e.currentTarget.style.boxShadow = ''; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = ''; }}
               >
                 {/* Rank */}
                 <div style={{
                   width: '32px', height: '32px', borderRadius: '10px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '13px', fontWeight: 700, flexShrink: 0,
-                  background: '#f8f9fc', color: '#94a3b8',
+                  background: 'var(--bg-primary)', color: 'var(--text-muted)',
                 }}>{entry.rank}</div>
 
                 {/* Avatar */}
@@ -197,7 +197,7 @@ export default function LeaderboardPage() {
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '2px' }}>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
                     {entry.user?.name}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -210,7 +210,7 @@ export default function LeaderboardPage() {
                     {entry.streak > 0 && (
                       <span style={{
                         display: 'flex', alignItems: 'center', gap: '3px',
-                        fontSize: '10px', fontWeight: 600, color: '#f59e0b',
+                        fontSize: '10px', fontWeight: 600, color: 'var(--warning)',
                         background: 'rgba(245,158,11,0.08)', padding: '2px 7px',
                         borderRadius: '6px',
                       }}>
@@ -224,11 +224,11 @@ export default function LeaderboardPage() {
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <p style={{
                     fontSize: '18px', fontWeight: 700,
-                    background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>{entry.points}</p>
-                  <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 500 }}>points</p>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>points</p>
                 </div>
               </div>
             );

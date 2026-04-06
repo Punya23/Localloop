@@ -89,10 +89,10 @@ export default function CommunitiesPage() {
 
       {/* ══════════ Header ══════════ */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
           Find your people
         </h1>
-        <p style={{ fontSize: '15px', color: '#94a3b8', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
           Discover local groups based on your journey and interests.
         </p>
       </div>
@@ -109,8 +109,8 @@ export default function CommunitiesPage() {
             style={{
               padding: '9px 20px', borderRadius: '24px', fontSize: '13px', fontWeight: 500,
               cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
-              border: activeCategory === cat ? 'none' : '1px solid #e5e7ee',
-              background: activeCategory === cat ? '#6366f1' : '#fff',
+              border: activeCategory === cat ? 'none' : '1px solid var(--border)',
+              background: activeCategory === cat ? 'var(--primary)' : '#fff',
               color: activeCategory === cat ? '#fff' : '#64748b',
               transition: 'all 0.15s',
               boxShadow: activeCategory === cat ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
@@ -123,15 +123,15 @@ export default function CommunitiesPage() {
       {isAuthenticated && myCommunities.length > 0 && (
         <div style={{ marginBottom: '36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageSquare size={18} color="#6366f1" /> Your Community Chats
+            <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MessageSquare size={18} color="var(--primary)" /> Your Community Chats
             </h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {myCommunities.map(c => (
               <div key={c.id} onClick={() => router.push(`/communities/${c.id}`)} style={{
-                background: '#fff', borderRadius: '16px', padding: '16px',
-                border: '1px solid #f0f1f5', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                background: 'var(--bg-card)', borderRadius: '16px', padding: '16px',
+                border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                 display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)'; }}
@@ -140,15 +140,15 @@ export default function CommunitiesPage() {
                  <div style={{
                   width: '56px', height: '56px', borderRadius: '14px', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: '24px',
-                  background: `linear-gradient(135deg, ${c.color || '#6366f1'}22, ${c.color || '#4f46e5'}44)`, flexShrink: 0,
+                  background: `linear-gradient(135deg, ${c.color || 'var(--primary)'}22, ${c.color || 'var(--primary-dark)'}44)`, flexShrink: 0,
                 }}>{c.icon || c.name.charAt(0)}</div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '4px' }}>{c.name}</h3>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>{c.name}</h3>
                   <p style={{ fontSize: '13px', color: '#64748b' }}>{c._count?.posts || 0} active posts • {c._count?.members || c.memberCount || 0} members</p>
                 </div>
                 <div style={{
-                   width: '36px', height: '36px', borderRadius: '50%', background: '#f8f9fc',
-                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1'
+                   width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-primary)',
+                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)'
                 }}>
                   <ChevronDown size={18} style={{ transform: 'rotate(-90deg)' }} />
                 </div>
@@ -161,15 +161,15 @@ export default function CommunitiesPage() {
       {/* ══════════ Suggested Communities ══════════ */}
       <div style={{ marginBottom: '36px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Discover Communities</h2>
-          <Link href="#" style={{ fontSize: '13px', fontWeight: 600, color: '#6366f1', textDecoration: 'none' }}>See All</Link>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Discover Communities</h2>
+          <Link href="#" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>See All</Link>
         </div>
         <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '8px' }}>
           {communities.filter(c => !joinedCommunities.has(c.id)).map((c) => {
             return (
               <div key={c.id} onClick={() => router.push(`/communities/${c.id}`)} style={{
-                minWidth: '210px', maxWidth: '240px', background: '#fff', borderRadius: '18px', padding: '22px 18px',
-                border: '1px solid #e5e7ee', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                minWidth: '210px', maxWidth: '240px', background: 'var(--bg-card)', borderRadius: '18px', padding: '22px 18px',
+                border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 flexShrink: 0, display: 'flex', flexDirection: 'column',
                 transition: 'all 0.2s', cursor: 'pointer',
               }}
@@ -179,23 +179,23 @@ export default function CommunitiesPage() {
                 <div style={{
                   width: '50px', height: '50px', borderRadius: '14px', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: '24px',
-                  background: `${c.color || '#6366f1'}12`, marginBottom: '14px',
+                  background: `${c.color || 'var(--primary)'}12`, marginBottom: '14px',
                 }}>{c.icon || c.name.charAt(0)}</div>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a2e', marginBottom: '6px' }}>{c.name}</h3>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>{c.name}</h3>
                 <p style={{
-                  fontSize: '12px', color: '#94a3b8', marginBottom: '16px', flex: 1, lineHeight: 1.5,
+                  fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', flex: 1, lineHeight: 1.5,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
                   overflow: 'hidden',
                 }}>{c.desc || c.description}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.03em' }}>{c.members || c.memberCount || 0} MEMBERS</span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.03em' }}>{c.members || c.memberCount || 0} MEMBERS</span>
                   <button
                     onClick={(e) => handleJoin(c.id, e)}
                     disabled={loadingAction === c.id}
                     style={{
                       padding: '7px 20px', borderRadius: '24px', fontSize: '12px', fontWeight: 600,
                       cursor: loadingAction === c.id ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif',
-                      background: '#6366f1',
+                      background: 'var(--primary)',
                       color: '#fff',
                       border: 'none',
                       transition: 'all 0.15s',
@@ -212,8 +212,8 @@ export default function CommunitiesPage() {
       {/* ══════════ Active Discussions ══════════ */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Active Discussions</h2>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 4 }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Active Discussions</h2>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
             <SlidersHorizontal size={18} />
           </button>
         </div>
@@ -224,8 +224,8 @@ export default function CommunitiesPage() {
             const isSaved = savedPosts.has(disc.id);
             return (
               <div key={disc.id} style={{
-                background: '#fff', borderRadius: '18px', padding: '20px',
-                border: '1px solid #f0f1f5', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                background: 'var(--bg-card)', borderRadius: '18px', padding: '20px',
+                border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
@@ -240,14 +240,14 @@ export default function CommunitiesPage() {
                     color: '#fff', flexShrink: 0,
                   }}>{disc.avatar}</div>
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{disc.user}</p>
-                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{disc.user}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {disc.from ? (
-                        <><span style={{ color: '#94a3b8' }}>{disc.from} to </span></>
+                        <><span style={{ color: 'var(--text-muted)' }}>{disc.from} to </span></>
                       ) : (
                         <span>in </span>
                       )}
-                      <span style={{ color: '#6366f1', fontWeight: 600 }}>{disc.community}</span>
+                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{disc.community}</span>
                       <span> • {disc.timeAgo}</span>
                     </p>
                   </div>
@@ -255,7 +255,7 @@ export default function CommunitiesPage() {
 
                 {/* Content */}
                 <p style={{
-                  fontSize: '14px', color: '#475569', lineHeight: '1.65',
+                  fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65',
                   marginBottom: disc.hasImage ? '14px' : '16px', whiteSpace: 'pre-line',
                 }}>
                   {disc.text}
@@ -286,33 +286,33 @@ export default function CommunitiesPage() {
                         display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px',
                         fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer',
                         fontFamily: 'Inter, sans-serif',
-                        color: isLiked ? '#ef4444' : '#94a3b8',
+                        color: isLiked ? 'var(--danger)' : 'var(--text-muted)',
                         transition: 'color 0.15s',
                       }}
                     >
-                      <Heart size={16} fill={isLiked ? '#ef4444' : 'none'} />
+                      <Heart size={16} fill={isLiked ? 'var(--danger)' : 'none'} />
                       {disc.likes + (isLiked ? 1 : 0)}
                     </button>
                     <button style={{
                       display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px',
-                      fontWeight: 500, color: '#94a3b8', background: 'none', border: 'none',
+                      fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none',
                       cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <MessageSquare size={16} /> {disc.comments} new
                     </button>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2 }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
                       <Share2 size={16} />
                     </button>
                     <button
                       onClick={() => toggleSave(disc.id)}
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer', padding: 2,
-                        color: isSaved ? '#6366f1' : '#94a3b8', transition: 'color 0.15s',
+                        color: isSaved ? 'var(--primary)' : 'var(--text-muted)', transition: 'color 0.15s',
                       }}
                     >
-                      <Bookmark size={16} fill={isSaved ? '#6366f1' : 'none'} />
+                      <Bookmark size={16} fill={isSaved ? 'var(--primary)' : 'none'} />
                     </button>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function CommunitiesPage() {
         }}
         style={{
         position: 'fixed', bottom: 80, right: 20, width: 56, height: 56,
-        borderRadius: '50%', background: '#6366f1', color: '#fff', border: 'none',
+        borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
         boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
         transition: 'transform 0.2s, box-shadow 0.2s',

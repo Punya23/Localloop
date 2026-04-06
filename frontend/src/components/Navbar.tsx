@@ -69,8 +69,8 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} style={{ padding: '20px 24px 8px', textDecoration: 'none', display: 'block' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#6366f1', letterSpacing: '-0.02em', marginTop: '10px' }}>LocalLoop</div>
-          <div style={{ fontSize: 9, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginTop: 2 }}>Relocation Concierge</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.02em', marginTop: '10px' }}>LocalLoop</div>
+          <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginTop: 2 }}>Relocation Concierge</div>
         </Link>
 
         {/* Nav Items */}
@@ -82,7 +82,7 @@ export default function Navbar() {
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
                 borderRadius: 12, fontSize: 13, fontWeight: active ? 600 : 500,
-                color: active ? '#6366f1' : '#64748b',
+                color: active ? 'var(--primary)' : '#64748b',
                 background: active ? 'rgba(99,102,241,0.08)' : 'transparent',
                 textDecoration: 'none', position: 'relative', transition: 'all 0.15s',
               }}>
@@ -90,7 +90,7 @@ export default function Navbar() {
                 {item.label}
                 {active && <div style={{
                   position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                  width: 3, height: 20, borderRadius: '3px 0 0 3px', background: '#6366f1',
+                  width: 3, height: 20, borderRadius: '3px 0 0 3px', background: 'var(--primary)',
                 }} />}
               </Link>
             );
@@ -98,36 +98,36 @@ export default function Navbar() {
         </div>
 
         {/* User + Verification Badge */}
-        <div style={{ padding: '12px', borderTop: '1px solid #e5e7ee' }}>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px' }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
-              background: 'rgba(99,102,241,0.1)', color: '#6366f1', flexShrink: 0,
+              background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', flexShrink: 0,
             }}>{(user?.name || 'U').charAt(0)}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontSize: 14, fontWeight: 600, color: '#1a1a2e',
+                fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
                 display: 'flex', alignItems: 'center', gap: 4,
               }}>
                 {user?.name || 'User'}
                 {user?.isVerified && (
                   <span style={{
-                    width: 14, height: 14, borderRadius: '50%', background: '#10b981',
+                    width: 14, height: 14, borderRadius: '50%', background: 'var(--success)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 8, color: '#fff', flexShrink: 0,
                   }}>✓</span>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: '#94a3b8' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 {isAdmin ? 'Admin' : user?.isVerified ? 'Verified' : 'Unverified'}
               </div>
             </div>
           </div>
           <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-            width: '100%', fontSize: 12, color: '#ef4444', background: 'none',
+            width: '100%', fontSize: 12, color: 'var(--danger)', background: 'none',
             border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', borderRadius: 8,
           }}>
             <LogOut size={14} /> Logout
@@ -178,13 +178,13 @@ export default function Navbar() {
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500">
           <Menu size={22} />
         </button>
-        <Link href="/dashboard" style={{ fontSize: 18, fontWeight: 800, color: '#6366f1', textDecoration: 'none', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>LocalLoop</Link>
+        <Link href="/dashboard" style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)', textDecoration: 'none', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>LocalLoop</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/notifications"><Bell size={20} style={{ color: '#64748b' }} /></Link>
           <Link href="/profile" style={{
             width: 32, height: 32, borderRadius: '50%', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-            background: '#6366f1', color: '#fff', textDecoration: 'none'
+            background: 'var(--primary)', color: '#fff', textDecoration: 'none'
           }}>{(user?.name || 'U').charAt(0)}</Link>
         </div>
       </nav>
@@ -192,7 +192,7 @@ export default function Navbar() {
       {/* ─── Mobile Bottom Nav (Optional overlay navigation layer) ─── */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, height: 64,
-        background: '#fff', borderTop: '1px solid #e5e7ee', zIndex: 50,
+        background: 'var(--bg-card)', borderTop: '1px solid var(--border)', zIndex: 50,
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         paddingBottom: 'env(safe-area-inset-bottom, 4px)',
       }} className="lg:!hidden">
@@ -202,7 +202,7 @@ export default function Navbar() {
           return (
             <Link key={item.href} href={item.href} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-              color: active ? '#6366f1' : '#94a3b8', fontSize: 10, fontWeight: 500,
+              color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10, fontWeight: 500,
               textDecoration: 'none',
             }}>
               <Icon size={20} />

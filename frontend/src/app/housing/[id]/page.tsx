@@ -95,9 +95,9 @@ export default function HousingDetailPage() {
   if (loading) {
     return (
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
-        <div style={{ height: '350px', borderRadius: '20px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '24px' }} />
-        <div style={{ height: '24px', width: '300px', borderRadius: '10px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '12px' }} />
-        <div style={{ height: '18px', width: '200px', borderRadius: '8px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />
+        <div style={{ height: '350px', borderRadius: '20px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '24px' }} />
+        <div style={{ height: '24px', width: '300px', borderRadius: '10px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '12px' }} />
+        <div style={{ height: '18px', width: '200px', borderRadius: '8px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function HousingDetailPage() {
       {/* ══════════ Back Button ══════════ */}
       <button onClick={() => router.back()} style={{
         display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500,
-        color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer',
+        color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Inter, sans-serif', marginBottom: '20px',
       }}>
         <ArrowLeft size={18} /> Back to listings
@@ -148,15 +148,15 @@ export default function HousingDetailPage() {
             <span style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700,
-              background: 'rgba(255,255,255,0.92)', color: '#10b981', backdropFilter: 'blur(4px)',
+              background: 'rgba(255,255,255,0.92)', color: 'var(--success)', backdropFilter: 'blur(4px)',
             }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }} />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />
               WOMEN SAFE
             </span>
           )}
           <span style={{
             padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700,
-            background: 'rgba(255,255,255,0.92)', color: '#1a1a2e', backdropFilter: 'blur(4px)',
+            background: 'rgba(255,255,255,0.92)', color: 'var(--text-primary)', backdropFilter: 'blur(4px)',
           }}>{h.type?.replace('_', ' ')}</span>
         </div>
 
@@ -165,8 +165,8 @@ export default function HousingDetailPage() {
           position: 'absolute', top: '16px', right: '16px',
           width: '42px', height: '42px', borderRadius: '12px', display: 'flex',
           alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          background: saved ? '#6366f1' : 'rgba(255,255,255,0.92)',
-          color: saved ? '#fff' : '#94a3b8',
+          background: saved ? 'var(--primary)' : 'rgba(255,255,255,0.92)',
+          color: saved ? '#fff' : 'var(--text-muted)',
           border: 'none', backdropFilter: 'blur(4px)', transition: 'all 0.2s',
         }}>
           <Heart size={18} fill={saved ? '#fff' : 'none'} />
@@ -179,14 +179,14 @@ export default function HousingDetailPage() {
               position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
               width: '36px', height: '36px', borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              background: 'rgba(255,255,255,0.85)', border: 'none', color: '#1a1a2e',
+              background: 'rgba(255,255,255,0.85)', border: 'none', color: 'var(--text-primary)',
               backdropFilter: 'blur(4px)',
             }}><ChevronLeft size={18} /></button>
             <button onClick={() => setActiveImage((i) => (i + 1) % images.length)} style={{
               position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
               width: '36px', height: '36px', borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              background: 'rgba(255,255,255,0.85)', border: 'none', color: '#1a1a2e',
+              background: 'rgba(255,255,255,0.85)', border: 'none', color: 'var(--text-primary)',
               backdropFilter: 'blur(4px)',
             }}><ChevronRight size={18} /></button>
             {/* Dots */}
@@ -212,10 +212,10 @@ export default function HousingDetailPage() {
 
         {/* ── Left Column ── */}
         <div>
-          <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#1a1a2e', marginBottom: '6px' }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
             {h.title}
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#94a3b8', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '18px' }}>
             <MapPin size={15} /> {h.area || h.address}, {h.city}
           </div>
 
@@ -227,15 +227,15 @@ export default function HousingDetailPage() {
             <div>
               <span style={{
                 fontSize: '32px', fontWeight: 800,
-                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>₹{h.rent?.toLocaleString()}</span>
-              <span style={{ fontSize: '14px', color: '#94a3b8' }}>/month</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/month</span>
             </div>
             {h.deposit && (
               <div style={{
-                padding: '5px 14px', borderRadius: '10px', background: '#f8f9fc',
-                fontSize: '13px', color: '#475569', border: '1px solid #e5e7ee',
+                padding: '5px 14px', borderRadius: '10px', background: 'var(--bg-primary)',
+                fontSize: '13px', color: 'var(--text-secondary)', border: '1px solid var(--border)',
               }}>
                 Deposit: <strong>₹{h.deposit?.toLocaleString()}</strong>
               </div>
@@ -244,10 +244,10 @@ export default function HousingDetailPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '5px 14px', borderRadius: '10px', background: '#fffbeb',
-                fontSize: '13px', fontWeight: 600, color: '#f59e0b',
+                fontSize: '13px', fontWeight: 600, color: 'var(--warning)',
                 border: '1px solid #fde68a',
               }}>
-                <Star size={14} fill="#f59e0b" /> {h.avgRating} ({h.reviews?.length || 0} reviews)
+                <Star size={14} fill="var(--warning)" /> {h.avgRating} ({h.reviews?.length || 0} reviews)
               </div>
             )}
           </div>
@@ -256,21 +256,21 @@ export default function HousingDetailPage() {
           {(h.beds > 0 || h.baths > 0 || h.sqft > 0) && (
             <div style={{
               display: 'flex', gap: '20px', padding: '16px 20px', borderRadius: '14px',
-              background: '#f8f9fc', marginBottom: '24px', border: '1px solid #e5e7ee',
+              background: 'var(--bg-primary)', marginBottom: '24px', border: '1px solid var(--border)',
             }}>
               {h.beds > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569' }}>
-                  <BedDouble size={18} style={{ color: '#6366f1' }} /> {h.beds} Bedroom{h.beds > 1 ? 's' : ''}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <BedDouble size={18} style={{ color: 'var(--primary)' }} /> {h.beds} Bedroom{h.beds > 1 ? 's' : ''}
                 </div>
               )}
               {h.baths > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569' }}>
-                  <Bath size={18} style={{ color: '#06b6d4' }} /> {h.baths} Bathroom{h.baths > 1 ? 's' : ''}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <Bath size={18} style={{ color: 'var(--accent)' }} /> {h.baths} Bathroom{h.baths > 1 ? 's' : ''}
                 </div>
               )}
               {h.sqft > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569' }}>
-                  <Maximize2 size={18} style={{ color: '#10b981' }} /> {h.sqft} sq ft
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <Maximize2 size={18} style={{ color: 'var(--success)' }} /> {h.sqft} sq ft
                 </div>
               )}
             </div>
@@ -278,30 +278,30 @@ export default function HousingDetailPage() {
 
           {/* About */}
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee', marginBottom: '20px',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)', marginBottom: '20px',
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '12px' }}>About</h3>
-            <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.7 }}>{h.description}</p>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>About</h3>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>{h.description}</p>
           </div>
 
           {/* Amenities */}
           {h.amenities?.length > 0 && (
             <div style={{
-              background: '#fff', borderRadius: '18px', padding: '22px',
-              border: '1px solid #e5e7ee', marginBottom: '20px',
+              background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+              border: '1px solid var(--border)', marginBottom: '20px',
             }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '14px' }}>Amenities</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px' }}>Amenities</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
                 {h.amenities.map((a: string) => {
                   const AIcon = amenityIcons[a] || CheckCircle2;
                   return (
                     <div key={a} style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
-                      padding: '10px 14px', borderRadius: '12px', background: '#f8f9fc',
-                      fontSize: '13px', color: '#475569', fontWeight: 500,
+                      padding: '10px 14px', borderRadius: '12px', background: 'var(--bg-primary)',
+                      fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500,
                     }}>
-                      <AIcon size={16} style={{ color: '#6366f1', flexShrink: 0 }} /> {a}
+                      <AIcon size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} /> {a}
                     </div>
                   );
                 })}
@@ -311,17 +311,17 @@ export default function HousingDetailPage() {
 
           {/* Reviews */}
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)',
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '18px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '18px' }}>
               Reviews ({h.reviews?.length || 0})
             </h3>
             {h.reviews?.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {h.reviews.map((r: any, idx: number) => (
                   <div key={r.id} style={{
-                    padding: '16px', borderRadius: '14px', background: '#f8f9fc',
+                    padding: '16px', borderRadius: '14px', background: 'var(--bg-primary)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                       <div style={{
@@ -331,34 +331,34 @@ export default function HousingDetailPage() {
                         color: '#fff',
                       }}>{r.user?.name?.charAt(0)}</div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{r.user?.name}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.user?.name}</p>
                         <div style={{ display: 'flex', gap: '2px' }}>
                           {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} size={12} fill={s <= r.rating ? '#fbbf24' : 'none'} style={{ color: s <= r.rating ? '#fbbf24' : '#e5e7ee' }} />
+                            <Star key={s} size={12} fill={s <= r.rating ? '#fbbf24' : 'none'} style={{ color: s <= r.rating ? '#fbbf24' : 'var(--border)' }} />
                           ))}
                         </div>
                       </div>
                     </div>
-                    <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{r.review}</p>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{r.review}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
                 No reviews yet. Be the first to share your experience!
               </p>
             )}
 
             {/* Write Review */}
             {isAuthenticated && (
-              <form onSubmit={handleReview} style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid #e5e7ee' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '12px' }}>Write a Review</h4>
+              <form onSubmit={handleReview} style={{ marginTop: '20px', paddingTop: '18px', borderTop: '1px solid var(--border)' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>Write a Review</h4>
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
                   {[1, 2, 3, 4, 5].map((s) => (
                     <button type="button" key={s} onClick={() => setReviewForm({ ...reviewForm, rating: s })} style={{
                       background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
                     }}>
-                      <Star size={24} fill={s <= reviewForm.rating ? '#fbbf24' : 'none'} style={{ color: s <= reviewForm.rating ? '#fbbf24' : '#e5e7ee' }} />
+                      <Star size={24} fill={s <= reviewForm.rating ? '#fbbf24' : 'none'} style={{ color: s <= reviewForm.rating ? '#fbbf24' : 'var(--border)' }} />
                     </button>
                   ))}
                 </div>
@@ -369,15 +369,15 @@ export default function HousingDetailPage() {
                   required
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: '12px',
-                    border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: '14px',
+                    border: '1px solid var(--border)', background: 'var(--bg-primary)', fontSize: '14px',
                     outline: 'none', fontFamily: 'Inter, sans-serif', resize: 'none',
-                    color: '#1a1a2e', marginBottom: '12px',
+                    color: 'var(--text-primary)', marginBottom: '12px',
                   }}
                 />
                 <button type="submit" disabled={submitting} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '10px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                  background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                  background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
                   fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
                 }}>
                   <Send size={14} /> {submitting ? 'Submitting...' : 'Submit Review'}
@@ -390,27 +390,27 @@ export default function HousingDetailPage() {
         {/* ── Right Sidebar: Contact ── */}
         <div>
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee', position: 'sticky', top: '72px',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)', position: 'sticky', top: '72px',
             boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '18px' }}>Contact</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '18px' }}>Contact</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {h.contactPhone && (
                 <a href={`tel:${h.contactPhone}`} style={{
                   display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
-                  borderRadius: '14px', background: '#f8f9fc', textDecoration: 'none',
-                  color: '#1a1a2e', fontSize: '14px', fontWeight: 500, transition: 'all 0.15s',
+                  borderRadius: '14px', background: 'var(--bg-primary)', textDecoration: 'none',
+                  color: 'var(--text-primary)', fontSize: '14px', fontWeight: 500, transition: 'all 0.15s',
                   border: '1px solid transparent',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.background = 'rgba(16,185,129,0.04)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#f8f9fc'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--success)'; e.currentTarget.style.background = 'rgba(16,185,129,0.04)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'var(--bg-primary)'; }}
                 >
                   <div style={{
                     width: '38px', height: '38px', borderRadius: '10px', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', background: 'rgba(16,185,129,0.1)',
                   }}>
-                    <Phone size={18} style={{ color: '#10b981' }} />
+                    <Phone size={18} style={{ color: 'var(--success)' }} />
                   </div>
                   {h.contactPhone}
                 </a>
@@ -418,18 +418,18 @@ export default function HousingDetailPage() {
               {h.contactEmail && (
                 <a href={`mailto:${h.contactEmail}`} style={{
                   display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
-                  borderRadius: '14px', background: '#f8f9fc', textDecoration: 'none',
-                  color: '#1a1a2e', fontSize: '14px', fontWeight: 500, transition: 'all 0.15s',
+                  borderRadius: '14px', background: 'var(--bg-primary)', textDecoration: 'none',
+                  color: 'var(--text-primary)', fontSize: '14px', fontWeight: 500, transition: 'all 0.15s',
                   border: '1px solid transparent',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.background = 'rgba(99,102,241,0.04)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#f8f9fc'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'rgba(99,102,241,0.04)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'var(--bg-primary)'; }}
                 >
                   <div style={{
                     width: '38px', height: '38px', borderRadius: '10px', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', background: 'rgba(99,102,241,0.1)',
                   }}>
-                    <Mail size={18} style={{ color: '#6366f1' }} />
+                    <Mail size={18} style={{ color: 'var(--primary)' }} />
                   </div>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.contactEmail}</span>
                 </a>
@@ -438,7 +438,7 @@ export default function HousingDetailPage() {
               {inquirySent ? (
                 <div style={{
                   padding: '14px', borderRadius: '14px', background: 'rgba(16,185,129,0.1)',
-                  color: '#10b981', fontSize: '14px', fontWeight: 600, textAlign: 'center', marginTop: '6px',
+                  color: 'var(--success)', fontSize: '14px', fontWeight: 600, textAlign: 'center', marginTop: '6px',
                 }}>
                   <CheckCircle2 size={18} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} />
                   Message Sent
@@ -450,8 +450,8 @@ export default function HousingDetailPage() {
                     value={inquiryMsg}
                     onChange={(e) => setInquiryMsg(e.target.value)}
                     style={{
-                      width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7ee',
-                      background: '#f8f9fc', fontSize: '13px', outline: 'none', color: '#1a1a2e',
+                      width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)',
+                      background: 'var(--bg-primary)', fontSize: '13px', outline: 'none', color: 'var(--text-primary)',
                       fontFamily: 'Inter, sans-serif', resize: 'none', marginBottom: '8px',
                     }}
                     required
@@ -459,11 +459,11 @@ export default function HousingDetailPage() {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button type="button" onClick={() => setShowInquiryForm(false)} style={{
                       flex: 1, padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: '#f8f9fc', color: '#475569', border: '1px solid #e5e7ee', cursor: 'pointer',
+                      background: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)', cursor: 'pointer',
                     }}>Cancel</button>
                     <button type="submit" disabled={sendingInquiry} style={{
                       flex: 2, padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                      background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
                     }}>{sendingInquiry ? 'Sending...' : 'Send to Owner'}</button>
                   </div>
                 </form>
@@ -471,7 +471,7 @@ export default function HousingDetailPage() {
                 <button onClick={() => setShowInquiryForm(true)} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   width: '100%', padding: '13px', borderRadius: '14px', fontSize: '14px', fontWeight: 600,
-                  background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
+                  background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
                   fontFamily: 'Inter, sans-serif', marginTop: '6px',
                   boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
                 }}
@@ -485,11 +485,11 @@ export default function HousingDetailPage() {
 
             <div style={{
               marginTop: '18px', padding: '14px 16px', borderRadius: '14px',
-              background: '#f8f9fc', fontSize: '12px', color: '#94a3b8',
+              background: 'var(--bg-primary)', fontSize: '12px', color: 'var(--text-muted)',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
               <Building2 size={14} style={{ flexShrink: 0 }} />
-              Listed by <strong style={{ color: '#475569' }}>{h.createdBy?.name}</strong>
+              Listed by <strong style={{ color: 'var(--text-secondary)' }}>{h.createdBy?.name}</strong>
             </div>
           </div>
         </div>

@@ -11,25 +11,25 @@ import {
 
 const demoNotifications = [
   {
-    id: 1, type: 'message', icon: MessageCircle, color: '#6366f1',
+    id: 1, type: 'message', icon: MessageCircle, color: 'var(--primary)',
     title: 'New message from Vikram Singh',
     description: 'Looking forward to our coffee chat about Pune housing!',
     time: '2 min ago', unread: true, link: '/chat',
   },
   {
-    id: 2, type: 'housing', icon: Building2, color: '#10b981',
+    id: 2, type: 'housing', icon: Building2, color: 'var(--success)',
     title: 'New Women-Safe listing in Hinjewadi',
     description: 'Skyline Residency — a verified 1 BHK matching your preferences is now available.',
     time: '1h ago', unread: true, link: '/housing',
   },
   {
-    id: 3, type: 'community', icon: Users, color: '#06b6d4',
+    id: 3, type: 'community', icon: Users, color: 'var(--accent)',
     title: 'You were mentioned in PCU Students',
     description: 'Rahul Sharma tagged you in a discussion about coworking spaces.',
     time: '3h ago', unread: true, link: '/communities',
   },
   {
-    id: 4, type: 'reputation', icon: Trophy, color: '#f59e0b',
+    id: 4, type: 'reputation', icon: Trophy, color: 'var(--warning)',
     title: 'Reputation milestone reached!',
     description: 'You earned 50 points and unlocked the Guide badge. Keep going!',
     time: 'Yesterday', unread: false, link: '/profile',
@@ -110,24 +110,24 @@ export default function NotificationsPage() {
           <div style={{
             position: 'relative', display: 'flex', alignItems: 'center',
           }}>
-            <Bell size={26} style={{ color: '#6366f1' }} />
+            <Bell size={26} style={{ color: 'var(--primary)' }} />
             {unreadCount > 0 && (
               <div style={{
                 position: 'absolute', top: '-4px', right: '-6px',
                 width: '18px', height: '18px', borderRadius: '50%',
-                background: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: 700,
+                background: 'var(--danger)', color: '#fff', fontSize: '10px', fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '2px solid #f8f9fc',
+                border: '2px solid var(--bg-primary)',
               }}>{unreadCount}</div>
             )}
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Notifications
           </h1>
         </div>
         {unreadCount > 0 && (
           <button onClick={markAllRead} style={{
-            fontSize: '13px', fontWeight: 600, color: '#6366f1',
+            fontSize: '13px', fontWeight: 600, color: 'var(--primary)',
             background: 'none', border: 'none', cursor: 'pointer',
             fontFamily: 'Inter, sans-serif',
           }}>
@@ -149,8 +149,8 @@ export default function NotificationsPage() {
             style={{
               padding: '8px 18px', borderRadius: '24px', fontSize: '13px', fontWeight: 500,
               cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
-              border: filter === f ? 'none' : '1px solid #e5e7ee',
-              background: filter === f ? '#6366f1' : '#fff',
+              border: filter === f ? 'none' : '1px solid var(--border)',
+              background: filter === f ? 'var(--primary)' : '#fff',
               color: filter === f ? '#fff' : '#64748b',
               transition: 'all 0.15s',
               boxShadow: filter === f ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
               <span style={{
                 marginLeft: '6px', fontSize: '10px', fontWeight: 700,
                 background: filter === f ? 'rgba(255,255,255,0.3)' : 'rgba(99,102,241,0.1)',
-                color: filter === f ? '#fff' : '#6366f1',
+                color: filter === f ? '#fff' : 'var(--primary)',
                 padding: '2px 6px', borderRadius: '10px',
               }}>{unreadCount}</span>
             )}
@@ -180,7 +180,7 @@ export default function NotificationsPage() {
                 display: 'flex', alignItems: 'flex-start', gap: '14px',
                 padding: '16px 18px', borderRadius: '16px',
                 background: notif.unread ? 'rgba(99, 102, 241, 0.03)' : '#fff',
-                border: notif.unread ? '1px solid rgba(99,102,241,0.2)' : '1px solid #f0f1f5',
+                border: notif.unread ? '1px solid rgba(99,102,241,0.2)' : '1px solid var(--border-light)',
                 cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)'; }}
@@ -201,16 +201,16 @@ export default function NotificationsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                   <p style={{
                     fontSize: '14px', fontWeight: notif.unread ? 600 : 500,
-                    color: '#1a1a2e', margin: 0,
+                    color: 'var(--text-primary)', margin: 0,
                   }}>{notif.title}</p>
                   {notif.unread && (
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%',
-                      background: '#6366f1', flexShrink: 0,
+                      background: 'var(--primary)', flexShrink: 0,
                     }} />
                   )}
                 </div>
-                <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 4px 0', lineHeight: 1.4 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 4px 0', lineHeight: 1.4 }}>
                   {notif.description}
                 </p>
                 <p style={{ fontSize: '11px', color: '#cbd5e1', margin: 0, fontWeight: 500 }}>
@@ -227,7 +227,7 @@ export default function NotificationsPage() {
                     padding: '4px', borderRadius: '6px', transition: 'color 0.15s',
                     display: 'flex', alignItems: 'center',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#94a3b8'}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                   onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
                 >
                   <X size={14} />
@@ -248,7 +248,7 @@ export default function NotificationsPage() {
       {filtered.length === 0 && (
         <div style={{
           textAlign: 'center', padding: '60px 24px',
-          background: '#fff', borderRadius: '18px', border: '1px solid #f0f1f5',
+          background: 'var(--bg-card)', borderRadius: '18px', border: '1px solid var(--border-light)',
         }}>
           <div style={{
             width: '70px', height: '70px', borderRadius: '20px', display: 'flex',
@@ -257,10 +257,10 @@ export default function NotificationsPage() {
           }}>
             <Bell size={32} style={{ color: '#cbd5e1' }} />
           </div>
-          <p style={{ fontWeight: 600, fontSize: '16px', color: '#1a1a2e', marginBottom: '4px' }}>
+          <p style={{ fontWeight: 600, fontSize: '16px', color: 'var(--text-primary)', marginBottom: '4px' }}>
             All caught up!
           </p>
-          <p style={{ fontSize: '14px', color: '#94a3b8' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
             No notifications to show.
           </p>
         </div>

@@ -183,7 +183,7 @@ export default function CommunityDetailPage() {
       {isAuthenticated && (
         <div style={{
           display: 'flex', gap: '4px', marginBottom: '20px',
-          background: '#f8f9fc', borderRadius: '12px', padding: '4px',
+          background: 'var(--bg-primary)', borderRadius: '12px', padding: '4px',
           overflowX: 'auto', WebkitOverflowScrolling: 'touch',
         }}>
           {[
@@ -203,7 +203,7 @@ export default function CommunityDetailPage() {
                   padding: '10px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
                   border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   background: active ? '#fff' : 'transparent',
-                  color: active ? '#6366f1' : '#94a3b8',
+                  color: active ? 'var(--primary)' : 'var(--text-muted)',
                   boxShadow: active ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   transition: 'all 0.2s',
                 }}
@@ -310,10 +310,10 @@ export default function CommunityDetailPage() {
             padding: '14px 20px', borderBottom: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', gap: '10px',
           }}>
-            <MessagesSquare size={18} style={{ color: '#6366f1' }} />
+            <MessagesSquare size={18} style={{ color: 'var(--primary)' }} />
             <div>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>Group Chat</span>
-              <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Group Chat</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
                 {community._count?.members || community.memberCount} members
               </span>
             </div>
@@ -325,11 +325,11 @@ export default function CommunityDetailPage() {
             display: 'flex', flexDirection: 'column', gap: '12px',
           }}>
             {chatLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                 Loading messages...
               </div>
             ) : chatMessages.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                 <MessagesSquare size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
                 <p style={{ fontSize: '14px', fontWeight: 500 }}>No messages yet</p>
                 <p style={{ fontSize: '12px' }}>Be the first to say something!</p>
@@ -347,7 +347,7 @@ export default function CommunityDetailPage() {
                         width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
-                        fontSize: '12px', fontWeight: 700, color: '#6366f1',
+                        fontSize: '12px', fontWeight: 700, color: 'var(--primary)',
                         alignSelf: 'flex-end',
                       }}>
                         {(msg.user?.name || '?').charAt(0).toUpperCase()}
@@ -355,24 +355,24 @@ export default function CommunityDetailPage() {
                     )}
                     <div style={{ maxWidth: '70%' }}>
                       {!isMe && (
-                        <p style={{ fontSize: '11px', fontWeight: 600, color: '#6366f1', marginBottom: '4px', marginLeft: '4px' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px', marginLeft: '4px' }}>
                           {msg.user?.name}
                         </p>
                       )}
                       <div style={{
                         padding: '10px 16px', fontSize: '14px', lineHeight: 1.5,
                         background: isMe
-                          ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
+                          ? 'linear-gradient(135deg, var(--primary), var(--primary-dark))'
                           : '#fff',
-                        color: isMe ? '#fff' : '#1a1a2e',
+                        color: isMe ? '#fff' : 'var(--text-primary)',
                         borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                        border: isMe ? 'none' : '1px solid #f0f1f5',
+                        border: isMe ? 'none' : '1px solid var(--border-light)',
                         boxShadow: isMe ? '0 2px 8px rgba(99,102,241,0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                       }}>
                         {msg.content}
                       </div>
                       <p style={{
-                        fontSize: '10px', color: '#94a3b8', marginTop: '4px',
+                        fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px',
                         textAlign: isMe ? 'right' : 'left',
                       }}>
                         {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -396,28 +396,28 @@ export default function CommunityDetailPage() {
                 onChange={(e) => setNewChatMsg(e.target.value)}
                 placeholder="Type a message..."
                 style={{
-                  flex: 1, background: '#f8f9fc', border: '1px solid #e5e7ee',
+                  flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--border)',
                   borderRadius: '12px', padding: '10px 16px', fontSize: '14px',
-                  outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+                  outline: 'none', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif',
                 }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#6366f1'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7ee'}
+                onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
               />
               <button type="submit" disabled={!newChatMsg.trim() || sendingChat} style={{
                 width: '40px', height: '40px', borderRadius: '50%', display: 'flex',
                 alignItems: 'center', justifyContent: 'center', border: 'none',
                 cursor: newChatMsg.trim() ? 'pointer' : 'default',
                 background: newChatMsg.trim()
-                  ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
-                  : '#e5e7ee',
+                  ? 'linear-gradient(135deg, var(--primary), var(--primary-dark))'
+                  : 'var(--border)',
                 color: '#fff',
                 boxShadow: newChatMsg.trim() ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
                 transition: 'all 0.2s',
               }}><Send size={16} /></button>
             </form>
           ) : (
-            <div style={{ padding: '14px 20px', textAlign: 'center', fontSize: '13px', color: '#94a3b8', borderTop: '1px solid var(--border)' }}>
-              <Link href="/login" style={{ color: '#6366f1', fontWeight: 600 }}>Log in</Link> to join the conversation
+            <div style={{ padding: '14px 20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)', borderTop: '1px solid var(--border)' }}>
+              <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>Log in</Link> to join the conversation
             </div>
           )}
         </div>

@@ -49,7 +49,7 @@ function ChatInner() {
         'linear-gradient(135deg, #c4b5fd, #a78bfa)',
         'linear-gradient(135deg, #93c5fd, #60a5fa)',
         'linear-gradient(135deg, #fca5a5, #f87171)',
-        'linear-gradient(135deg, #fcd34d, #f59e0b)',
+        'linear-gradient(135deg, #fcd34d, var(--warning))',
       ];
 
       const mappedDirect = convs.map((c: any, i: number) => ({
@@ -72,7 +72,7 @@ function ChatInner() {
           msg: 'Group chat',
           unread: 0,
           initials: comm.name?.substring(0, 2).toUpperCase() || 'G',
-          avatarGrad: 'linear-gradient(135deg, #6ee7b7, #10b981)',
+          avatarGrad: 'linear-gradient(135deg, #6ee7b7, var(--success))',
         };
       });
 
@@ -278,17 +278,17 @@ function ChatInner() {
       {/* ══════════ CONVERSATIONS SIDEBAR ══════════ */}
       <div style={{
         width: 340, flexShrink: 0, flexDirection: 'column', display: selected ? 'none' : 'flex',
-        borderRight: '1px solid #e5e7ee', background: '#fff',
+        borderRight: '1px solid var(--border)', background: 'var(--bg-card)',
       }} className="md-always-flex">
         <div style={{ padding: '20px 18px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e', margin: 0 }}>Messages</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Messages</h2>
             <button
               onClick={() => setShowNewChat(true)}
               title="New Conversation"
               style={{
                 width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
@@ -302,7 +302,7 @@ function ChatInner() {
               <button key={t} onClick={() => setTab(t)} style={{
                 padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
                 border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                background: tab === t ? '#6366f1' : '#f0f1f5',
+                background: tab === t ? 'var(--primary)' : 'var(--border-light)',
                 color: tab === t ? '#fff' : '#64748b', transition: 'all 0.15s',
               }}>{t}</button>
             ))}
@@ -311,7 +311,7 @@ function ChatInner() {
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {filteredConvs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 24px', color: '#94a3b8' }}>
+            <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
               <MessageCircle size={32} style={{ margin: '0 auto 12px' }} />
               <p style={{ fontSize: 14, fontWeight: 500 }}>No conversations yet</p>
               <p style={{ fontSize: 12, marginTop: 4 }}>Tap + to start a new chat</p>
@@ -324,7 +324,7 @@ function ChatInner() {
                 width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
-                borderLeft: isActive ? '3px solid #6366f1' : '3px solid transparent',
+                borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
                 transition: 'all 0.1s',
               }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -333,16 +333,16 @@ function ChatInner() {
                     alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700,
                     background: c.avatarGrad, color: '#fff',
                   }}>{c.initials}</div>
-                  {c.online && <div style={{ position: 'absolute', bottom: 1, right: 1, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2.5px solid #fff' }} />}
+                  {c.online && <div style={{ position: 'absolute', bottom: 1, right: 1, width: 12, height: 12, borderRadius: '50%', background: 'var(--success)', border: '2.5px solid #fff' }} />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>{c.name}</span>
-                    {c.group && <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '1px 6px', borderRadius: 4 }}>GROUP</span>}
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</span>
+                    {c.group && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '1px 6px', borderRadius: 4 }}>GROUP</span>}
                   </div>
-                  <p style={{ fontSize: 12, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.msg}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.msg}</p>
                 </div>
-                {c.unread > 0 && <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: '#6366f1', color: '#fff', flexShrink: 0 }}>{c.unread}</div>}
+                {c.unread > 0 && <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: 'var(--primary)', color: '#fff', flexShrink: 0 }}>{c.unread}</div>}
               </button>
             );
           })}
@@ -350,22 +350,22 @@ function ChatInner() {
       </div>
 
       {/* ══════════ CHAT AREA ══════════ */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f8f9fc', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', minWidth: 0 }}>
         {activeConv ? (
           <>
             {/* Header */}
-            <div style={{ padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderBottom: '1px solid #e5e7ee' }}>
+            <div style={{ padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><ArrowLeft size={20} /></button>
                 <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, background: activeConv.avatarGrad, color: '#fff' }}>{activeConv.initials}</div>
                 <div>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e', margin: 0 }}>{activeConv.name}</p>
-                  {typingState && <p style={{ fontSize: 11, color: '#10b981', margin: 0 }}>typing…</p>}
+                  <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{activeConv.name}</p>
+                  {typingState && <p style={{ fontSize: 11, color: 'var(--success)', margin: 0 }}>typing…</p>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {[Video, Phone, MoreVertical].map((Icon, i) => (
-                  <button key={i} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 8, borderRadius: 10 }}><Icon size={18} /></button>
+                  <button key={i} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 8, borderRadius: 10 }}><Icon size={18} /></button>
                 ))}
               </div>
             </div>
@@ -373,7 +373,7 @@ function ChatInner() {
             {/* Messages */}
             <div style={{ flex: 1, overflow: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {messages.length === 0 && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: '#94a3b8' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: 'var(--text-muted)' }}>
                   <MessageCircle size={36} style={{ opacity: 0.4 }} />
                   <p style={{ fontSize: 14, fontWeight: 500 }}>No messages yet</p>
                   <p style={{ fontSize: 12 }}>Say hi to {activeConv.name}! 👋</p>
@@ -392,14 +392,14 @@ function ChatInner() {
                     )}
                     <div style={{
                       padding: '12px 16px', fontSize: 14, lineHeight: 1.55,
-                      background: m.mine ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#fff',
-                      color: m.mine ? '#fff' : '#1a1a2e',
+                      background: m.mine ? 'linear-gradient(135deg, var(--primary), var(--primary-dark))' : '#fff',
+                      color: m.mine ? '#fff' : 'var(--text-primary)',
                       borderRadius: m.mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                      border: m.mine ? 'none' : '1px solid #f0f1f5',
+                      border: m.mine ? 'none' : '1px solid var(--border-light)',
                     }}>{m.text}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#94a3b8', marginTop: 4, justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)', marginTop: 4, justifyContent: m.mine ? 'flex-end' : 'flex-start' }}>
                       {m.time}
-                      {m.mine && m.read && <CheckCheck size={12} style={{ color: '#6366f1' }} />}
+                      {m.mine && m.read && <CheckCheck size={12} style={{ color: 'var(--primary)' }} />}
                       {m.mine && !m.read && <Check size={12} />}
                     </div>
                   </div>
@@ -408,8 +408,8 @@ function ChatInner() {
               {typingState && (
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: activeConv.avatarGrad, color: '#fff', alignSelf: 'flex-end', flexShrink: 0 }}>{activeConv.initials.charAt(0)}</div>
-                  <div style={{ padding: '12px 18px', background: '#fff', borderRadius: '18px 18px 18px 4px', border: '1px solid #f0f1f5', display: 'flex', gap: 4, alignItems: 'center' }}>
-                    {[0, 1, 2].map((i) => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#94a3b8', animation: `typingBounce 1.4s infinite ${i * 0.15}s` }} />)}
+                  <div style={{ padding: '12px 18px', background: 'var(--bg-card)', borderRadius: '18px 18px 18px 4px', border: '1px solid var(--border-light)', display: 'flex', gap: 4, alignItems: 'center' }}>
+                    {[0, 1, 2].map((i) => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-muted)', animation: `typingBounce 1.4s infinite ${i * 0.15}s` }} />)}
                   </div>
                 </div>
               )}
@@ -417,15 +417,15 @@ function ChatInner() {
             </div>
 
             {/* Input */}
-            <form onSubmit={send} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, background: '#fff', borderTop: '1px solid #e5e7ee' }}>
-              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><Mic size={19} /></button>
-              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><Smile size={19} /></button>
+            <form onSubmit={send} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><Mic size={19} /></button>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><Smile size={19} /></button>
               <input
                 value={newMsg} onChange={handleTyping}
                 placeholder={`Message ${activeConv.name}…`}
-                style={{ flex: 1, background: '#f8f9fc', border: '1px solid #e5e7ee', borderRadius: 14, padding: '10px 16px', fontSize: 14, outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif' }}
+                style={{ flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 14, padding: '10px 16px', fontSize: 14, outline: 'none', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
               />
-              <button type="submit" disabled={!newMsg.trim()} style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: newMsg.trim() ? 'pointer' : 'default', background: newMsg.trim() ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#e5e7ee', color: '#fff', transition: 'all 0.15s' }}>
+              <button type="submit" disabled={!newMsg.trim()} style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: newMsg.trim() ? 'pointer' : 'default', background: newMsg.trim() ? 'linear-gradient(135deg, var(--primary), var(--primary-dark))' : 'var(--border)', color: '#fff', transition: 'all 0.15s' }}>
                 <Send size={15} />
               </button>
             </form>
@@ -433,13 +433,13 @@ function ChatInner() {
         ) : (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
             <div style={{ width: 80, height: 80, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(99,102,241,0.08)', marginBottom: 16 }}>
-              <MessageCircle size={36} style={{ color: '#6366f1' }} />
+              <MessageCircle size={36} style={{ color: 'var(--primary)' }} />
             </div>
-            <p style={{ fontWeight: 600, fontSize: 18, color: '#1a1a2e', marginBottom: 4 }}>Select a conversation</p>
-            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>Or start a new one</p>
+            <p style={{ fontWeight: 600, fontSize: 18, color: 'var(--text-primary)', marginBottom: 4 }}>Select a conversation</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>Or start a new one</p>
             <button
               onClick={() => setShowNewChat(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: '#6366f1', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}
             >
               <Plus size={16} /> New Conversation
             </button>
@@ -450,46 +450,46 @@ function ChatInner() {
       {/* ══════════ NEW CONVERSATION MODAL ══════════ */}
       {showNewChat && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowNewChat(false)}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: 420, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 24, width: 420, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a2e', margin: 0 }}>New Conversation</h3>
-              <button onClick={() => setShowNewChat(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={20} /></button>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>New Conversation</h3>
+              <button onClick={() => setShowNewChat(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
             </div>
 
             <div style={{ position: 'relative', marginBottom: 14 }}>
-              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 autoFocus
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 placeholder="Search people by name or company…"
-                style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1px solid #e5e7ee', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#f8f9fc', color: '#1a1a2e', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
               />
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {searchLoading && <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Searching…</p>}
+              {searchLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Searching…</p>}
               {!searchLoading && userSearch && userResults.length === 0 && (
-                <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>No users found</p>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No users found</p>
               )}
               {!searchLoading && !userSearch && (
-                <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '20px 0' }}>Type a name to search for people</p>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '20px 0' }}>Type a name to search for people</p>
               )}
               {userResults.map((u: any) => (
                 <button key={u.id} onClick={() => startConversation(u)} style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
-                  background: '#f8f9fc', border: '1px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  background: 'var(--bg-primary)', border: '1px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   textAlign: 'left', transition: 'all 0.15s',
                 }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f1f5'; e.currentTarget.style.borderColor = '#c7d2fe'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fc'; e.currentTarget.style.borderColor = 'transparent'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-light)'; e.currentTarget.style.borderColor = '#c7d2fe'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.borderColor = 'transparent'; }}
                 >
                   <div style={{ width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)', color: '#fff', flexShrink: 0 }}>
                     {(u.name || '?').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', margin: 0 }}>{u.name}</p>
-                    <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>{u.company || u.university || u.city || ''}</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{u.name}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>{u.company || u.university || u.city || ''}</p>
                   </div>
                 </button>
               ))}
@@ -509,7 +509,7 @@ function ChatInner() {
 /* ── Page wrapper with Suspense (required for useSearchParams) ── */
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: '#94a3b8' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 32, color: 'var(--text-muted)' }}>Loading…</div>}>
       <ChatInner />
     </Suspense>
   );

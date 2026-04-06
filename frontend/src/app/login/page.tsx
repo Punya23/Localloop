@@ -145,7 +145,7 @@ export default function LoginPage() {
               fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
             }}
           >
-            <Shield size={14} style={{ color: '#6366f1' }} />
+            <Shield size={14} style={{ color: 'var(--primary)' }} />
             Admin Login
             {showAdminPanel ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
@@ -170,7 +170,7 @@ export default function LoginPage() {
                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#e0e7ff', margin: 0 }}>
                     Admin Dashboard
                   </p>
-                  <p style={{ fontSize: '11px', color: '#818cf8', margin: 0 }}>
+                  <p style={{ fontSize: '11px', color: 'var(--primary-light)', margin: 0 }}>
                     Authorized personnel only
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export default function LoginPage() {
                   });
               }} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ position: 'relative' }}>
-                  <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#818cf8' }} />
+                  <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-light)' }} />
                   <input
                     type="email"
                     value={adminEmail}
@@ -216,7 +216,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#818cf8' }} />
+                  <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-light)' }} />
                   <input
                     type="password"
                     value={adminPassword}
@@ -244,7 +244,7 @@ export default function LoginPage() {
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     padding: '11px', borderRadius: '12px', fontSize: '13px', fontWeight: 700,
-                    background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
                     color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
                     fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
                     boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',

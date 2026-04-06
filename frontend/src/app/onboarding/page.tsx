@@ -536,7 +536,7 @@ export default function OnboardingPage() {
                   <div className="flex-1">
                     <div className="font-semibold">Enable Women Mode</div>
                     <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Women-only communities, safety tags, women mentor priority</div>
-                    <div className="text-xs mt-1" style={{ color: '#f59e0b' }}>⚠️ Requires ID verification for access</div>
+                    <div className="text-xs mt-1" style={{ color: 'var(--warning)' }}>⚠️ Requires ID verification for access</div>
                   </div>
                   <div className="w-12 h-7 rounded-full transition-all duration-300 relative"
                        style={{ background: form.isWomenMode ? '#ec4899' : 'var(--border)' }}>

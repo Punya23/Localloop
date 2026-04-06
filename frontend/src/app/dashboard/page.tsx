@@ -16,9 +16,9 @@ import {
 
 
 const localityScores = [
-  { label: 'Safety', score: 85, color: '#10b981' },
-  { label: 'Connectivity', score: 72, color: '#6366f1' },
-  { label: 'Food Options', score: 90, color: '#f59e0b' },
+  { label: 'Safety', score: 85, color: 'var(--success)' },
+  { label: 'Connectivity', score: 72, color: 'var(--primary)' },
+  { label: 'Food Options', score: 90, color: 'var(--warning)' },
   { label: 'Nightlife', score: 58, color: '#ec4899' },
 ];
 
@@ -60,14 +60,14 @@ function MiniChart({ data }: { data: { month: string; rent: number }[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height: '90px' }}>
       <defs>
         <linearGradient id="chartGradDash" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6366f1" stopOpacity={0.25} />
-          <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+          <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.25} />
+          <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
         </linearGradient>
       </defs>
       <path d={areaD} fill="url(#chartGradDash)" />
-      <path d={pathD} fill="none" stroke="#6366f1" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={pathD} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
       {points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={3.5} fill="#fff" stroke="#6366f1" strokeWidth={2} />
+        <circle key={i} cx={p.x} cy={p.y} r={3.5} fill="#fff" stroke="var(--primary)" strokeWidth={2} />
       ))}
     </svg>
   );
@@ -94,7 +94,7 @@ export default function DashboardPage() {
   if (!isReady || !user) {
     return (
       <div style={{ padding: '32px' }}>
-        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
+        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
       </div>
     );
   }
@@ -106,16 +106,16 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div style={{ padding: '32px' }}>
-        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
+        <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {[1, 2, 3].map(i => <div key={i} style={{ height: '140px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />)}
+          {[1, 2, 3].map(i => <div key={i} style={{ height: '140px', borderRadius: '16px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-7">
           <div>
-            {[1, 2].map(i => <div key={i} style={{ height: '200px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
+            {[1, 2].map(i => <div key={i} style={{ height: '200px', borderRadius: '16px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
           </div>
           <div>
-            {[1, 2, 3].map(i => <div key={i} style={{ height: '120px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
+            {[1, 2, 3].map(i => <div key={i} style={{ height: '120px', borderRadius: '16px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
           </div>
         </div>
       </div>
@@ -127,18 +127,18 @@ export default function DashboardPage() {
 
       {/* ═══════════ Welcome Section ═══════════ */}
       <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#1a1a2e', marginBottom: '10px' }}>
+        <h1 style={{ fontSize: '30px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px' }}>
           Welcome {userName} 👋
         </h1>
         <Link href="/profile" style={{
           display: 'inline-flex', alignItems: 'center', gap: '10px',
-          padding: '8px 18px', borderRadius: '12px', background: '#fff',
-          border: '1px solid #e5e7ee', fontSize: '13px', color: '#475569',
+          padding: '8px 18px', borderRadius: '12px', background: 'var(--bg-card)',
+          border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text-secondary)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)', textDecoration: 'none',
         }}>
-          <Calendar size={14} style={{ color: '#6366f1' }} />
-          <span>Moving in <strong style={{ color: '#6366f1' }}>{moveMonth}</strong> to <strong style={{ color: '#1a1a2e' }}>{userArea}</strong></span>
-          <span style={{ color: '#94a3b8', display: 'flex' }}>
+          <Calendar size={14} style={{ color: 'var(--primary)' }} />
+          <span>Moving in <strong style={{ color: 'var(--primary)' }}>{moveMonth}</strong> to <strong style={{ color: 'var(--text-primary)' }}>{userArea}</strong></span>
+          <span style={{ color: 'var(--text-muted)', display: 'flex' }}>
             <Pencil size={12} />
           </span>
         </Link>
@@ -153,10 +153,10 @@ export default function DashboardPage() {
           {/* ═══ Recommended For You ═══ */}
           <div style={{ marginBottom: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Recommended for You</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Recommended for You</h2>
               <Link href="#" style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
-                fontSize: '13px', fontWeight: 600, color: '#6366f1', textDecoration: 'none',
+                fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
               }}>
                 <Sparkles size={14} /> AI Insights
               </Link>
@@ -168,7 +168,7 @@ export default function DashboardPage() {
                   icon: Building2,
                   title: `Best PGs under ₹${(user?.budgetMax || 15000) / 1000}k`,
                   subtitle: `Found ${data?.cityStats?.totalListings || 0} matching properties`,
-                  gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  gradient: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
                   href: '/housing',
                 },
                 {
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                   icon: Users,
                   title: `Join ${user?.moveMonth || 'Next'} Movers`,
                   subtitle: `${data?.insights?.movingWithYou || 0} people moving with you`,
-                  gradient: 'linear-gradient(135deg, #10b981, #059669)',
+                  gradient: 'linear-gradient(135deg, var(--success), #059669)',
                   href: '/communities',
                 },
                 {
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                   icon: Heart,
                   title: `${data?.insights?.nearbyAlumni || 0} alumni nearby`,
                   subtitle: `From ${(user as any)?.university || (user as any)?.company || 'your network'}`,
-                  gradient: 'linear-gradient(135deg, #818cf8, #6366f1)',
+                  gradient: 'linear-gradient(135deg, var(--primary-light), var(--primary))',
                   href: '/people',
                 },
               ].map((card) => {
@@ -219,9 +219,9 @@ export default function DashboardPage() {
           {/* ═══ Trending Housing ═══ */}
           <div style={{ marginBottom: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Trending Housing</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Trending Housing</h2>
               <Link href="/housing" style={{
-                fontSize: '13px', fontWeight: 600, color: '#6366f1', textDecoration: 'none',
+                fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
                 View all <ArrowRight size={14} />
@@ -230,8 +230,8 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
               {data?.recommendedHousing?.map((h: any) => (
                 <Link key={h.id} href={`/housing/${h.id}`} style={{
-                  minWidth: '260px', background: '#fff', borderRadius: '18px', overflow: 'hidden',
-                  border: '1px solid #e5e7ee', textDecoration: 'none', color: '#1a1a2e',
+                  minWidth: '260px', background: 'var(--bg-card)', borderRadius: '18px', overflow: 'hidden',
+                  border: '1px solid var(--border)', textDecoration: 'none', color: 'var(--text-primary)',
                   transition: 'all 0.25s', flexShrink: 0,
                 }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                     <div style={{
                       position: 'absolute', top: '10px', left: '10px',
                       padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-                      background: (h.isWomenFriendly ? '#10b981' : '#6366f1'), color: '#fff', textTransform: 'uppercase',
+                      background: (h.isWomenFriendly ? 'var(--success)' : 'var(--primary)'), color: '#fff', textTransform: 'uppercase',
                       letterSpacing: '0.04em', backdropFilter: 'blur(4px)',
                     }}>{(h.isWomenFriendly ? 'WOMEN SAFE' : 'VERIFIED')}</div>
                     <div style={{
@@ -258,13 +258,13 @@ export default function DashboardPage() {
                       <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>{h.title}</h3>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>{h.type}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.type}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                      <span style={{ fontSize: '20px', fontWeight: 700, color: '#6366f1' }}>
+                      <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary)' }}>
                         ₹{h.rent.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>/mo</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/mo</span>
                     </div>
                   </div>
                 </Link>
@@ -276,11 +276,11 @@ export default function DashboardPage() {
           <div>
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid #e5e7ee',
+              marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid var(--border)',
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a2e' }}>Community Feed</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Community Feed</h2>
               <Link href="/communities" style={{
-                fontSize: '13px', fontWeight: 600, color: '#6366f1', textDecoration: 'none',
+                fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
                 Join Discussions <ArrowRight size={14} />
@@ -291,8 +291,8 @@ export default function DashboardPage() {
                 const isLiked = likedPosts.has(post.id);
                 return (
                   <div key={post.id} style={{
-                    background: '#fff', borderRadius: '18px', padding: '22px',
-                    border: '1px solid #f0f1f5', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+                    border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     transition: 'all 0.2s',
                   }}
                     onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
@@ -307,14 +307,14 @@ export default function DashboardPage() {
                         color: '#fff', flexShrink: 0,
                       }}>{post.user?.name?.charAt(0) || "U"}</div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{post.user?.name}</p>
-                        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
-                          in <span style={{ color: '#6366f1', fontWeight: 500 }}>{post.community?.name}</span> • {new Date(post.createdAt).toLocaleDateString()}
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{post.user?.name}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          in <span style={{ color: 'var(--primary)', fontWeight: 500 }}>{post.community?.name}</span> • {new Date(post.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     {/* Text */}
-                    <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.65', marginBottom: '16px' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
                       {post.content}
                     </p>
                     {/* Actions */}
@@ -323,22 +323,22 @@ export default function DashboardPage() {
                         onClick={() => toggleLike(post.id)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500,
-                          color: isLiked ? '#ef4444' : '#94a3b8',
+                          color: isLiked ? 'var(--danger)' : 'var(--text-muted)',
                           background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                           transition: 'color 0.15s',
                         }}
                       >
-                        <Heart size={16} fill={isLiked ? '#ef4444' : 'none'} />
+                        <Heart size={16} fill={isLiked ? 'var(--danger)' : 'none'} />
                         {post.likesCount + (isLiked ? 1 : 0)}
                       </button>
                       <Link href={`/communities/${post.community?.id}`} style={{
                         display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500,
-                        color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', textDecoration: 'none'
+                        color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', textDecoration: 'none'
                       }}>
                         <MessageSquare size={16} /> {post._count?.comments || 0} Comments
                       </Link>
                       <button style={{
-                        background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', marginLeft: 'auto',
+                        background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', marginLeft: 'auto',
                       }}>
                         <Share2 size={16} />
                       </button>
@@ -355,28 +355,28 @@ export default function DashboardPage() {
 
           {/* ═══ Rent Trends ═══ */}
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-              <TrendingUp size={16} style={{ color: '#6366f1' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e' }}>Rent Trends</h3>
+              <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>Rent Trends</h3>
             </div>
-            <p style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '14px' }}>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
               {userArea} Phase 1 • Last 6 Months
             </p>
             <MiniChart data={rentTrendData} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '14px' }}>
               <div>
-                <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>AVG. RENT</p>
-                <p style={{ fontSize: '26px', fontWeight: 700, color: '#1a1a2e' }}>₹13.2k</p>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>AVG. RENT</p>
+                <p style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)' }}>₹13.2k</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span style={{
-                  fontSize: '11px', fontWeight: 700, color: '#10b981',
+                  fontSize: '11px', fontWeight: 700, color: 'var(--success)',
                   background: 'rgba(16,185,129,0.08)', padding: '4px 10px', borderRadius: '8px',
                 }}>+12% YOY</span>
-                <p style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 600, marginTop: '6px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--warning)', fontWeight: 600, marginTop: '6px' }}>
                   ⚡ High Demand
                 </p>
               </div>
@@ -385,15 +385,15 @@ export default function DashboardPage() {
 
           {/* ═══ Local Meetups ═══ */}
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Calendar size={16} style={{ color: '#6366f1' }} />
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e' }}>Local Meetups</h3>
+                <Calendar size={16} style={{ color: 'var(--primary)' }} />
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>Local Meetups</h3>
               </div>
-              <Link href="/events" style={{ color: '#6366f1', textDecoration: 'none', display: 'flex' }}>
+              <Link href="/events" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex' }}>
                 <ArrowRight size={18} />
               </Link>
             </div>
@@ -403,27 +403,27 @@ export default function DashboardPage() {
  return (
                 <div key={m.id} style={{
                   display: 'flex', alignItems: 'center', gap: '14px',
-                  padding: '12px 14px', borderRadius: '14px', background: '#f8f9fc',
+                  padding: '12px 14px', borderRadius: '14px', background: 'var(--bg-primary)',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f0f1f5'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#f8f9fc'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--border-light)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-primary)'}
                 >
                   {/* Date Box */}
                   <div style={{
-                    width: '50px', height: '52px', borderRadius: '12px', background: '#fff',
-                    border: '1px solid #e5e7ee', display: 'flex', flexDirection: 'column',
+                    width: '50px', height: '52px', borderRadius: '12px', background: 'var(--bg-card)',
+                    border: '1px solid var(--border)', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{d.toLocaleString("en-US", {month: "short"}).toUpperCase()}</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e' }}>{d.getDate()}</span>
+                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{d.toLocaleString("en-US", {month: "short"}).toUpperCase()}</span>
+                    <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{d.getDate()}</span>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '3px' }}>{m.title}</p>
-                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>{m.location} • {d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '3px' }}>{m.title}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{m.location} • {d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</p>
                   </div>
                   <div style={{
-                    fontSize: 10, fontWeight: 600, color: '#6366f1',
+                    fontSize: 10, fontWeight: 600, color: 'var(--primary)',
                     background: 'rgba(99,102,241,0.08)', padding: '3px 8px',
                     borderRadius: 8, whiteSpace: 'nowrap',
                   }}>
@@ -437,24 +437,24 @@ export default function DashboardPage() {
 
           {/* ═══ Locality Score ═══ */}
           <div style={{
-            background: '#fff', borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
+            border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
-              <CheckCircle2 size={18} style={{ color: '#10b981' }} />
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e' }}>Locality Score</h3>
+              <CheckCircle2 size={18} style={{ color: 'var(--success)' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>Locality Score</h3>
               <span style={{
-                fontSize: 10, fontWeight: 600, color: '#94a3b8', marginLeft: 'auto',
+                fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginLeft: 'auto',
               }}>{userArea}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {localityScores.map((s) => (
                 <div key={s.label}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '7px' }}>
-                    <span style={{ color: '#475569', fontWeight: 500 }}>{s.label}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{s.label}</span>
                     <span style={{ fontWeight: 700, color: s.color, fontSize: 12 }}>{s.score}%</span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: '#f0f1f5', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'var(--border-light)', overflow: 'hidden' }}>
                     <div style={{
                       width: `${s.score}%`, height: '100%', borderRadius: '4px',
                       background: s.color, transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -467,26 +467,26 @@ export default function DashboardPage() {
 
           {/* ═══ Quick Actions ═══ */}
           <div style={{
-            background: 'linear-gradient(135deg, #f8f9fc, #e8eaff)',
+            background: 'linear-gradient(135deg, var(--bg-primary), #e8eaff)',
             borderRadius: '18px', padding: '22px',
-            border: '1px solid #e5e7ee',
+            border: '1px solid var(--border)',
           }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '14px' }}>Quick Actions</h3>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px' }}>Quick Actions</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { icon: Building2, label: 'Browse Housing', href: '/housing', color: '#6366f1' },
-                { icon: Users, label: 'Find Communities', href: '/communities', color: '#10b981' },
+                { icon: Building2, label: 'Browse Housing', href: '/housing', color: 'var(--primary)' },
+                { icon: Users, label: 'Find Communities', href: '/communities', color: 'var(--success)' },
                 { icon: Shield, label: 'Women-Only Mode', href: '/women-only', color: '#ec4899' },
               ].map((action) => {
                 const ActionIcon = action.icon;
                 return (
                   <Link key={action.label} href={action.href} style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                    borderRadius: 12, background: '#fff', textDecoration: 'none',
-                    color: '#1a1a2e', transition: 'all 0.15s', border: '1px solid #e5e7ee',
+                    borderRadius: 12, background: 'var(--bg-card)', textDecoration: 'none',
+                    color: 'var(--text-primary)', transition: 'all 0.15s', border: '1px solid var(--border)',
                   }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = action.color; e.currentTarget.style.boxShadow = `0 2px 8px ${action.color}20`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7ee'; e.currentTarget.style.boxShadow = 'none'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     <div style={{
                       width: 34, height: 34, borderRadius: 10, display: 'flex',
@@ -496,7 +496,7 @@ export default function DashboardPage() {
                       <ActionIcon size={16} style={{ color: action.color }} />
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 500 }}>{action.label}</span>
-                    <ChevronRight size={14} style={{ marginLeft: 'auto', color: '#94a3b8' }} />
+                    <ChevronRight size={14} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
                   </Link>
                 );
               })}
@@ -514,7 +514,7 @@ export default function DashboardPage() {
         }}
         style={{
           position: 'fixed', bottom: '32px', right: '32px', width: '56px', height: '56px',
-          borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e, #2d2d4e)',
+          borderRadius: '50%', background: 'linear-gradient(135deg, var(--text-primary), #2d2d4e)',
           color: '#fff', border: 'none', display: 'flex',
           alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           boxShadow: '0 4px 18px rgba(26,26,46,0.35)', zIndex: 40,
