@@ -35,33 +35,34 @@ export default function OnboardingPage() {
   const { user, isAuthenticated, updateUser, welcomeMessage, clearWelcomeMessage } = useAuthStore();
   const router = useRouter();
 
+  const u = user as any;
   const [form, setForm] = useState({
-    role: '' as string,
-    gender: '' as string,
-    city: 'Pune',
-    preferredArea: '',
-    moveMonth: '',
-    budgetMin: 3000,
-    budgetMax: 15000,
-    isWomenMode: false,
-    university: '',
-    company: '',
-    bio: '',
-    phone: '',
+    role: u?.role || '' as string,
+    gender: u?.gender || '' as string,
+    city: u?.city || 'Pune',
+    preferredArea: u?.preferredArea || '',
+    moveMonth: u?.moveMonth || '',
+    budgetMin: u?.budgetMin || 3000,
+    budgetMax: u?.budgetMax || 15000,
+    isWomenMode: u?.isWomenMode || false,
+    university: u?.university || '',
+    company: u?.company || '',
+    bio: u?.bio || '',
+    phone: u?.phone || '',
     // ML-ready fields
-    interests: [] as string[],
-    foodPreference: '',
-    workSchedule: '',
-    languages: [] as string[],
-    lifestyle: '',
-    transportMode: '',
-    smoking: 'no',
-    drinking: 'no',
-    petFriendly: false,
-    ageRange: '',
-    hometown: '',
-    courseOrDept: '',
-    monthlyIncome: '',
+    interests: u?.interests || [] as string[],
+    foodPreference: u?.foodPreference || '',
+    workSchedule: u?.workSchedule || '',
+    languages: u?.languages || [] as string[],
+    lifestyle: u?.lifestyle || '',
+    transportMode: u?.transportMode || '',
+    smoking: u?.smoking || 'no',
+    drinking: u?.drinking || 'no',
+    petFriendly: u?.petFriendly || false,
+    ageRange: u?.ageRange || '',
+    hometown: u?.hometown || '',
+    courseOrDept: u?.courseOrDept || '',
+    monthlyIncome: u?.monthlyIncome || '',
   });
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function OnboardingPage() {
     setForm((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter((i) => i !== interest)
+        ? prev.interests.filter((i: string) => i !== interest)
         : [...prev.interests, interest],
     }));
   };
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
     setForm((prev) => ({
       ...prev,
       languages: prev.languages.includes(lang)
-        ? prev.languages.filter((l) => l !== lang)
+        ? prev.languages.filter((l: string) => l !== lang)
         : [...prev.languages, lang],
     }));
   };

@@ -382,11 +382,11 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ══════════ Floating Compose Button ══════════ */}
+      {/* ══════════ Floating Compose / Edit Button ══════════ */}
       <button className="lg:hidden" 
         onClick={() => {
           if (typeof window !== 'undefined') {
-            window.location.href = '/communities';
+            window.location.href = '/onboarding';
           }
         }}
         style={{
