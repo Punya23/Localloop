@@ -160,4 +160,98 @@ export class CommunitiesService {
       joinedAt: m.joinedAt,
     }));
   }
+
+  // ════════════ MEMBERS ════════════
+
+  async getMembers(communityId: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+
+    const [members, total] = await Promise.all([
+      this.prisma.communityMember.findMany({
+        where: { communityId },
+        skip,
+        take: limit,
+        orderBy: [{ role: 'desc' }, { joinedAt: 'asc' }],
+        include: {
+          user: {
+            select: { id: true, name: true, avatar: true, bio: true, city: true, company: true, university: true },
+          },
+        },
+      }),
+      this.prisma.communityMember.count({ where: { communityId } }),
+    ]);
+
+    return {
+      data: members,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  // ════════════ POLLS ════════════
+
+  async getPolls(communityId: string) {
+    const polls = await this.prisma.communityPoll.findMany({
+      where: { communityId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        createdBy: { select: { id: true, name: true, avatar: true } },
+        votes: { select: { userId: true, optionIndex: true } },
+      },
+    });
+
+    return polls;
+  }
+
+  async createPoll(userId: string, communityId: string, question: string, options: string[], expiresInDays: number = 7) {
+    // Verify membership
+    const member = await this.prisma.communityMember.findUnique({
+      where: { userId_communityId: { userId, communityId } },
+    });
+
+    if (!member) throw new ForbiddenException('Only members can create polls');
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+
+    return this.prisma.communityPoll.create({
+      data: {
+        question,
+        options,
+        communityId,
+        createdById: userId,
+        expiresAt,
+      },
+    });
+  }
+
+  async votePoll(userId: string, pollId: string, optionIndex: number) {
+    const poll = await this.prisma.communityPoll.findUnique({
+      where: { id: pollId },
+      select: { communityId: true, expiresAt: true },
+    });
+
+    if (!poll) throw new NotFoundException('Poll not found');
+
+    if (poll.expiresAt && new Date() > poll.expiresAt) {
+      throw new ForbiddenException('This poll has expired');
+    }
+
+    // Verify membership
+    const member = await this.prisma.communityMember.findUnique({
+      where: { userId_communityId: { userId, communityId: poll.communityId } },
+    });
+
+    if (!member) throw new ForbiddenException('Only members can vote');
+
+    // Upsert vote
+    return this.prisma.pollVote.upsert({
+      where: { pollId_userId: { pollId, userId } },
+      update: { optionIndex },
+      create: {
+        pollId,
+        userId,
+        optionIndex,
+      },
+    });
+  }
 }

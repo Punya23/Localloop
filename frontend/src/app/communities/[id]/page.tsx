@@ -7,10 +7,10 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import {
   ArrowLeft, Users, Send, MessageCircle, Clock,
-  MessagesSquare, ChevronDown,
+  MessagesSquare, ChevronDown, CheckCircle2, BarChart2, Crown, Image as ImageIcon
 } from 'lucide-react';
 
-type ViewMode = 'posts' | 'chat';
+type ViewMode = 'chat' | 'posts' | 'polls' | 'members' | 'media';
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -24,21 +24,34 @@ export default function CommunityDetailPage() {
   const [commentText, setCommentText] = useState<Record<string, string>>({});
 
   // Chat state
-  const [viewMode, setViewMode] = useState<ViewMode>('posts');
+  const [viewMode, setViewMode] = useState<ViewMode>('chat');
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [newChatMsg, setNewChatMsg] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Poll state
+  const [polls, setPolls] = useState<any[]>([]);
+  const [newPollQ, setNewPollQ] = useState('');
+  const [newPollOptions, setNewPollOptions] = useState(['', '']);
+  const [creatingPoll, setCreatingPoll] = useState(false);
+
+  // Members state
+  const [members, setMembers] = useState<any[]>([]);
+
   useEffect(() => {
     if (id) {
       Promise.all([
         api.getCommunity(id),
         api.getCommunityPosts(id),
-      ]).then(([comm, postData]) => {
+        api.getCommunityPolls(id).catch(() => []),
+        api.getCommunityMembers(id).catch(() => ({ data: [] })),
+      ]).then(([comm, postData, pollsData, membersData]) => {
         setCommunity(comm);
         setPosts(postData.data || []);
+        setPolls(pollsData || []);
+        setMembers(membersData.data || []);
       }).catch(console.error).finally(() => setLoading(false));
     }
   }, [id]);
@@ -109,6 +122,30 @@ export default function CommunityDetailPage() {
     finally { setSendingChat(false); }
   };
 
+  const handleCreatePoll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const opts = newPollOptions.filter(o => o.trim());
+    if (!newPollQ.trim() || opts.length < 2) return;
+    setCreatingPoll(true);
+    try {
+      await api.createCommunityPoll(id, { question: newPollQ, options: opts });
+      const pd = await api.getCommunityPolls(id);
+      setPolls(pd || []);
+      setNewPollQ('');
+      setNewPollOptions(['', '']);
+      setViewMode('polls');
+    } catch (err: any) { alert(err.message); }
+    finally { setCreatingPoll(false); }
+  };
+
+  const handleVotePoll = async (pollId: string, optionIndex: number) => {
+    try {
+      await api.voteCommunityPoll(id, pollId, optionIndex);
+      const pd = await api.getCommunityPolls(id);
+      setPolls(pd || []);
+    } catch (err: any) { alert(err.message); }
+  };
+
   if (loading) {
     return <div className="p-6 lg:p-8"><div className="shimmer h-64 rounded-xl max-w-3xl" /></div>;
   }
@@ -118,7 +155,7 @@ export default function CommunityDetailPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl">
+    <div className="p-4 md:p-6 lg:p-8 pb-32 max-w-3xl mx-auto w-full">
       <Link href="/communities" className="flex items-center gap-2 text-sm mb-6 no-underline" style={{ color: 'var(--text-muted)' }}>
         <ArrowLeft size={16} /> Back to communities
       </Link>
@@ -147,35 +184,34 @@ export default function CommunityDetailPage() {
         <div style={{
           display: 'flex', gap: '4px', marginBottom: '20px',
           background: '#f8f9fc', borderRadius: '12px', padding: '4px',
+          overflowX: 'auto', WebkitOverflowScrolling: 'touch',
         }}>
-          <button
-            onClick={() => setViewMode('posts')}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '10px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
-              border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              background: viewMode === 'posts' ? '#fff' : 'transparent',
-              color: viewMode === 'posts' ? '#6366f1' : '#94a3b8',
-              boxShadow: viewMode === 'posts' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-              transition: 'all 0.2s',
-            }}
-          >
-            <MessageCircle size={16} /> Posts
-          </button>
-          <button
-            onClick={() => setViewMode('chat')}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '10px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
-              border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              background: viewMode === 'chat' ? '#fff' : 'transparent',
-              color: viewMode === 'chat' ? '#6366f1' : '#94a3b8',
-              boxShadow: viewMode === 'chat' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-              transition: 'all 0.2s',
-            }}
-          >
-            <MessagesSquare size={16} /> Group Chat
-          </button>
+          {[
+            { id: 'chat', label: 'Group Chat', icon: MessagesSquare },
+            { id: 'posts', label: 'Posts', icon: MessageCircle },
+            { id: 'polls', label: 'Polls', icon: BarChart2 },
+            { id: 'members', label: 'Members', icon: Users },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const active = viewMode === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setViewMode(tab.id as ViewMode)}
+                style={{
+                  flex: '1 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  padding: '10px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
+                  border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  background: active ? '#fff' : 'transparent',
+                  color: active ? '#6366f1' : '#94a3b8',
+                  boxShadow: active ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Icon size={16} /> <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -384,6 +420,135 @@ export default function CommunityDetailPage() {
               <Link href="/login" style={{ color: '#6366f1', fontWeight: 600 }}>Log in</Link> to join the conversation
             </div>
           )}
+        </div>
+      )}
+      {/* ══════════ POLLS VIEW ══════════ */}
+      {viewMode === 'polls' && (
+        <div className="flex flex-col gap-6">
+          {isAuthenticated && (
+            <form onSubmit={handleCreatePoll} className="glass-card p-5">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><BarChart2 size={16} className="text-primary"/> Create a Poll</h3>
+              <input
+                className="input-field w-full text-sm mb-3" placeholder="Ask a question..."
+                value={newPollQ} onChange={e => setNewPollQ(e.target.value)} required />
+              <div className="space-y-2 mb-3">
+                {newPollOptions.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input className="input-field flex-1 text-sm py-2" placeholder={`Option ${i + 1}`}
+                           value={opt} onChange={e => {
+                             const newOpts = [...newPollOptions];
+                             newOpts[i] = e.target.value;
+                             setNewPollOptions(newOpts);
+                           }} required={i < 2} />
+                    {i >= 2 && (
+                      <button type="button" onClick={() => setNewPollOptions(newPollOptions.filter((_, idx) => idx !== i))}
+                              className="text-red-500 p-2 hover:bg-red-50 rounded">✕</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {newPollOptions.length < 5 && (
+                <button type="button" onClick={() => setNewPollOptions([...newPollOptions, ''])}
+                        className="text-xs text-primary font-medium hover:underline block mb-3">+ Add Option</button>
+              )}
+              <div className="flex justify-end">
+                <button type="submit" className="btn-primary text-sm px-4" disabled={creatingPoll || !newPollQ.trim()}>
+                  {creatingPoll ? 'Publishing...' : 'Publish Poll'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {polls.length === 0 ? (
+            <div className="glass-card p-8 text-center text-gray-500">
+              <BarChart2 size={40} className="mx-auto mb-3 opacity-50" />
+              <p>No polls yet in this community.</p>
+            </div>
+          ) : (
+            polls.map(poll => {
+              // Safe parse, handle both stringified JSON and array
+              let optsArray: string[] = [];
+              try {
+                optsArray = Array.isArray(poll.options) ? poll.options : JSON.parse(poll.options);
+              } catch(e) {
+                optsArray = ['Option error'];
+              }
+              const totalVotes = poll.votes?.length || 0;
+              const hasVoted = poll.votes?.find((v: any) => v.userId === user?.id);
+
+              return (
+                <div key={poll.id} className="glass-card p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 font-inter">
+                      {poll.createdBy?.name?.charAt(0) || '?'}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{poll.createdBy?.name || 'Unknown'}</p>
+                      <p className="text-xs text-gray-400 font-inter">{new Date(poll.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">{poll.question}</h3>
+                  <div className="space-y-3">
+                    {optsArray.map((opt: string, i: number) => {
+                      const votesForOpt = poll.votes?.filter((v: any) => v.optionIndex === i).length || 0;
+                      const percent = totalVotes > 0 ? Math.round((votesForOpt / totalVotes) * 100) : 0;
+                      const isMyVote = hasVoted?.optionIndex === i;
+
+                      return (
+                        <div key={i} className="relative group cursor-pointer" onClick={() => !hasVoted && handleVotePoll(poll.id, i)}>
+                          <div className={`w-full overflow-hidden rounded-xl border relative z-10 transition-all ${isMyVote ? 'border-primary shadow-[0_0_0_1px_rgba(99,102,241,1)]' : 'border-gray-200 hover:border-indigo-300'}`}>
+                            <div className="absolute inset-0 bg-indigo-50" style={{ width: `${hasVoted ? percent : 0}%`, transition: 'width 0.5s ease' }} />
+                            <div className="relative z-20 px-4 py-3 flex justify-between items-center text-sm">
+                              <span className={`font-medium ${isMyVote ? 'text-primary font-semibold' : 'text-gray-700'}`}>
+                                {isMyVote && <CheckCircle2 size={14} className="inline mr-2 text-primary" />}
+                                {opt}
+                              </span>
+                              {hasVoted && <span className="font-semibold text-gray-500">{percent}%</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 text-xs text-gray-400 font-medium">
+                    {totalVotes} votes
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ══════════ MEMBERS VIEW ══════════ */}
+      {viewMode === 'members' && (
+        <div className="glass-card p-2 md:p-4">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Users size={18} className="text-primary"/> Members ({community._count?.members || community.memberCount})
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 divide-y divide-gray-50">
+            {members.map(member => (
+              <div key={member.id} className="flex items-center gap-4 p-3 hover:bg-gray-50 transition-colors rounded-xl">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-indigo-100 to-white border border-gray-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
+                  {member.user.avatar ? (
+                    <img src={member.user.avatar} className="w-full h-full object-cover" alt="" />
+                  ) : member.user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-900 truncate">{member.user.name}</h4>
+                    {member.role === 'ADMIN' && <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Crown size={10}/> Admin</span>}
+                    {member.role === 'MODERATOR' && <span className="bg-blue-50 text-blue-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full relative">Mod</span>}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                    {member.user.company ? `At ${member.user.company}` : member.user.university ? `Student at ${member.user.university}` : member.user.bio || 'New member'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

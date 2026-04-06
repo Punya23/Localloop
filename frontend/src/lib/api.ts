@@ -375,7 +375,7 @@ class ApiClient {
     });
   }
 
-  // ════════════ COMMUNITY GROUP CHAT ════════════
+  // ════════════ COMMUNITY GROUP CHAT & POLLS & MEMBERS ════════════
 
   async getCommunityMessages(communityId: string, page = 1) {
     return this.request<any>(`/chat/community/${communityId}?page=${page}`);
@@ -385,6 +385,28 @@ class ApiClient {
     return this.request<any>(`/chat/community/${communityId}`, {
       method: 'POST',
       body: JSON.stringify({ content }),
+    });
+  }
+
+  async getCommunityMembers(communityId: string, page = 1) {
+    return this.request<any>(`/communities/${communityId}/members?page=${page}`);
+  }
+
+  async getCommunityPolls(communityId: string) {
+    return this.request<any>(`/communities/${communityId}/polls`);
+  }
+
+  async createCommunityPoll(communityId: string, data: { question: string; options: string[]; expiresInDays?: number }) {
+    return this.request<any>(`/communities/${communityId}/polls`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async voteCommunityPoll(communityId: string, pollId: string, optionIndex: number) {
+    return this.request<any>(`/communities/${communityId}/polls/${pollId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ optionIndex }),
     });
   }
 }

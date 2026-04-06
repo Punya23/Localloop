@@ -5,32 +5,7 @@ import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { MapPin, Star, ArrowRight, Save, Camera, Bookmark, Pencil, Award, TrendingUp, Calendar, Heart, MessageSquare } from 'lucide-react';
 
-/* ── Demo Data ──────────────────────────────────────────── */
-
-const demoUserPosts = [
-  { id: 1, title: 'Cozy Studio in Koregaon Park', sub: 'Housing • 2 days ago', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=400&fit=crop', aspect: '1 / 1.2' },
-  { id: 2, title: 'Relocation Tips for Pune IT Hubs', sub: 'Guide • 5 days ago', img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=400&fit=crop', aspect: '1 / 1' },
-  { id: 3, title: 'Best Coworking Spaces in Baner', sub: 'Reviews • 1 week ago', img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop', aspect: '1 / 1' },
-  { id: 4, title: 'A Guide to Pune Architecture', sub: 'Gallery • 2 weeks ago', img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=400&h=400&fit=crop', aspect: '1 / 1.2' },
-];
-
-const demoReviews = [
-  { id: 1, place: 'Skyline Residency', rating: 4.5, text: 'Great location near IT Park. Clean rooms and helpful staff. The WiFi could be faster though.', date: '3 days ago' },
-  { id: 2, place: 'Blue Tokai Café', rating: 5, text: 'Perfect coworking spot! Amazing coffee and reliable internet. Highly recommend for remote workers.', date: '1 week ago' },
-];
-
-const demoSaved = [
-  { id: 1, title: 'Green Terrace PG', type: 'Housing', price: '₹9,000/mo', img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop' },
-  { id: 2, title: 'React Meetup Event', type: 'Event', price: 'Free', img: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop' },
-];
-
-const achievementBadges = [
-  { label: 'First Review', icon: '⭐', earned: true },
-  { label: '5 Connections', icon: '🤝', earned: true },
-  { label: 'First Post', icon: '📝', earned: true },
-  { label: 'Community Leader', icon: '👑', earned: false },
-  { label: 'Top Contributor', icon: '🏆', earned: false },
-];
+import { useRouter } from 'next/navigation';
 
 /* ── Star Rating Component ──────────────────────────── */
 
@@ -52,6 +27,7 @@ function StarRating({ rating }: { rating: number }) {
 /* ── Profile Page ─────────────────────────────────────── */
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, updateUser } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -104,10 +80,18 @@ export default function ProfilePage() {
     ? Math.min(100, ((points - lvl.ptsNeeded) / (lvl.nextPts - lvl.ptsNeeded)) * 100)
     : 100;
 
+  const achievementBadges = [
+    { label: 'First Review', icon: '⭐', earned: (p.housingReviews?.length > 0) },
+    { label: '5 Connections', icon: '🤝', earned: (p.communities?.length >= 5) },
+    { label: 'First Post', icon: '📝', earned: (p.posts?.length > 0) },
+    { label: 'Community Leader', icon: '👑', earned: (points >= 1000) },
+    { label: 'Top Contributor', icon: '🏆', earned: (points >= 2000) },
+  ];
+
   const profileTabs = ['Posts', 'Reviews', 'Saved Items'];
 
   return (
-    <div style={{ maxWidth: '540px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 pb-28">
 
       {/* ══════════ Avatar + Identity ══════════ */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -317,76 +301,74 @@ export default function ProfilePage() {
 
       {/* ══════════ Posts Tab ══════════ */}
       {activeTab === 'Posts' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-          {demoUserPosts.map((post) => (
-            <div key={post.id} style={{ cursor: 'pointer' }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = ''}
-            >
-              <div style={{
-                borderRadius: '14px', overflow: 'hidden', position: 'relative',
-                aspectRatio: post.aspect,
-                transition: 'transform 0.2s',
-              }}>
-                <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%)',
-                }} />
-                <button style={{
-                  position: 'absolute', top: '8px', right: '8px',
-                  background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)',
-                  border: 'none', borderRadius: '8px', padding: '5px', cursor: 'pointer', color: '#64748b',
-                }}><Bookmark size={14} /></button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ padding: '16px', borderRadius: '16px', background: '#f8f9fc', border: '1px dashed #c4b5fd', textAlign: 'center', cursor: 'pointer' }} onClick={() => router.push('/communities')}>
+             <p style={{ fontSize: '14px', color: '#6366f1', fontWeight: 600 }}>+ Write a new Post / Blog in Communities</p>
+          </div>
+          {p.posts?.map((post: any) => (
+            <div key={post.id} style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #f0f1f5', cursor: 'pointer' }} onClick={() => router.push(`/communities/${post.community?.id}`)}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600 }}>{post.community?.name || 'Community'}</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>{new Date(post.createdAt).toLocaleDateString()}</span>
               </div>
-              <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginTop: '10px', marginBottom: '3px' }}>{post.title}</h4>
-              <p style={{ fontSize: '12px', color: '#94a3b8' }}>{post.sub}</p>
+              <p style={{ fontSize: '15px', color: '#1a1a2e', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{post.content}</p>
             </div>
           ))}
+          {(!p.posts || p.posts.length === 0) && (
+            <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>No posts yet.</p>
+          )}
         </div>
       )}
 
       {/* ══════════ Reviews Tab ══════════ */}
       {activeTab === 'Reviews' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {demoReviews.map((review) => (
+          <div style={{ padding: '16px', borderRadius: '16px', background: '#f8f9fc', border: '1px dashed #fcd34d', textAlign: 'center', cursor: 'pointer' }} onClick={() => router.push('/housing')}>
+             <p style={{ fontSize: '14px', color: '#f59e0b', fontWeight: 600 }}>+ Review a PG / Accommodation</p>
+          </div>
+          {p.housingReviews?.map((review: any) => (
             <div key={review.id} style={{
               background: '#fff', borderRadius: 16, padding: '18px 20px',
               border: '1px solid #f0f1f5', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}>
+              cursor: 'pointer'
+            }} onClick={() => router.push(`/housing/${review.housing?.id}`)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <h4 style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e' }}>{review.place}</h4>
+                <h4 style={{ fontSize: 15, fontWeight: 600, color: '#1a1a2e' }}>{review.housing?.title}</h4>
                 <StarRating rating={review.rating} />
               </div>
-              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 8 }}>{review.text}</p>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>{review.date}</span>
+              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 8 }}>{review.review}</p>
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(review.createdAt).toLocaleDateString()}</span>
             </div>
           ))}
+          {(!p.housingReviews || p.housingReviews.length === 0) && (
+            <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>No reviews yet.</p>
+          )}
         </div>
       )}
 
       {/* ══════════ Saved Items Tab ══════════ */}
       {activeTab === 'Saved Items' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {demoSaved.map((item) => (
+          {p.savedHousings?.map((item: any) => (
             <div key={item.id} style={{
               display: 'flex', gap: 14, background: '#fff', borderRadius: 16, padding: 14,
               border: '1px solid #f0f1f5', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               cursor: 'pointer', transition: 'all 0.2s',
             }}
+            onClick={() => router.push(`/housing/${item.housing?.id}`)}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#d4d6de'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f0f1f5'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
             >
               <div style={{
                 width: 80, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
               }}>
-                <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={item.housing?.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop'} alt={item.housing?.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', marginBottom: 4 }}>{item.title}</h4>
+                <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', marginBottom: 4 }}>{item.housing?.title}</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#f0f1f5', color: '#64748b', fontWeight: 500 }}>{item.type}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#6366f1' }}>{item.price}</span>
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#f0f1f5', color: '#64748b', fontWeight: 500 }}>{item.housing?.type?.replace('_', ' ')}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#6366f1' }}>₹{item.housing?.rent}/mo</span>
                 </div>
               </div>
               <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', alignSelf: 'center' }}>
@@ -394,6 +376,9 @@ export default function ProfilePage() {
               </button>
             </div>
           ))}
+          {(!p.savedHousings || p.savedHousings.length === 0) && (
+            <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>No saved items.</p>
+          )}
         </div>
       )}
 

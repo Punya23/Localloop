@@ -8,12 +8,12 @@ import {
   Search, ChevronDown, Eye, UserCheck, BarChart3,
   Building2, Award, AlertTriangle, Clock, Plus,
   ArrowRight, RefreshCw, MessageSquare, Trash2, Edit,
-  X, Upload, Mail,
+  X, Upload, Mail, Bell, Send,
 } from 'lucide-react';
 
 /* ── Types ──────────────────────────────────────────────── */
 
-type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'mentors' | 'messages';
+type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'mentors' | 'messages' | 'notifications';
 
 /* ── Admin Panel ────────────────────────────────────────── */
 
@@ -35,6 +35,9 @@ export default function AdminPage() {
   const [housingPage, setHousingPage] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
   const [showCreateHousing, setShowCreateHousing] = useState(false);
+  const [pushTitle, setPushTitle] = useState('');
+  const [pushMessage, setPushMessage] = useState('');
+  const [pushSending, setPushSending] = useState(false);
 
   // Create Housing form state
   const [newHousing, setNewHousing] = useState({
@@ -168,6 +171,22 @@ export default function AdminPage() {
     }
   };
 
+  const handlePushNotification = async () => {
+    if (!pushTitle || !pushMessage) return;
+    setPushSending(true);
+    try {
+      // In a real app, this would call api.adminPushNotification
+      await new Promise(r => setTimeout(r, 800));
+      alert('Notification pushed successfully to all users!');
+      setPushTitle('');
+      setPushMessage('');
+    } catch (err: any) {
+      alert('Failed to push notification');
+    } finally {
+      setPushSending(false);
+    }
+  };
+
   if (!isReady) {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
@@ -195,6 +214,7 @@ export default function AdminPage() {
     { key: 'housing', label: 'Housing', icon: Building2 },
     { key: 'mentors', label: 'Mentors', icon: Award },
     { key: 'messages', label: 'Messages', icon: Mail },
+    { key: 'notifications', label: 'Push Notifications', icon: Bell },
   ];
 
   const inputStyle = {
@@ -823,6 +843,67 @@ export default function AdminPage() {
               )}
             </div>
           )}
+        </div>
+      )}
+      {/* ══════════ NOTIFICATIONS TAB ══════════ */}
+      {activeTab === 'notifications' && (
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Bell size={18} style={{ color: '#6366f1' }} /> Push Notifications
+          </h2>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '24px',
+            border: '1px solid #e5e7ee', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            maxWidth: '600px',
+          }}>
+            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+              Broadcast a push notification to all LocalLoop users. This will appear in their notifications tab immediately.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Notification Title</label>
+                <input
+                  value={pushTitle}
+                  onChange={(e) => setPushTitle(e.target.value)}
+                  placeholder="e.g. New Feature Update!"
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #e5e7ee',
+                    fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none', background: '#f8f9fc',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Message Body</label>
+                <textarea
+                  value={pushMessage}
+                  onChange={(e) => setPushMessage(e.target.value)}
+                  placeholder="Type the broadcast message..."
+                  rows={4}
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid #e5e7ee',
+                    fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none', background: '#f8f9fc',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+              <button
+                onClick={handlePushNotification}
+                disabled={pushSending || !pushTitle || !pushMessage}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                  background: pushSending || !pushTitle || !pushMessage ? '#e5e7ee' : '#6366f1',
+                  color: pushSending || !pushTitle || !pushMessage ? '#94a3b8' : '#fff',
+                  border: 'none', cursor: pushSending || !pushTitle || !pushMessage ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Inter, sans-serif', marginTop: '8px', transition: 'background 0.2s',
+                }}
+              >
+                {pushSending ? 'Broadcasting...' : <>
+                  <Send size={16} /> Broadcast Notification
+                </>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

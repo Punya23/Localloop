@@ -66,6 +66,18 @@ export class UsersService {
             },
           },
         },
+        posts: {
+          orderBy: { createdAt: 'desc' },
+          include: { community: { select: { id: true, name: true } } },
+        },
+        housingReviews: {
+          orderBy: { createdAt: 'desc' },
+          include: { housing: { select: { id: true, title: true } } },
+        },
+        savedHousings: {
+          orderBy: { createdAt: 'desc' },
+          include: { housing: true },
+        },
         _count: {
           select: {
             posts: true,
@@ -224,6 +236,27 @@ export class UsersService {
       }),
     };
 
+    // Recommended Insights (Alumni/Coworkers & Movers)
+    const [nearbyAlumni, movingWithYou] = await Promise.all([
+      this.prisma.user.count({
+        where: {
+          city: user.city,
+          id: { not: user.id },
+          OR: [
+            ...(user.university ? [{ university: user.university }] : []),
+            ...(user.company ? [{ company: user.company }] : []),
+          ],
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          city: user.city,
+          moveMonth: user.moveMonth,
+          id: { not: user.id },
+        },
+      }),
+    ]);
+
     return {
       user: (() => { const { password, ...u } = user; return u; })(),
       recommendedHousing,
@@ -236,6 +269,10 @@ export class UsersService {
         totalListings: cityStats.totalListings,
         totalCommunities: cityStats.totalCommunities,
         totalUsers: cityStats.totalUsers,
+      },
+      insights: {
+        nearbyAlumni,
+        movingWithYou,
       },
     };
   }

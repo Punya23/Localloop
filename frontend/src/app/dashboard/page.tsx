@@ -14,33 +14,6 @@ import {
 /* ── Demo Data ───────────────────────────────────────────── */
 
 
-const recommendedCards = [
-  {
-    id: 'r1',
-    icon: Building2,
-    title: 'Best PGs under ₹10k',
-    subtitle: 'Found 12 matching properties',
-    gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-  },
-  {
-    id: 'r2',
-    icon: Users,
-    title: 'Join May Movers',
-    subtitle: '45 people moving with you',
-    gradient: 'linear-gradient(135deg, #10b981, #059669)',
-  },
-  {
-    id: 'r3',
-    icon: Heart,
-    title: '3 alumni nearby',
-    subtitle: 'Working at Infosys & Wipro',
-    gradient: 'linear-gradient(135deg, #818cf8, #6366f1)',
-  },
-];
-
-
-
-
 
 const localityScores = [
   { label: 'Safety', score: 85, color: '#10b981' },
@@ -126,7 +99,7 @@ export default function DashboardPage() {
     );
   }
 
-  const userName = (user?.name || 'User').split(' ')[0];
+  const userName = (user?.name || 'User').split(' ')[0].toUpperCase();
   const userArea = user?.preferredArea || 'Hinjewadi';
   const moveMonth = user?.moveMonth || 'May';
 
@@ -134,10 +107,10 @@ export default function DashboardPage() {
     return (
       <div style={{ padding: '32px' }}>
         <div style={{ height: '32px', width: '300px', borderRadius: '12px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '32px' }} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[1, 2, 3].map(i => <div key={i} style={{ height: '140px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite' }} />)}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '28px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-7">
           <div>
             {[1, 2].map(i => <div key={i} style={{ height: '200px', borderRadius: '16px', background: '#f0f1f5', animation: 'pulse 1.5s infinite', marginBottom: '16px' }} />)}
           </div>
@@ -150,29 +123,29 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ padding: '24px 32px 100px', maxWidth: '1200px' }}>
+    <div className="p-4 md:p-6 lg:p-8 pb-32 max-w-[1200px] mx-auto w-full">
 
       {/* ═══════════ Welcome Section ═══════════ */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#1a1a2e', marginBottom: '10px' }}>
           Welcome {userName} 👋
         </h1>
-        <div style={{
+        <Link href="/profile" style={{
           display: 'inline-flex', alignItems: 'center', gap: '10px',
           padding: '8px 18px', borderRadius: '12px', background: '#fff',
           border: '1px solid #e5e7ee', fontSize: '13px', color: '#475569',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)', textDecoration: 'none',
         }}>
           <Calendar size={14} style={{ color: '#6366f1' }} />
           <span>Moving in <strong style={{ color: '#6366f1' }}>{moveMonth}</strong> to <strong style={{ color: '#1a1a2e' }}>{userArea}</strong></span>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
+          <span style={{ color: '#94a3b8', display: 'flex' }}>
             <Pencil size={12} />
-          </button>
-        </div>
+          </span>
+        </Link>
       </div>
 
       {/* ═══════════ Main Grid: Content + Sidebar ═══════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '28px' }}>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-8">
 
         {/* ── LEFT COLUMN ── */}
         <div>
@@ -188,11 +161,36 @@ export default function DashboardPage() {
                 <Sparkles size={14} /> AI Insights
               </Link>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-              {recommendedCards.map((card) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  id: 'r1',
+                  icon: Building2,
+                  title: `Best PGs under ₹${(user?.budgetMax || 15000) / 1000}k`,
+                  subtitle: `Found ${data?.cityStats?.totalListings || 0} matching properties`,
+                  gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  href: '/housing',
+                },
+                {
+                  id: 'r2',
+                  icon: Users,
+                  title: `Join ${user?.moveMonth || 'Next'} Movers`,
+                  subtitle: `${data?.insights?.movingWithYou || 0} people moving with you`,
+                  gradient: 'linear-gradient(135deg, #10b981, #059669)',
+                  href: '/communities',
+                },
+                {
+                  id: 'r3',
+                  icon: Heart,
+                  title: `${data?.insights?.nearbyAlumni || 0} alumni nearby`,
+                  subtitle: `From ${(user as any)?.university || (user as any)?.company || 'your network'}`,
+                  gradient: 'linear-gradient(135deg, #818cf8, #6366f1)',
+                  href: '/people',
+                },
+              ].map((card) => {
                 const Icon = card.icon;
                 return (
-                  <Link key={card.id} href={card.id === 'r1' ? '/housing' : card.id === 'r2' ? '/communities' : '/people'} style={{
+                  <Link key={card.id} href={card.href} style={{
                     background: card.gradient, borderRadius: '18px', padding: '24px 20px',
                     color: '#fff', cursor: 'pointer', transition: 'all 0.25s',
                     minHeight: '145px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none'

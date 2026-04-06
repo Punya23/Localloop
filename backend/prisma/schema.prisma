@@ -111,6 +111,8 @@ model User {
   bookings        HousingBooking[]
   mentorships     Mentorship[]      @relation("Mentee")
   mentoring       Mentorship[]      @relation("Mentor")
+  createdPolls    CommunityPoll[]
+  pollVotes       PollVote[]
 
   @@map("users")
 }
@@ -263,6 +265,7 @@ model Community {
   posts       Post[]
   events      Event[]
   communityMessages CommunityMessage[]
+  polls       CommunityPoll[]
 
   @@index([city, type])
   @@map("communities")
@@ -280,6 +283,36 @@ model CommunityMember {
 
   @@unique([userId, communityId])
   @@map("community_members")
+}
+
+model CommunityPoll {
+  id          String      @id @default(cuid())
+  question    String
+  options     Json        // Array of string options
+  communityId String
+  createdById String
+  expiresAt   DateTime?
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  votes       PollVote[]
+
+  @@map("community_polls")
+}
+
+model PollVote {
+  id          String        @id @default(cuid())
+  pollId      String
+  userId      String
+  optionIndex Int           // The index of the option in CommunityPoll.options
+
+  poll        CommunityPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId]) // 1 vote per user per poll
+  @@map("poll_votes")
 }
 
 // ============================================

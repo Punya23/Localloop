@@ -12,8 +12,8 @@ import {
 const demoNotifications = [
   {
     id: 1, type: 'message', icon: MessageCircle, color: '#6366f1',
-    title: 'New message from David Chen',
-    description: 'Looking forward to our coffee chat about Lisbon housing!',
+    title: 'New message from Vikram Singh',
+    description: 'Looking forward to our coffee chat about Pune housing!',
     time: '2 min ago', unread: true, link: '/chat',
   },
   {
@@ -33,30 +33,6 @@ const demoNotifications = [
     title: 'Reputation milestone reached!',
     description: 'You earned 50 points and unlocked the Guide badge. Keep going!',
     time: 'Yesterday', unread: false, link: '/profile',
-  },
-  {
-    id: 5, type: 'like', icon: Heart, color: '#ef4444',
-    title: 'Ananya K. liked your post',
-    description: '"Best Coworking Spaces in Baner" received 12 new likes.',
-    time: 'Yesterday', unread: false, link: '/profile',
-  },
-  {
-    id: 6, type: 'women', icon: Shield, color: '#ec4899',
-    title: 'Women-only meetup this weekend',
-    description: 'Coffee & Connect event at Blue Tokai, Baner. RSVP now!',
-    time: '2 days ago', unread: false, link: '/events',
-  },
-  {
-    id: 7, type: 'event', icon: Calendar, color: '#8b5cf6',
-    title: 'Techies Who Trek is tomorrow!',
-    description: 'Carpool from Hinjewadi IT Park at 5 AM. Don\'t forget your water bottle!',
-    time: '2 days ago', unread: false, link: '/events',
-  },
-  {
-    id: 8, type: 'housing', icon: Star, color: '#f59e0b',
-    title: 'Your housing review was helpful!',
-    description: '5 people found your review of Green Terrace PG useful. +10 reputation.',
-    time: '3 days ago', unread: false, link: '/profile',
   },
 ];
 

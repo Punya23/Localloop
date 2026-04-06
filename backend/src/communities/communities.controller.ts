@@ -52,4 +52,45 @@ export class CommunitiesController {
   leave(@Request() req: any, @Param('id') id: string) {
     return this.communitiesService.leave(req.user.sub, id);
   }
+
+  // ════════════ MEMBERS ════════════
+
+  @Get(':id/members')
+  @ApiOperation({ summary: 'Get community members' })
+  getMembers(@Param('id') id: string, @Query('page') page?: string) {
+    return this.communitiesService.getMembers(id, page ? parseInt(page, 10) : 1);
+  }
+
+  // ════════════ POLLS ════════════
+
+  @Get(':id/polls')
+  @ApiOperation({ summary: 'Get community polls' })
+  getPolls(@Param('id') id: string) {
+    return this.communitiesService.getPolls(id);
+  }
+
+  @Post(':id/polls')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create community poll' })
+  createPoll(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: { question: string; options: string[]; expiresInDays?: number },
+  ) {
+    return this.communitiesService.createPoll(req.user.sub, id, body.question, body.options, body.expiresInDays);
+  }
+
+  @Post(':id/polls/:pollId/vote')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Vote on community poll' })
+  votePoll(
+    @Request() req: any,
+    @Param('id') communityId: string, // Not strictly needed for logic but good for restful URL
+    @Param('pollId') pollId: string,
+    @Body() body: { optionIndex: number },
+  ) {
+    return this.communitiesService.votePoll(req.user.sub, pollId, body.optionIndex);
+  }
 }
