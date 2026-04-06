@@ -107,7 +107,7 @@ export default function AIChatbot() {
           onClick={handleOpen}
           style={{
             position: 'fixed',
-            bottom: 84,
+            bottom: 152, // Safely above mobile navbar (64px) + page FABs (~80-136px)
             right: 20,
             width: 56,
             height: 56,

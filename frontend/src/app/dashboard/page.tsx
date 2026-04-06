@@ -513,7 +513,7 @@ export default function DashboardPage() {
           }
         }}
         style={{
-          position: 'fixed', bottom: '32px', right: '32px', width: '56px', height: '56px',
+          position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
           borderRadius: '50%', background: 'linear-gradient(135deg, var(--text-primary), #2d2d4e)',
           color: '#fff', border: 'none', display: 'flex',
           alignItems: 'center', justifyContent: 'center', cursor: 'pointer',

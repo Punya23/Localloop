@@ -331,7 +331,7 @@ export default function CommunitiesPage() {
           }
         }}
         style={{
-        position: 'fixed', bottom: 80, right: 20, width: 56, height: 56,
+        position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
         borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
         boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
