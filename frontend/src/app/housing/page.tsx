@@ -77,7 +77,19 @@ export default function HousingPage() {
     params.budgetMax = budget;
     if (pref === 'Women Only') params.isWomenFriendly = 'true';
     if (housingType) params.type = housingType;
-    api.getHousings(params).then((r) => { if (r?.data?.length) setData(r.data); else setData([]); }).catch(() => {}).finally(() => setLoading(false));
+    
+    Promise.all([
+      api.getHousings(params).catch(() => null),
+      api.getSavedHousings().catch(() => null)
+    ]).then(([r, savedRes]) => {
+      if (r?.data?.length) setData(r.data); else setData([]);
+      
+      if (savedRes && Array.isArray(savedRes)) {
+        const savedIds = new Set<string>();
+        savedRes.forEach((s: any) => savedIds.add(s.id || s.housingId));
+        setSaved(savedIds);
+      }
+    }).finally(() => setLoading(false));
   }, [area, budget, pref, housingType]);
 
   // Debounced search
@@ -111,7 +123,14 @@ export default function HousingPage() {
     return true;
   });
 
-  const toggleSave = (id: string) => setSaved((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSave = (id: string) => {
+    setSaved((p) => {
+      const n = new Set(p);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+    api.saveHousing(id).catch(console.error);
+  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

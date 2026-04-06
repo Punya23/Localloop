@@ -42,10 +42,15 @@ export default function HousingDetailPage() {
 
   useEffect(() => {
     if (id) {
-      api.getHousing(id)
-        .then((data) => { if (data) setHousing(data); })
-        .catch(() => {})
-        .finally(() => setLoading(false));
+      Promise.all([
+        api.getHousing(id).catch(() => null),
+        api.getSavedHousings().catch(() => null)
+      ]).then(([data, savedRes]) => {
+        if (data) setHousing(data);
+        if (savedRes && Array.isArray(savedRes)) {
+          setSaved(savedRes.some((s: any) => (s.id || s.housingId) === id));
+        }
+      }).finally(() => setLoading(false));
     }
   }, [id]);
 
