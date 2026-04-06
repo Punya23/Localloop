@@ -16,7 +16,7 @@ export class ChatbotEngine {
       apiKey: this.config.get('CEREBRAS_API_KEY'),
       baseURL: this.config.get('CEREBRAS_BASE_URL') || 'https://api.cerebras.ai/v1',
     });
-    this.model = this.config.get('CEREBRAS_MODEL') || 'llama-3.1-8b';
+    this.model = this.config.get('CEREBRAS_MODEL') || 'llama3.1-8b';
   }
 
   /**
