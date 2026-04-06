@@ -76,7 +76,12 @@ function ChatInner() {
         };
       });
 
-      setConversations([...mappedDirect, ...mappedGroups]);
+      setConversations((prev) => {
+        const newConvs = [...mappedDirect, ...mappedGroups];
+        // Preserve any local placeholder conversations that haven't been established on the backend yet
+        const placeholders = prev.filter(p => !newConvs.find(n => n.id === p.id) && p.msg === 'Start a conversation');
+        return [...placeholders, ...newConvs];
+      });
       return [...mappedDirect, ...mappedGroups];
     } catch (e) {
       console.error(e);
@@ -86,45 +91,45 @@ function ChatInner() {
 
   /* ── Handle ?userId deep-link from people page ── */
   useEffect(() => {
+    if (!user) return;
+    
     const paramUserId = searchParams.get('userId');
     const paramName = searchParams.get('name');
 
-    if (!paramUserId || !user) return;
-
-    // Store the name in case this user isn't in conversations yet
-    if (paramName) {
-      pendingNamesRef.current[paramUserId] = decodeURIComponent(paramName);
-    }
-
-    // Load conversations first, then check if this user is already there
-    fetchConversations().then((convs) => {
-      const exists = convs.find((c: any) => c.id === paramUserId);
-      if (!exists && paramName) {
-        // Inject a placeholder conversation so chat opens immediately
-        const placeholder = {
-          id: paramUserId,
-          name: decodeURIComponent(paramName),
-          group: false,
-          msg: 'Start a conversation',
-          unread: 0,
-          initials: decodeURIComponent(paramName).substring(0, 2).toUpperCase(),
-          avatarGrad: 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
-          online: false,
-        };
-        setConversations((prev) => {
-          if (prev.find((c) => c.id === paramUserId)) return prev;
-          return [placeholder, ...prev];
-        });
+    if (paramUserId) {
+      // Store the name in case this user isn't in conversations yet
+      if (paramName) {
+        pendingNamesRef.current[paramUserId] = decodeURIComponent(paramName);
       }
-      setSelected(paramUserId);
-      // Remove query params from URL
-      router.replace('/chat');
-    });
-  }, [user]);
 
-  useEffect(() => {
-    if (user) fetchConversations();
-  }, [user]);
+      // Load conversations first, then check if this user is already there
+      fetchConversations().then((convs) => {
+        const exists = convs.find((c: any) => c.id === paramUserId);
+        if (!exists && paramName) {
+          // Inject a placeholder conversation so chat opens immediately
+          const placeholder = {
+            id: paramUserId,
+            name: decodeURIComponent(paramName),
+            group: false,
+            msg: 'Start a conversation',
+            unread: 0,
+            initials: decodeURIComponent(paramName).substring(0, 2).toUpperCase(),
+            avatarGrad: 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+            online: false,
+          };
+          setConversations((prev) => {
+            if (prev.find((c) => c.id === paramUserId)) return prev;
+            return [placeholder, ...prev];
+          });
+        }
+        setSelected(paramUserId);
+        // Remove query params from URL
+        router.replace('/chat');
+      });
+    } else {
+      fetchConversations();
+    }
+  }, [user, searchParams, router]);
 
   /* ── Socket.io setup ── */
   useEffect(() => {
@@ -133,7 +138,10 @@ function ChatInner() {
     const baseUrl = url.replace('/api', '');
     const s = io(`${baseUrl}/chat`, { autoConnect: true });
 
-    s.on('connect', () => { s.emit('register', { userId: user.id }); });
+    s.on('connect', () => { 
+      const token = localStorage.getItem('localloop_token');
+      s.emit('register', { token }); 
+    });
 
     s.on('receive_message', (msg: any) => {
       const cur = selectedRef.current;

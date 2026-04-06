@@ -39,6 +39,13 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== 'undefined') {
+        this.clearToken();
+        // Redirect if not already on login page
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login?expired=true';
+        }
+      }
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new Error(error.message || `HTTP ${response.status}`);
     }
@@ -372,6 +379,29 @@ class ApiClient {
   async adminDeleteHousing(housingId: string) {
     return this.request<any>(`/admin/housings/${housingId}`, {
       method: 'DELETE',
+    });
+  }
+
+  async getAdminCommunities(page = 1, limit = 20) {
+    return this.request<any>(`/admin/communities?page=${page}&limit=${limit}`);
+  }
+
+  async adminDeleteCommunity(communityId: string) {
+    return this.request<any>(`/admin/communities/${communityId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async adminPushNotification(title: string, message: string) {
+    return this.request<any>('/admin/push-notification', {
+      method: 'POST',
+      body: JSON.stringify({ title, message }),
+    });
+  }
+
+  async adminBanUser(userId: string) {
+    return this.request<any>(`/admin/users/${userId}/ban`, {
+      method: 'PATCH',
     });
   }
 

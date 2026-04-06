@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsEnum, IsBoolean, IsArray, Min } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsEnum, IsBoolean, IsArray, Min, IsUrl } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -61,6 +61,7 @@ export class CreateHousingDto {
 
   @ApiPropertyOptional()
   @IsArray()
+  @IsUrl({}, { each: true })
   @IsString({ each: true })
   @IsOptional()
   images?: string[];

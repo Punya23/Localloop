@@ -28,24 +28,28 @@ export class AuthService {
     // Generate invite code for the user
     const inviteCode = this.generateInviteCode();
 
-    // Create user
-    const user = await this.prisma.user.create({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        password: hashedPassword,
-        inviteCode,
-        welcomeEmailSent: false,
-      },
-    });
+    // Create user and reputation within a transaction to avoid broken accounts
+    const user = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          name: dto.name,
+          email: dto.email,
+          password: hashedPassword,
+          inviteCode,
+          welcomeEmailSent: false,
+        },
+      });
 
-    // Create initial reputation
-    await this.prisma.reputation.create({
-      data: {
-        userId: user.id,
-        points: 0,
-        level: 'EXPLORER',
-      },
+      // Create initial reputation
+      await tx.reputation.create({
+        data: {
+          userId: u.id,
+          points: 0,
+          level: 'EXPLORER',
+        },
+      });
+
+      return u;
     });
 
     // Send Real Welcome Email!

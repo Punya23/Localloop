@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway({
   cors: {
@@ -23,7 +24,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private connectedUsers: Map<string, string> = new Map(); // socketId -> userId
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
@@ -36,12 +37,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('register')
   handleRegister(
-    @MessageBody() data: { userId: string },
+    @MessageBody() data: { token: string },
     @ConnectedSocket() client: Socket,
   ) {
-    this.connectedUsers.set(client.id, data.userId);
-    client.join(`user_${data.userId}`);
-    return { event: 'registered', data: { success: true } };
+    try {
+      const payload = this.jwtService.verify(data.token);
+      this.connectedUsers.set(client.id, payload.sub);
+      client.join(`user_${payload.sub}`);
+      return { event: 'registered', data: { success: true } };
+    } catch (error) {
+      console.error('Socket authentication failed:', error.message);
+      client.disconnect();
+      return { event: 'registered', data: { success: false, error: 'Unauthorized' } };
+    }
   }
 
   // ════════════ 1-TO-1 MESSAGING ════════════
@@ -51,6 +59,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { senderId: string; receiverId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
+    const authId = this.connectedUsers.get(client.id);
+    if (!authId || authId !== data.senderId) {
+      console.warn(`Impersonation blocked: Socket ${client.id} tried to send as ${data.senderId}`);
+      return { error: 'Unauthorized' };
+    }
     // Save message to database
     const message = await this.prisma.message.create({
       data: {
@@ -125,6 +138,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { userId: string; communityId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
+    const authId = this.connectedUsers.get(client.id);
+    if (!authId || authId !== data.userId) {
+      console.warn(`Impersonation blocked: Socket ${client.id} tried to send community message as ${data.userId}`);
+      return { error: 'Unauthorized' };
+    }
     // Save to database
     const message = await this.prisma.communityMessage.create({
       data: {

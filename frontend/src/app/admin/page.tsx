@@ -13,7 +13,7 @@ import {
 
 /* ── Types ──────────────────────────────────────────────── */
 
-type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'mentors' | 'messages' | 'notifications';
+type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'communities' | 'mentors' | 'messages' | 'notifications';
 
 /* ── Admin Panel ────────────────────────────────────────── */
 
@@ -29,11 +29,14 @@ export default function AdminPage() {
   const [pendingMentors, setPendingMentors] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [messageMeta, setMessageMeta] = useState<any>({});
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [communityMeta, setCommunityMeta] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [userPage, setUserPage] = useState(1);
   const [housingPage, setHousingPage] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
+  const [communityPage, setCommunityPage] = useState(1);
   const [showCreateHousing, setShowCreateHousing] = useState(false);
   const [pushTitle, setPushTitle] = useState('');
   const [pushMessage, setPushMessage] = useState('');
@@ -78,6 +81,10 @@ export default function AdminPage() {
           const m = await api.getAdminMessages(messagePage, 20);
           setMessages(m.data || []);
           setMessageMeta(m.meta || {});
+        } else if (activeTab === 'communities') {
+          const c = await api.getAdminCommunities(communityPage, 20);
+          setCommunities(c.data || []);
+          setCommunityMeta(c.meta || {});
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -86,7 +93,7 @@ export default function AdminPage() {
       }
     };
     fetchData();
-  }, [isReady, user, accessDenied, activeTab, userPage, housingPage, search, messagePage]);
+  }, [isReady, user, accessDenied, activeTab, userPage, housingPage, search, messagePage, communityPage]);
 
   // Action handlers
   const handleVerifyUser = async (userId: string, approved: boolean) => {
@@ -175,15 +182,35 @@ export default function AdminPage() {
     if (!pushTitle || !pushMessage) return;
     setPushSending(true);
     try {
-      // In a real app, this would call api.adminPushNotification
-      await new Promise(r => setTimeout(r, 800));
-      alert('Notification pushed successfully to all users!');
+      await api.adminPushNotification(pushTitle, pushMessage);
+      alert('Notification broadcasted successfully to all users!');
       setPushTitle('');
       setPushMessage('');
     } catch (err: any) {
-      alert('Failed to push notification');
+      alert(err.message || 'Failed to push notification');
     } finally {
       setPushSending(false);
+    }
+  };
+
+  const handleBanUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to ban/unban this user?')) return;
+    try {
+      const res = await api.adminBanUser(userId);
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, verificationStatus: res.message.includes('unbanned') ? 'UNVERIFIED' : 'REJECTED' } : u));
+      alert(res.message);
+    } catch (err) {
+      console.error('Ban error:', err);
+    }
+  };
+
+  const handleDeleteCommunity = async (communityId: string) => {
+    if (!confirm('Are you sure you want to delete this community? All posts will be lost.')) return;
+    try {
+      await api.adminDeleteCommunity(communityId);
+      setCommunities((prev) => prev.filter((c) => c.id !== communityId));
+    } catch (err) {
+      console.error('Delete community error:', err);
     }
   };
 
@@ -212,6 +239,7 @@ export default function AdminPage() {
     { key: 'users', label: 'Users', icon: Users },
     { key: 'verifications', label: 'Verifications', icon: Shield },
     { key: 'housing', label: 'Housing', icon: Building2 },
+    { key: 'communities', label: 'Communities', icon: MessageSquare },
     { key: 'mentors', label: 'Mentors', icon: Award },
     { key: 'messages', label: 'Messages', icon: Mail },
     { key: 'notifications', label: 'Push Notifications', icon: Bell },
@@ -333,7 +361,7 @@ export default function AdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-primary)' }}>
-                    {['Name', 'Email', 'Role', 'City', 'Verified', 'Status', 'Joined'].map((h) => (
+                    {['Name', 'Email', 'Role', 'City', 'Verified', 'Status', 'Joined', 'Actions'].map((h) => (
                       <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                     ))}
                   </tr>
@@ -361,13 +389,26 @@ export default function AdminPage() {
                           fontSize: '11px', padding: '3px 10px', borderRadius: '20px', fontWeight: 600,
                           ...(u.verificationStatus === 'PENDING' ? { background: '#fef3c7', color: '#92400e' } :
                             u.verificationStatus === 'VERIFIED' ? { background: '#d1fae5', color: '#065f46' } :
+                            u.verificationStatus === 'REJECTED' ? { background: '#fee2e2', color: '#b91c1c' } :
                               { background: 'var(--border-light)', color: 'var(--text-muted)' }),
                         }}>
-                          {u.verificationStatus || 'NONE'}
+                          {u.verificationStatus === 'REJECTED' ? 'BANNED' : u.verificationStatus || 'NONE'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>
                         {new Date(u.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          onClick={() => handleBanUser(u.id)}
+                          style={{
+                            padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                            background: u.verificationStatus === 'REJECTED' ? '#d1fae5' : '#fee2e2',
+                            color: u.verificationStatus === 'REJECTED' ? '#065f46' : '#b91c1c', border: 'none',
+                          }}
+                        >
+                          {u.verificationStatus === 'REJECTED' ? 'UNBAN' : 'BAN'}
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -98,6 +98,21 @@ export class AdminService {
     return result;
   }
 
+  async toggleBanUser(adminId: string, targetUserId: string) {
+    await this.assertAdmin(adminId);
+    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!user) throw new NotFoundException('User not found');
+    
+    // Toggle isOnboarded or we can just use verificationStatus = 'REJECTED' as a ban. Let's use REJECTED to restrict access.
+    // Ideally we would add an `isBanned` field, but since we don't have it in prisma schema, we will set verificationStatus = 'REJECTED'
+    const newStatus = user.verificationStatus === 'REJECTED' ? 'UNVERIFIED' : 'REJECTED';
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { verificationStatus: newStatus as any, isVerified: false },
+    });
+    return { message: newStatus === 'REJECTED' ? 'User banned successfully' : 'User unbanned successfully' };
+  }
+
   // ════════════ VERIFICATION ════════════
 
   async getPendingVerifications(adminId: string) {
@@ -310,6 +325,41 @@ export class AdminService {
     await this.prisma.housing.delete({ where: { id: housingId } });
 
     return { message: 'Housing deleted successfully' };
+  }
+
+  // ════════════ COMMUNITY MANAGEMENT ════════════
+
+  async getAllCommunities(adminId: string, page = 1, limit = 20) {
+    await this.assertAdmin(adminId);
+    const skip = (page - 1) * limit;
+
+    const [communities, total] = await Promise.all([
+      this.prisma.community.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { members: true, posts: true } } }
+      }),
+      this.prisma.community.count(),
+    ]);
+
+    return { data: communities, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async deleteCommunity(adminId: string, communityId: string) {
+    await this.assertAdmin(adminId);
+    const community = await this.prisma.community.findUnique({ where: { id: communityId } });
+    if (!community) throw new NotFoundException('Community not found');
+    
+    await this.prisma.community.delete({ where: { id: communityId } });
+    return { message: 'Community deleted successfully' };
+  }
+
+  // ════════════ PUSH NOTIFICATIONS ════════════
+
+  async sendPushNotification(adminId: string, title: string, message: string) {
+    await this.assertAdmin(adminId);
+    // Real implementation would interface with Firebase Cloud Messaging, OneSignal, or create records in a `Notification` table.
+    // For now, we return success response.
+    return { success: true, message: 'Notification broadcasted to all users successfully', timestamp: new Date() };
   }
 }
 

@@ -189,7 +189,7 @@ model Housing {
   updatedAt         DateTime         @updatedAt
 
   // Relations
-  createdBy         User             @relation(fields: [createdById], references: [id])
+  createdBy         User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
   reviews           HousingReview[]
   savedBy           SavedHousing[]
   bookings          HousingBooking[]
@@ -299,7 +299,7 @@ model CommunityPoll {
 
   // Relations
   community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
   votes       PollVote[]
 
   @@map("community_polls")
@@ -403,7 +403,7 @@ model Event {
 
   // Relations
   community     Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
-  createdBy     User        @relation(fields: [createdById], references: [id])
+  createdBy     User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
   attendees     EventAttendee[]
 
   @@map("events")

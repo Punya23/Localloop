@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReputationService } from '../reputation/reputation.service';
 import { CreatePostDto, CreateCommentDto } from './dto/posts.dto';
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private reputationService: ReputationService) {}
 
   async create(userId: string, dto: CreatePostDto) {
     // Verify user is a member of the community
@@ -33,10 +34,7 @@ export class PostsService {
     });
 
     // Award reputation points for posting
-    await this.prisma.reputation.updateMany({
-      where: { userId },
-      data: { points: { increment: 5 } },
-    });
+    await this.reputationService.addPoints(userId, 5, 'Post created');
 
     // Update community post count
     await this.prisma.community.update({
@@ -100,10 +98,7 @@ export class PostsService {
     });
 
     // Award reputation points for commenting
-    await this.prisma.reputation.updateMany({
-      where: { userId },
-      data: { points: { increment: 7 } },
-    });
+    await this.reputationService.addPoints(userId, 7, 'Comment added');
 
     return comment;
   }

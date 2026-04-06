@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReputationService } from '../reputation/reputation.service';
 import { CreateHousingDto, HousingFilterDto, CreateReviewDto } from './dto/housing.dto';
 
 @Injectable()
 export class HousingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private reputationService: ReputationService) {}
 
   async create(userId: string, dto: CreateHousingDto) {
     return this.prisma.housing.create({
@@ -13,7 +14,7 @@ export class HousingService {
         description: dto.description,
         address: dto.address,
         area: dto.area,
-        city: dto.city || 'Pune',
+        city: dto.city,
         rent: dto.rent,
         deposit: dto.deposit,
         type: dto.type as any,
@@ -62,9 +63,6 @@ export class HousingService {
           createdBy: {
             select: { id: true, name: true, avatar: true },
           },
-          reviews: {
-            select: { rating: true },
-          },
           _count: {
             select: { reviews: true, savedBy: true },
           },
@@ -73,13 +71,20 @@ export class HousingService {
       this.prisma.housing.count({ where }),
     ]);
 
-    // Calculate average rating for each housing
+    // Fetch average ratings efficiently from DB instead of fetching all review objects into memory
+    const housingIds = housings.map(h => h.id);
+    const reviewsAgg = housingIds.length > 0 ? await this.prisma.housingReview.groupBy({
+      by: ['housingId'],
+      where: { housingId: { in: housingIds } },
+      _avg: { rating: true },
+    }) : [];
+
+    const ratingMap = new Map(reviewsAgg.map(agg => [agg.housingId, agg._avg.rating]));
+
+    // Append average rating to each housing
     const housingsWithRating = housings.map((h) => ({
       ...h,
-      avgRating:
-        h.reviews.length > 0
-          ? Math.round((h.reviews.reduce((sum, r) => sum + r.rating, 0) / h.reviews.length) * 10) / 10
-          : null,
+      avgRating: ratingMap.has(h.id) && ratingMap.get(h.id) !== null ? Math.round((ratingMap.get(h.id) as number) * 10) / 10 : null,
       reviewCount: h._count.reviews,
     }));
 
@@ -152,10 +157,7 @@ export class HousingService {
     });
 
     // Award reputation points for reviewing
-    await this.prisma.reputation.updateMany({
-      where: { userId },
-      data: { points: { increment: 10 } },
-    });
+    await this.reputationService.addPoints(userId, 10, 'Review added');
 
     return review;
   }
@@ -189,7 +191,6 @@ export class HousingService {
       include: {
         housing: {
           include: {
-            reviews: { select: { rating: true } },
             _count: { select: { reviews: true } },
           },
         },
@@ -197,14 +198,18 @@ export class HousingService {
       orderBy: { createdAt: 'desc' },
     });
 
+    const housingIds = saved.map(s => s.housingId);
+    const reviewsAgg = housingIds.length > 0 ? await this.prisma.housingReview.groupBy({
+      by: ['housingId'],
+      where: { housingId: { in: housingIds } },
+      _avg: { rating: true },
+    }) : [];
+
+    const ratingMap = new Map(reviewsAgg.map(agg => [agg.housingId, agg._avg.rating]));
+
     return saved.map((s) => ({
       ...s.housing,
-      avgRating:
-        s.housing.reviews.length > 0
-          ? Math.round(
-              (s.housing.reviews.reduce((sum, r) => sum + r.rating, 0) / s.housing.reviews.length) * 10,
-            ) / 10
-          : null,
+      avgRating: ratingMap.has(s.housingId) && ratingMap.get(s.housingId) !== null ? Math.round((ratingMap.get(s.housingId) as number) * 10) / 10 : null,
       savedAt: s.createdAt,
     }));
   }

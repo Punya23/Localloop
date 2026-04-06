@@ -108,14 +108,17 @@ export class CommunitiesService {
       }
     }
 
-    await this.prisma.communityMember.create({
-      data: { userId, communityId },
-    });
+    // Use transaction to ensure accuracy
+    await this.prisma.$transaction(async (tx) => {
+      await tx.communityMember.create({
+        data: { userId, communityId },
+      });
 
-    // Update member count
-    await this.prisma.community.update({
-      where: { id: communityId },
-      data: { memberCount: { increment: 1 } },
+      // Update member count
+      await tx.community.update({
+        where: { id: communityId },
+        data: { memberCount: { increment: 1 } },
+      });
     });
 
     return { message: 'Joined community successfully' };
@@ -130,13 +133,16 @@ export class CommunitiesService {
       throw new NotFoundException('Not a member of this community');
     }
 
-    await this.prisma.communityMember.delete({
-      where: { id: membership.id },
-    });
+    // Use transaction to ensure accuracy
+    await this.prisma.$transaction(async (tx) => {
+      await tx.communityMember.delete({
+        where: { id: membership.id },
+      });
 
-    await this.prisma.community.update({
-      where: { id: communityId },
-      data: { memberCount: { decrement: 1 } },
+      await tx.community.update({
+        where: { id: communityId },
+        data: { memberCount: { decrement: 1 } },
+      });
     });
 
     return { message: 'Left community successfully' };

@@ -118,4 +118,31 @@ export class AdminController {
   getMessages(@Request() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getMessages(req.user.sub, page || 1, limit || 20);
   }
+
+  // ── Communities ──
+  @Get('communities')
+  @ApiOperation({ summary: 'Get all communities (paginated)' })
+  getAllCommunities(@Request() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getAllCommunities(req.user.sub, page || 1, limit || 20);
+  }
+
+  @Delete('communities/:id')
+  @ApiOperation({ summary: 'Admin delete a community' })
+  deleteCommunity(@Request() req: any, @Param('id') id: string) {
+    return this.adminService.deleteCommunity(req.user.sub, id);
+  }
+
+  // ── Push Notifications ──
+  @Post('push-notification')
+  @ApiOperation({ summary: 'Broadcast push notification to users' })
+  sendPushNotification(@Request() req: any, @Body() body: { title: string; message: string }) {
+    return this.adminService.sendPushNotification(req.user.sub, body.title, body.message);
+  }
+
+  // ── User Bans ──
+  @Patch('users/:id/ban')
+  @ApiOperation({ summary: 'Ban or unban user' })
+  banUser(@Request() req: any, @Param('id') id: string) {
+    return this.adminService.toggleBanUser(req.user.sub, id);
+  }
 }
