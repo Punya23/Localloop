@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Bell, MessageCircle, Building2, Users, Trophy, Heart,
@@ -39,26 +39,53 @@ const demoNotifications = [
 /* ── Notifications Page ───────────────────────────────── */
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(demoNotifications);
+  const [readIds, setReadIds] = useState<number[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<number[]>([]);
   const [filter, setFilter] = useState('All');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const r = localStorage.getItem('ll_notif_read');
+      const d = localStorage.getItem('ll_notif_dismissed');
+      if (r) setReadIds(JSON.parse(r));
+      if (d) setDismissedIds(JSON.parse(d));
+    } catch {}
+  }, []);
 
   const filters = ['All', 'Unread', 'Messages', 'Housing', 'Community'];
 
   const markRead = (id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
-    );
+    if (!readIds.includes(id)) {
+      const updated = [...readIds, id];
+      setReadIds(updated);
+      localStorage.setItem('ll_notif_read', JSON.stringify(updated));
+    }
   };
 
   const dismiss = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (!dismissedIds.includes(id)) {
+      const updated = [...dismissedIds, id];
+      setDismissedIds(updated);
+      localStorage.setItem('ll_notif_dismissed', JSON.stringify(updated));
+    }
   };
 
   const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    const allActiveIds = demoNotifications.map((n) => n.id);
+    setReadIds(allActiveIds);
+    localStorage.setItem('ll_notif_read', JSON.stringify(allActiveIds));
   };
 
-  const filtered = notifications.filter((n) => {
+  const currentNotifications = demoNotifications
+    .filter((n) => !dismissedIds.includes(n.id))
+    .map((n) => ({
+      ...n,
+      unread: readIds.includes(n.id) ? false : n.unread,
+    }));
+
+  const filtered = currentNotifications.filter((n) => {
     if (filter === 'Unread') return n.unread;
     if (filter === 'Messages') return n.type === 'message';
     if (filter === 'Housing') return n.type === 'housing';
@@ -66,7 +93,10 @@ export default function NotificationsPage() {
     return true;
   });
 
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const unreadCount = currentNotifications.filter((n) => n.unread).length;
+
+  // Render a placeholder or nothing until mounted to avoid hydration mismatch
+  if (!mounted) return <div style={{ minHeight: '100vh' }} />;
 
   return (
     <div style={{ maxWidth: '640px', margin: '0 auto', padding: '24px 24px 100px' }}>
