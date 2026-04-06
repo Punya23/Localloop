@@ -67,6 +67,13 @@ export default function HousingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileFilters, setMobileFilters] = useState(false);
 
+  // ML Predictor States
+  const [mlArea, setMlArea] = useState('Hinjewadi');
+  const [mlRoomType, setMlRoomType] = useState('Single Room');
+  const [mlHasAc, setMlHasAc] = useState(false);
+  const [mlPredictedRent, setMlPredictedRent] = useState<number | null>(null);
+  const [mlLoading, setMlLoading] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     // Pass filter params to API so server-side can narrow
@@ -259,6 +266,72 @@ export default function HousingPage() {
               boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
             }} />
           </button>
+        </div>
+
+        {/* ═══ ML Predicted Rent ═══ */}
+        <div style={{
+          background: 'linear-gradient(135deg, var(--bg-primary), #f3f0ff)',
+          borderRadius: 14, padding: 16, marginBottom: 28, border: '1px solid #e2e8f0',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Sparkles size={16} style={{ color: '#8b5cf6' }} />
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>AI Price Predictor</h3>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)' }}>Location</label>
+              <select 
+                value={mlArea} onChange={e => setMlArea(e.target.value)}
+                style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }}
+              >
+                <option>Hinjewadi</option>
+                <option>Wakad</option>
+                <option>Viman Nagar</option>
+                <option>Kothrud</option>
+                <option>Kharadi</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)' }}>Type</label>
+              <select 
+                value={mlRoomType} onChange={e => setMlRoomType(e.target.value)}
+                style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }}
+              >
+                <option>Single Room</option>
+                <option>Double Sharing</option>
+                <option>Triple Sharing</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="checkbox" checked={mlHasAc} onChange={e => setMlHasAc(e.target.checked)} />
+              <label style={{ fontSize: 12, color: 'var(--text-primary)' }}>Has AC</label>
+            </div>
+            
+            <button
+              onClick={async () => {
+                setMlLoading(true);
+                try {
+                  const res = await api.predictRent({ area: mlArea, room_type: mlRoomType, has_ac: mlHasAc, has_food: true });
+                  if (res.predicted_rent) setMlPredictedRent(res.predicted_rent);
+                  else if (res.error) alert(res.error);
+                } catch(e) { setMlPredictedRent(null); }
+                setMlLoading(false);
+              }}
+              style={{
+                background: '#8b5cf6', color: '#fff', border: 'none', padding: '8px', 
+                borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 4,
+              }}>
+              {mlLoading ? 'Predicting...' : 'Predict Fair Rent'}
+            </button>
+
+            {mlPredictedRent !== null && (
+              <div style={{ background: '#fff', borderRadius: 8, padding: 10, marginTop: 4, border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>ML Estimate</span>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>₹{mlPredictedRent.toLocaleString()}</div>
+              </div>
+            )}
+          </div>
         </div>
 
         <button onClick={() => { setPref('All'); setVerified(true); setBudget(30000); setArea('All'); setHousingType(''); setSearchQuery(''); }} style={{

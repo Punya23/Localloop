@@ -428,6 +428,13 @@ class ApiClient {
     return this.request<any>(`/ai/price-intelligence/area/${encodeURIComponent(area)}?city=${city}`);
   }
 
+  async predictRent(data: { area: string; room_type: string; has_ac: boolean; has_food: boolean }) {
+    return this.request<any>('/ai/predict-rent', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getDealScore(housingId: string) {
     return this.request<any>(`/ai/price-intelligence/deal-score/${housingId}`);
   }

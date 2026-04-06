@@ -39,16 +39,31 @@ export default function AIChatbot() {
     }, 100);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const msg = input.trim();
-    setInput('');
+  useEffect(() => {
+    const handleOpenChatbot = (e: CustomEvent<{ initialPrompt?: string }>) => {
+      setIsOpen(true);
+      loadHistory();
+      scrollToBottom();
+      if (e.detail?.initialPrompt) {
+        setInput(e.detail.initialPrompt);
+      }
+    };
+
+    window.addEventListener('open-chatbot', handleOpenChatbot as EventListener);
+    return () => window.removeEventListener('open-chatbot', handleOpenChatbot as EventListener);
+  }, [historyLoaded]);
+
+  const handleSend = async (overrideMsg?: string) => {
+    const msgTemplate = overrideMsg || input.trim();
+    if (!msgTemplate || loading) return;
+    
+    if (!overrideMsg) setInput('');
 
     // Optimistic user message
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
       role: 'user',
-      content: msg,
+      content: msgTemplate,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -56,7 +71,7 @@ export default function AIChatbot() {
     setLoading(true);
 
     try {
-      const res = await api.sendAIChatMessage(msg);
+      const res = await api.sendAIChatMessage(msgTemplate);
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         role: 'assistant',

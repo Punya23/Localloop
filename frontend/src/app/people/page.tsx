@@ -15,12 +15,26 @@ import {
 export default function PeoplePage() {
   const { user, isReady } = useAuthGuard({ requireOnboarded: true });
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [aiMatches, setAiMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAi, setLoadingAi] = useState(true);
   const [search, setSearch] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch AI smart matches
+  useEffect(() => {
+    if (!isReady || !user) return;
+    setLoadingAi(true);
+    api.getAIMatches('friends', 6)
+      .then((res) => {
+        setAiMatches(res || []);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingAi(false));
+  }, [isReady, user]);
 
   // Fetch users from backend search endpoint
   useEffect(() => {
@@ -69,15 +83,102 @@ export default function PeoplePage() {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px 24px 100px' }}>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Users size={24} style={{ color: 'var(--primary)' }} /> Find People
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px', letterSpacing: '-0.5px' }}>
+          <Users size={32} style={{ color: 'var(--primary)' }} /> Find Your Tribe
         </h1>
-        <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-          Connect with fellow relocators in your city
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>
+          Discover and connect with like-minded people. Build your community.
         </p>
       </div>
 
+      {/* ── 🔥 AI Vibe Matched ── */}
+      {!loadingAi && aiMatches.length > 0 && (
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Sparkles size={20} style={{ color: '#ec4899' }} />
+            <h2 style={{ fontSize: '18px', fontWeight: 700, background: 'linear-gradient(90deg, #ec4899, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+              Top Vibe Matches
+            </h2>
+            <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.1)', color: '#ec4899', fontWeight: 600, marginLeft: '8px' }}>
+              AI Recommended
+            </span>
+          </div>
+
+          <div style={{ 
+            display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', 
+            scrollbarWidth: 'none', msOverflowStyle: 'none' 
+          }}>
+            {aiMatches.map((m: any) => (
+              <div key={m.id} style={{
+                minWidth: '260px', maxWidth: '260px', background: 'rgba(255, 255, 255, 0.03)', 
+                backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '20px', 
+                border: '1px solid rgba(255, 255, 255, 0.1)', 
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.05)',
+                display: 'flex', flexDirection: 'column', gap: '12px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative', overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => { 
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(139, 92, 246, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+              }}
+              onMouseLeave={(e) => { 
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.05)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              >
+                <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '56px', height: '56px', borderRadius: '16px', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #f472b6, #8b5cf6)',
+                    fontSize: '22px', fontWeight: 700, color: '#fff',
+                    boxShadow: '0 4px 12px rgba(236, 72, 153, 0.3)'
+                  }}>
+                    {m.avatar ? <img src={m.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '16px', objectFit: 'cover' }} /> : (m.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px 0' }}>{m.name}</h3>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{m.compatibilityScore}% Match</span>
+                    </div>
+                  </div>
+                </div>
+
+                {m.matchReasons && m.matchReasons.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                    {m.matchReasons.map((reason: string, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ec4899' }} />
+                        {reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Link href={`/chat?userId=${m.id}&name=${encodeURIComponent(m.name || '')}`} style={{
+                  marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
+                  background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', textDecoration: 'none',
+                  transition: 'all 0.2s', border: '1px solid rgba(139, 92, 246, 0.2)'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#8b5cf6'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'; e.currentTarget.style.color = '#8b5cf6'; }}
+                >
+                  <MessageCircle size={15} /> Slide into DMs
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Community Search ── */}
+      <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>Explore Network</h2>
       {/* ── Search + Filters ── */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>

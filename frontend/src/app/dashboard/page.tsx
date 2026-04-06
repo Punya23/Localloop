@@ -154,12 +154,17 @@ export default function DashboardPage() {
           <div style={{ marginBottom: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Recommended for You</h2>
-              <Link href="#" style={{
+              <button onClick={(e) => {
+                e.preventDefault();
+                const prompt = `Can you provide some personalized AI Insights for me? I am looking to move to ${userArea} around ${moveMonth} with a budget up to ₹${(user?.budgetMax || 15000)}. What are your top recommendations?`;
+                window.dispatchEvent(new CustomEvent('open-chatbot', { detail: { initialPrompt: prompt } }));
+              }} style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
                 fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
+                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0
               }}>
                 <Sparkles size={14} /> AI Insights
-              </Link>
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
@@ -279,12 +284,25 @@ export default function DashboardPage() {
               marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid var(--border)',
             }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>Community Feed</h2>
-              <Link href="/communities" style={{
-                fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
-                display: 'flex', alignItems: 'center', gap: '4px',
-              }}>
-                Join Discussions <ArrowRight size={14} />
-              </Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={(e) => {
+                  e.preventDefault();
+                  const prompt = `Can you summarize the latest discussions in the communities and tell me what the biggest topics are right now?`;
+                  window.dispatchEvent(new CustomEvent('open-chatbot', { detail: { initialPrompt: prompt } }));
+                }} style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  fontSize: '13px', fontWeight: 600, color: '#8b5cf6', textDecoration: 'none',
+                  background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0
+                }}>
+                  <Sparkles size={14} /> AI Summary
+                </button>
+                <Link href="/communities" style={{
+                  fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                }}>
+                  Join Discussions <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {data?.recentPosts?.map((post: any, idx: number) => {

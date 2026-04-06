@@ -58,6 +58,24 @@ export class AiController {
     return this.aiService.getDealScore(housingId);
   }
 
+  @Post('predict-rent')
+  @ApiOperation({ summary: 'Predict rent using Python ML microservice' })
+  async predictRent(@Body() data: any) {
+    try {
+      const resp = await fetch('http://localhost:8000/predict/rent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!resp.ok) {
+        throw new Error('ML API failed');
+      }
+      return await resp.json();
+    } catch (e) {
+      return { error: 'ML Service unavailable. Did you start the Python microservice?' };
+    }
+  }
+
   // ════════════ SMART MATCHING ════════════
 
   @Get('match/people')
