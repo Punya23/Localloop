@@ -60,7 +60,7 @@ export default function Navbar() {
       {/* ─── Sidebar (Desktop & Mobile Drawer) ─── */}
       <nav style={{
         position: 'fixed', left: 0, top: 0, height: '100%', width: 220,
-        background: '#fff', borderRight: '1px solid #e5e7ee', zIndex: 60,
+        background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)', borderRight: '1px solid var(--border-light)', zIndex: 60,
       }} className={`flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Mobile Close Button */}
         <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden absolute top-4 right-4 p-2 text-slate-500">
@@ -138,30 +138,30 @@ export default function Navbar() {
       {/* ─── Desktop Top Bar ─── */}
       <div style={{
         position: 'fixed', top: 0, left: 220, right: 0, height: 52,
-        background: '#fff', borderBottom: '1px solid #e5e7ee', zIndex: 40,
+        background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)',
+        borderBottom: '1px solid var(--border-light)', zIndex: 40,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px',
       }} className="hidden lg:!flex">
         <div style={{ position: 'relative', width: 320 }}>
-          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input placeholder="Search neighborhoods or streets..." style={{
             width: '100%', padding: '9px 16px 9px 40px', borderRadius: 10,
-            border: '1px solid #e5e7ee', background: '#f8f9fc', fontSize: 14,
-            outline: 'none', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+            border: '1px solid var(--border)', background: 'rgba(0,0,0,0.03)', fontSize: 14,
+            outline: 'none', color: 'var(--text-primary)', fontFamily: 'inherit',
           }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           {[{ href: '/housing', label: 'Housing' }, { href: '/communities', label: 'Communities' }].map((l) => (
             <Link key={l.href} href={l.href} style={{
-              fontSize: 14, fontWeight: 500, color: isActive(l.href) ? '#6366f1' : '#64748b',
-              textDecoration: isActive(l.href) ? 'underline' : 'none',
-              textUnderlineOffset: 6,
+              fontSize: 14, fontWeight: 500, color: isActive(l.href) ? 'var(--primary)' : 'var(--text-secondary)',
+              textDecoration: isActive(l.href) ? 'none' : 'none',
             }}>{l.label}</Link>
           ))}
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Globe size={20} /></button>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}><Settings size={20} /></button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}><Globe size={20} /></button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}><Settings size={20} /></button>
           {!user?.isOnboarded && (
             <Link href="/onboarding" style={{
-              background: '#6366f1', color: '#fff', padding: '8px 20px',
+              background: 'var(--primary)', color: '#fff', padding: '8px 20px',
               borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none',
             }}>Complete Profile</Link>
           )}
@@ -171,7 +171,8 @@ export default function Navbar() {
       {/* ─── Mobile Top Bar ─── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-        background: '#fff', borderBottom: '1px solid #e5e7ee', zIndex: 50,
+        background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)',
+        borderBottom: '1px solid var(--border-light)', zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
       }} className="lg:!hidden">
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500">

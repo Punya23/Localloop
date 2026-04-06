@@ -2,37 +2,39 @@
 
 @layer base {
   :root {
-    --primary: #6366f1;
-    --primary-light: #818cf8;
-    --primary-dark: #4f46e5;
-    --primary-bg: rgba(99, 102, 241, 0.08);
-    --primary-bg-hover: rgba(99, 102, 241, 0.12);
-    --accent: #06b6d4;
-    --accent-light: #22d3ee;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --women-safe: #10b981;
-    --women-badge-bg: rgba(16, 185, 129, 0.1);
-    --superhost: #f59e0b;
-    --bg-primary: #f8f9fc;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
-    --bg-card-hover: #f3f4f8;
-    --bg-sidebar: #ffffff;
-    --bg-chat-other: #f0f1f5;
-    --bg-chat-me: #6366f1;
-    --text-primary: #1a1a2e;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --border: #e5e7ee;
-    --border-light: #f0f1f5;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
+    --primary: #0071e3;
+    --primary-light: #2997ff;
+    --primary-dark: #0066cc;
+    --primary-bg: rgba(0, 113, 227, 0.08);
+    --primary-bg-hover: rgba(0, 113, 227, 0.12);
+    --accent: #2997ff;
+    --accent-light: #5ac8fa;
+    --success: #34c759;
+    --warning: #ff9500;
+    --danger: #ff3b30;
+    --women-safe: #34c759;
+    --women-badge-bg: rgba(52, 199, 89, 0.1);
+    --superhost: #ff9500;
+    --bg-primary: #f5f5f7;
+    --bg-secondary: transparent;
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-hover: rgba(255, 255, 255, 0.9);
+    --bg-sidebar: rgba(255, 255, 255, 0.85);
+    --bg-chat-other: #e5e5ea;
+    --bg-chat-me: #0071e3;
+    --text-primary: #1d1d1f;
+    --text-secondary: #515154;
+    --text-muted: #86868b;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-light: rgba(0, 0, 0, 0.04);
+    --border-glass: rgba(255, 255, 255, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.02);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
     --radius: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --blur-effect: blur(24px) saturate(180%);
   }
 
   * {
@@ -42,7 +44,7 @@
   }
 
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
@@ -51,9 +53,9 @@
   }
 
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg-primary); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
 
   a { text-decoration: none; color: inherit; }
 }
@@ -62,10 +64,12 @@
   /* Glass card */
   .glass-card {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    backdrop-filter: var(--blur-effect);
+    -webkit-backdrop-filter: var(--blur-effect);
+    border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
   }
 
   /* Gradient text */
