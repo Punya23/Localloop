@@ -90,7 +90,7 @@ export default function ProfilePage() {
   }
 
   const p = profile || {};
-  const points = p.reputation?.points || user?.reputation?.points || 450;
+  const points = p.reputation?.points ?? user?.reputation?.points ?? 0;
   const level = p.reputation?.level || user?.reputation?.level || 'EXPLORER';
 
   const levels: Record<string, { label: string; next: string; nextPts: number; ptsNeeded: number }> = {
@@ -273,9 +273,39 @@ export default function ProfilePage() {
               transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
             }} />
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--primary)', marginTop: '8px', fontStyle: 'italic' }}>
-            Next milestone: Voyager at {lvl.nextPts.toLocaleString()} pts
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--primary)', fontStyle: 'italic', margin: 0 }}>
+              Next milestone: {lvl.next} at {lvl.nextPts.toLocaleString()} pts
+            </p>
+          </div>
+          
+          {/* How to earn points info */}
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+              <TrendingUp size={14} style={{ color: 'var(--text-muted)' }} />
+              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>How to earn points</p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ 
+                background: 'var(--bg-primary)', padding: '6px 12px', borderRadius: '20px', 
+                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', border: '1px solid var(--border-light)'
+              }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>+5</span> <span>Create Post</span>
+              </div>
+              <div style={{ 
+                background: 'var(--bg-primary)', padding: '6px 12px', borderRadius: '20px', 
+                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', border: '1px solid var(--border-light)'
+              }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>+7</span> <span>Comment</span>
+              </div>
+              <div style={{ 
+                background: 'var(--bg-primary)', padding: '6px 12px', borderRadius: '20px', 
+                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', border: '1px solid var(--border-light)'
+              }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>+10</span> <span>Write Review</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

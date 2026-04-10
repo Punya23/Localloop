@@ -39,6 +39,10 @@ export default function AdminPage() {
   const [messagePage, setMessagePage] = useState(1);
   const [communityPage, setCommunityPage] = useState(1);
   const [showCreateHousing, setShowCreateHousing] = useState(false);
+  const [editingHousing, setEditingHousing] = useState<any>(null);
+  const [editHousingData, setEditHousingData] = useState<any>(null);
+  const [updatingHousing, setUpdatingHousing] = useState(false);
+  const [editUploadingImages, setEditUploadingImages] = useState(false);
   const [pushTitle, setPushTitle] = useState('');
   const [pushMessage, setPushMessage] = useState('');
   const [pushSending, setPushSending] = useState(false);
@@ -153,6 +157,68 @@ export default function AdminPage() {
       setHousings((prev) => prev.filter((h) => h.id !== housingId));
     } catch (err) {
       console.error('Delete housing error:', err);
+    }
+  };
+
+  const handleEditHousing = (housing: any) => {
+    setEditingHousing(housing);
+    setEditHousingData({
+      title: housing.title || '',
+      description: housing.description || '',
+      address: housing.address || '',
+      area: housing.area || '',
+      city: housing.city || 'Pune',
+      rent: housing.rent || 0,
+      deposit: housing.deposit || 0,
+      type: housing.type || 'PG',
+      genderPreference: housing.genderPreference || 'ANY',
+      amenities: (housing.amenities || []).join(', '),
+      isWomenFriendly: housing.isWomenFriendly || false,
+      contactPhone: housing.contactPhone || '',
+      contactEmail: housing.contactEmail || '',
+      images: housing.images || [],
+    });
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length || !editHousingData) return;
+    setEditUploadingImages(true);
+    try {
+      const fileArray = Array.from(files);
+      const result = await api.uploadImages(fileArray, 'housing');
+      setEditHousingData((prev: any) => ({
+        ...prev,
+        images: [...prev.images, ...result.images.map((img: any) => img.url)],
+      }));
+    } catch (err: any) {
+      alert(err.message || 'Image upload failed');
+    } finally {
+      setEditUploadingImages(false);
+    }
+  };
+
+  const handleUpdateHousing = async () => {
+    if (!editingHousing || !editHousingData) return;
+    setUpdatingHousing(true);
+    try {
+      const payload = {
+        ...editHousingData,
+        rent: Number(editHousingData.rent),
+        deposit: Number(editHousingData.deposit) || undefined,
+        amenities: editHousingData.amenities.split(',').map((a: string) => a.trim()).filter(Boolean),
+      };
+      await api.adminUpdateHousing(editingHousing.id, payload);
+      setEditingHousing(null);
+      setEditHousingData(null);
+      // Refresh housing list
+      const h = await api.getAdminHousings(housingPage, 20);
+      setHousings(h.data || []);
+      setHousingMeta(h.meta || {});
+    } catch (err: any) {
+      alert(err.message || 'Failed to update housing');
+    } finally {
+      setUpdatingHousing(false);
     }
   };
 
@@ -663,7 +729,7 @@ export default function AdminPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
             }}>
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '20px', padding: '28px',
+                background: '#fff', borderRadius: '20px', padding: '28px',
                 width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -836,6 +902,16 @@ export default function AdminPage() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
+                      onClick={() => handleEditHousing(h)}
+                      style={{
+                        padding: '8px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        background: 'var(--bg-card)', color: 'var(--primary)', border: '1px solid var(--primary)',
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: '5px',
+                      }}
+                    >
+                      <Edit size={13} /> Edit
+                    </button>
+                    <button
                       onClick={() => handleVerifyHousing(h.id, !h.isVerified)}
                       style={{
                         padding: '8px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
@@ -874,6 +950,165 @@ export default function AdminPage() {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── Edit Housing Modal ── */}
+          {editingHousing && editHousingData && (
+            <div style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+            }}>
+              <div style={{
+                background: '#fff', borderRadius: '20px', padding: '28px',
+                width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)' }}>Edit Housing Listing</h2>
+                  <button onClick={() => { setEditingHousing(null); setEditHousingData(null); }} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+                  }}><X size={22} /></button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Title *</label>
+                    <input value={editHousingData.title} onChange={(e) => setEditHousingData({ ...editHousingData, title: e.target.value })}
+                      placeholder="e.g. Sunny PG for Women" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Description *</label>
+                    <textarea value={editHousingData.description} onChange={(e) => setEditHousingData({ ...editHousingData, description: e.target.value })}
+                      placeholder="Describe the property..." rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Address *</label>
+                      <input value={editHousingData.address} onChange={(e) => setEditHousingData({ ...editHousingData, address: e.target.value })}
+                        placeholder="Full address" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Area *</label>
+                      <input value={editHousingData.area} onChange={(e) => setEditHousingData({ ...editHousingData, area: e.target.value })}
+                        placeholder="e.g. Hinjewadi" style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Rent (₹) *</label>
+                      <input type="number" value={editHousingData.rent || ''} onChange={(e) => setEditHousingData({ ...editHousingData, rent: Number(e.target.value) })}
+                        placeholder="10000" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Deposit (₹)</label>
+                      <input type="number" value={editHousingData.deposit || ''} onChange={(e) => setEditHousingData({ ...editHousingData, deposit: Number(e.target.value) })}
+                        placeholder="20000" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>City</label>
+                      <input value={editHousingData.city} onChange={(e) => setEditHousingData({ ...editHousingData, city: e.target.value })}
+                        style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Type</label>
+                      <select value={editHousingData.type} onChange={(e) => setEditHousingData({ ...editHousingData, type: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
+                        <option value="PG">PG</option>
+                        <option value="HOSTEL">Hostel</option>
+                        <option value="FLAT">Flat</option>
+                        <option value="SHARED_ROOM">Shared Room</option>
+                        <option value="SINGLE_ROOM">Single Room</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Gender Preference</label>
+                      <select value={editHousingData.genderPreference} onChange={(e) => setEditHousingData({ ...editHousingData, genderPreference: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
+                        <option value="ANY">Any</option>
+                        <option value="MALE_ONLY">Male Only</option>
+                        <option value="FEMALE_ONLY">Female Only</option>
+                        <option value="CO_ED">Co-Ed</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Amenities (comma-separated)</label>
+                    <input value={editHousingData.amenities} onChange={(e) => setEditHousingData({ ...editHousingData, amenities: e.target.value })}
+                      placeholder="WiFi, AC, Parking, Gym" style={inputStyle} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Contact Phone</label>
+                      <input value={editHousingData.contactPhone} onChange={(e) => setEditHousingData({ ...editHousingData, contactPhone: e.target.value })}
+                        placeholder="+91..." style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Contact Email</label>
+                      <input value={editHousingData.contactEmail} onChange={(e) => setEditHousingData({ ...editHousingData, contactEmail: e.target.value })}
+                        placeholder="owner@email.com" style={inputStyle} />
+                    </div>
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 0' }}>
+                    <input type="checkbox" checked={editHousingData.isWomenFriendly}
+                      onChange={(e) => setEditHousingData({ ...editHousingData, isWomenFriendly: e.target.checked })} />
+                    <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Women Friendly</span>
+                  </label>
+
+                  {/* Image Management */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Images</label>
+                    {editHousingData.images.length > 0 && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {editHousingData.images.map((url: string, idx: number) => (
+                          <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                            <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button onClick={() => setEditHousingData({ ...editHousingData, images: editHousingData.images.filter((_: any, i: number) => i !== idx) })}
+                              style={{
+                                position: 'absolute', top: '4px', right: '4px', width: '20px', height: '20px',
+                                borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center', fontSize: '12px',
+                              }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      padding: '12px', border: '2px dashed var(--border)', borderRadius: '12px',
+                      cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500,
+                      marginBottom: '10px'
+                    }}>
+                      <Upload size={16} />
+                      {editUploadingImages ? 'Uploading...' : 'Upload More Images'}
+                      <input type="file" accept="image/*" multiple onChange={handleEditImageUpload}
+                        style={{ display: 'none' }} disabled={editUploadingImages} />
+                    </label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Image Links (Comma-separated)</label>
+                    <textarea 
+                      value={editHousingData.images.join(', ')} 
+                      onChange={(e) => setEditHousingData({ ...editHousingData, images: e.target.value.split(',').map((u) => u.trim()).filter(Boolean) })}
+                      placeholder="https://...jpg, https://...png" 
+                      rows={3} 
+                      style={{ ...inputStyle, resize: 'vertical' as const }} 
+                    />
+                  </div>
+
+                  <button onClick={handleUpdateHousing} disabled={updatingHousing || !editHousingData.title || !editHousingData.description || !editHousingData.rent}
+                    style={{
+                      padding: '12px', borderRadius: '12px', fontSize: '15px', fontWeight: 600,
+                      background: updatingHousing || !editHousingData.title ? 'var(--border)' : 'var(--primary)',
+                      color: updatingHousing || !editHousingData.title ? 'var(--text-muted)' : '#fff',
+                      border: 'none', cursor: updatingHousing ? 'not-allowed' : 'pointer',
+                      fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', gap: '8px', marginTop: '8px',
+                    }}>
+                    {updatingHousing ? 'Saving...' : <>
+                      <CheckCircle2 size={18} /> Save Changes
+                    </>}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

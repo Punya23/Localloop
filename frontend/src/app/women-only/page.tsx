@@ -206,7 +206,7 @@ export default function WomenOnlyPage() {
                 }}>
                   <div style={{
                     height: '200px',
-                    backgroundImage: h.images?.[0] ? `url(${h.images[0]})` : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                    backgroundImage: `url(${(h.images && h.images.length > 0) ? h.images[0] : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=350&fit=crop'})`,
                     backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
                   }}>
                     {h.isVerified && (
