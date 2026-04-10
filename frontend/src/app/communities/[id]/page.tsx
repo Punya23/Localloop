@@ -95,7 +95,7 @@ export default function CommunityDetailPage() {
     if (!newPost.trim()) return;
     setPosting(true);
     try {
-      await api.createPost({ title: newPostTitle || undefined, content: newPost, communityId: id });
+      await api.createPost({ content: newPost, communityId: id });
       const postData = await api.getCommunityPosts(id);
       setPosts(postData.data || []);
       setNewPost('');

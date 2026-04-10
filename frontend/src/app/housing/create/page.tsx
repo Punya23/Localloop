@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function CreateHousingPage() {
   const router = useRouter();
-  const { user, isReady } = useAuthGuard({ requireVerified: true, requireAuth: true });
+  const { user, isReady } = useAuthGuard({ requireVerified: true });
 
   const [form, setForm] = useState({
     title: '', description: '', address: '', area: '', city: 'Pune',
@@ -65,7 +65,6 @@ export default function CreateHousingPage() {
   };
 
   const inputStyle = {
-    fill: true,
     width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border)',
     fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--bg-primary)',
   };
