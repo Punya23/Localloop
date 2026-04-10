@@ -35,6 +35,7 @@ export class CommunitiesService {
   async findAll(userId?: string, city?: string) {
     const communities = await this.prisma.community.findMany({
       where: {
+        isVerified: true,
         ...(city && { city: { contains: city, mode: 'insensitive' as any } }),
       },
       orderBy: { memberCount: 'desc' },
@@ -180,7 +181,7 @@ export class CommunitiesService {
         orderBy: [{ role: 'desc' }, { joinedAt: 'asc' }],
         include: {
           user: {
-            select: { id: true, name: true, avatar: true, bio: true, city: true, company: true, university: true },
+            select: { id: true, name: true, avatar: true, bio: true, city: true, company: true, university: true, isMentor: true },
           },
         },
       }),

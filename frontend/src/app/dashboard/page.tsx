@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { api } from '@/lib/api';
 import {
@@ -77,6 +78,7 @@ function MiniChart({ data }: { data: { month: string; rent: number }[] }) {
 
 export default function DashboardPage() {
   const { user, isReady } = useAuthGuard({ requireOnboarded: true });
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -308,10 +310,14 @@ export default function DashboardPage() {
               {data?.recentPosts?.map((post: any, idx: number) => {
                 const isLiked = likedPosts.has(post.id);
                 return (
-                  <div key={post.id} style={{
+                  <div key={post.id} onClick={(e) => {
+                      if (!(e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('a')) {
+                        router.push(`/communities/${post.community?.id}`);
+                      }
+                    }} style={{
                     background: 'var(--bg-card)', borderRadius: '18px', padding: '22px',
                     border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.2s', cursor: 'pointer',
                   }}
                     onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
                     onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}

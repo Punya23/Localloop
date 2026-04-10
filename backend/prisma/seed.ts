@@ -109,6 +109,34 @@ async function main() {
     },
   });
 
+  const commPCU = await prisma.community.upsert({
+    where: { id: 'seed-comm-pcu' },
+    update: {},
+    create: {
+      id: 'seed-comm-pcu',
+      name: 'PCU University',
+      description: 'Official community for Pimpri Chinchwad University (PCU) students and alumni. Discuss courses, events, and campus life.',
+      city: 'Pune',
+      type: 'UNIVERSITY',
+      avatar: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=300&fit=crop',
+      createdById: admin.id,
+    },
+  });
+
+  const commTech = await prisma.community.upsert({
+    where: { id: 'seed-comm-tech' },
+    update: {},
+    create: {
+      id: 'seed-comm-tech',
+      name: 'Pune AI & Tech Enthusiasts',
+      description: 'A community for developers, data scientists, and tech lovers in Pune. Share resources, host meetups, and network!',
+      city: 'Pune',
+      type: 'PROFESSIONAL',
+      avatar: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=300&fit=crop',
+      createdById: admin.id,
+    },
+  });
+
   // 5. Add Users to Communities
   await prisma.communityMember.upsert({
     where: { userId_communityId: { userId: mentor1.id, communityId: comm1.id } },
@@ -117,6 +145,18 @@ async function main() {
   await prisma.communityMember.upsert({
     where: { userId_communityId: { userId: user1.id, communityId: comm1.id } },
     update: {}, create: { userId: user1.id, communityId: comm1.id, role: 'MEMBER' },
+  });
+  await prisma.communityMember.upsert({
+    where: { userId_communityId: { userId: user1.id, communityId: commPCU.id } },
+    update: {}, create: { userId: user1.id, communityId: commPCU.id, role: 'MEMBER' },
+  });
+  await prisma.communityMember.upsert({
+    where: { userId_communityId: { userId: mentor1.id, communityId: commTech.id } },
+    update: {}, create: { userId: mentor1.id, communityId: commTech.id, role: 'MEMBER' },
+  });
+  await prisma.communityMember.upsert({
+    where: { userId_communityId: { userId: admin.id, communityId: commPCU.id } },
+    update: {}, create: { userId: admin.id, communityId: commPCU.id, role: 'ADMIN' },
   });
 
   // 6. Create Real Housing Properties
@@ -185,6 +225,8 @@ async function main() {
       { id: 'post-1', content: "Anyone moved to Phase 3 recently? How's the traffic during the rains? Thinking of taking a flat near Megapolis. 🌧️", communityId: comm1.id, userId: user1.id, likesCount: 2, commentsCount: 2 },
       { id: 'post-2', content: 'Found an amazing Tiffin service near Phase 1. Healthy, home-cooked, and super affordable. Check out "Mom\'s Kitchen". 🍲', communityId: comm2.id, userId: mentor1.id, likesCount: 5, commentsCount: 1 },
       { id: 'post-3', content: 'Pro tip: The 7:45 AM shuttle from Wakad to IT Park avoids all traffic. Been using it for 3 months now. Game changer! 🚌', communityId: comm1.id, userId: user1.id, likesCount: 8, commentsCount: 1 },
+      { id: 'post-4', content: 'Who else is joining the Computer Science branch at PCU this year? Need some peers to connect with! 💻', communityId: commPCU.id, userId: user1.id, likesCount: 12, commentsCount: 3 },
+      { id: 'post-5', content: 'Organizing an AI meetup this weekend near FC Road. Let me know who is interested in joining. 🤖', communityId: commTech.id, userId: mentor1.id, likesCount: 20, commentsCount: 5 },
     ]
   });
 

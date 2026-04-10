@@ -109,7 +109,7 @@ export class ChatService {
         take: limit,
         orderBy: { createdAt: 'asc' },
         include: {
-          user: { select: { id: true, name: true, avatar: true } },
+          user: { select: { id: true, name: true, avatar: true, isMentor: true } },
         },
       }),
       this.prisma.communityMessage.count({ where: { communityId } }),
@@ -141,7 +141,7 @@ export class ChatService {
         userId,
       },
       include: {
-        user: { select: { id: true, name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true, isMentor: true } },
       },
     });
 

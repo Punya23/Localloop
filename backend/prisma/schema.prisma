@@ -259,6 +259,7 @@ model Community {
   isPrivate   Boolean        @default(false)
   isWomenOnly Boolean        @default(false)
   memberCount Int            @default(0)
+  isVerified  Boolean        @default(false)
   createdById String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt

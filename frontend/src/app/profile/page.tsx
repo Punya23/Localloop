@@ -35,6 +35,11 @@ export default function ProfilePage() {
   const [editForm, setEditForm] = useState({ name: '', bio: '', city: '', preferredArea: '' });
   const [activeTab, setActiveTab] = useState('Posts');
 
+  // Mentor Application state
+  const [showMentorModal, setShowMentorModal] = useState(false);
+  const [mentorForm, setMentorForm] = useState({ expertise: '', experience: '', availability: '' });
+  const [mentorApplying, setMentorApplying] = useState(false);
+
   useEffect(() => {
     api.getProfile().then((p) => {
       setProfile(p);
@@ -55,6 +60,27 @@ export default function ProfilePage() {
       updateUser(updated);
       setEditing(false);
     } catch { setEditing(false); }
+  };
+
+  const handleMentorApply = async () => {
+    if (!mentorForm.expertise || !mentorForm.experience || !mentorForm.availability) return;
+    setMentorApplying(true);
+    try {
+      const dto = {
+        expertise: mentorForm.expertise.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
+        experience: mentorForm.experience,
+        availability: mentorForm.availability,
+      };
+      await api.applyForMentor(dto);
+      const updatedProfile = await api.getProfile();
+      setProfile(updatedProfile);
+      setShowMentorModal(false);
+    } catch (err) {
+      console.error(err);
+      alert('Application failed. Try again later.');
+    } finally {
+      setMentorApplying(false);
+    }
   };
 
   if (loading) {
@@ -282,6 +308,33 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ══════════ Mentor Hub Application ══════════ */}
+      <div style={{
+        background: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)', borderRadius: '18px', padding: '18px 22px', marginBottom: '24px',
+        border: '1px solid #c7d2fe', boxShadow: '0 4px 12px rgba(99,102,241,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+      }}>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>Want to be a Mentor?</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Share your expertise and help new arrivals settle in.</p>
+        </div>
+        <div>
+          {p.mentorProfile ? (
+            p.mentorProfile.isApproved ? (
+              <span style={{ padding: '6px 14px', borderRadius: '20px', background: 'var(--primary)', color: '#fff', fontSize: '13px', fontWeight: 600 }}>Active Mentor</span>
+            ) : (
+              <span style={{ padding: '6px 14px', borderRadius: '20px', background: 'var(--warning)', color: '#fff', fontSize: '13px', fontWeight: 600 }}>Application Pending</span>
+            )
+          ) : (
+            <button onClick={() => setShowMentorModal(true)} style={{
+              padding: '8px 18px', borderRadius: '24px', background: 'var(--primary)', color: '#fff',
+              fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+            }}>
+              Apply Now
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* ══════════ Profile Tabs ══════════ */}
       <div style={{ display: 'flex', gap: '28px', borderBottom: '2px solid var(--border-light)', marginBottom: '24px' }}>
         {profileTabs.map((tab) => (
@@ -401,6 +454,65 @@ export default function ProfilePage() {
       >
         <Pencil size={20} />
       </button>
+
+      {/* ══════════ Mentor Application Modal ══════════ */}
+      {showMentorModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '440px',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)'
+          }}>
+            <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Become a Mentor</h2>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>Share your journey, help newcomers find flats, understand city routes, and guide them in Pune.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>What is your domain expertise?</label>
+                <input
+                  placeholder="e.g. IT, Real Estate, College Admissions, Freelancing..."
+                  value={mentorForm.expertise} onChange={(e) => setMentorForm({ ...mentorForm, expertise: e.target.value })}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', outline: 'none', fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>How long have you been living in the city?</label>
+                <input
+                  placeholder="e.g. 3 years, since childhood..."
+                  value={mentorForm.experience} onChange={(e) => setMentorForm({ ...mentorForm, experience: e.target.value })}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', outline: 'none', fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>What is your availability for mentees?</label>
+                <input
+                  placeholder="e.g. Weekends only, 2 hours a week..."
+                  value={mentorForm.availability} onChange={(e) => setMentorForm({ ...mentorForm, availability: e.target.value })}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', outline: 'none', fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                onClick={() => setShowMentorModal(false)}
+                style={{ padding: '10px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >Cancel</button>
+              <button
+                onClick={handleMentorApply}
+                disabled={mentorApplying}
+                style={{ padding: '10px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, background: 'var(--primary)', border: 'none', color: '#fff', cursor: 'pointer' }}
+              >
+                {mentorApplying ? 'Submitting...' : 'Submit Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Gradient Shift Keyframes via style tag ── */}
       <style>{`

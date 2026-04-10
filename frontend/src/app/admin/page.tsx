@@ -214,6 +214,15 @@ export default function AdminPage() {
     }
   };
 
+  const handleVerifyCommunity = async (communityId: string, verified: boolean) => {
+    try {
+      await api.verifyCommunityAdmin(communityId, verified);
+      setCommunities((prev) => prev.map((c) => c.id === communityId ? { ...c, isVerified: verified } : c));
+    } catch (err) {
+      console.error('Verify community error:', err);
+    }
+  };
+
   if (!isReady) {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
@@ -742,6 +751,97 @@ export default function AdminPage() {
                   </button>
                   <span style={{ padding: '6px 12px', fontSize: '13px', color: 'var(--text-muted)' }}>{housingPage} / {housingMeta.totalPages}</span>
                   <button onClick={() => setHousingPage(Math.min(housingMeta.totalPages, housingPage + 1))} disabled={housingPage >= housingMeta.totalPages}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════ COMMUNITIES TAB ══════════ */}
+      {activeTab === 'communities' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MessageSquare size={18} style={{ color: '#8b5cf6' }} /> All Communities
+            </h2>
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ height: '80px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {communities.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                  <MessageSquare size={36} style={{ color: 'var(--text-muted)', margin: '0 auto 12px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>No communities found</p>
+                </div>
+              ) : communities.map((c) => (
+                <div key={c.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</h3>
+                      {c.isVerified && (
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: '#d1fae5', color: '#065f46' }}>VERIFIED</span>
+                      )}
+                      {!c.isVerified && (
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: '#fef3c7', color: '#b45309' }}>UNVERIFIED</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <span style={{ textTransform: 'capitalize' }}>{c.type?.toLowerCase()}</span>
+                      <span>{c.city}</span>
+                      <span>{c.memberCount || 0} members</span>
+                      <span>{c._count?.posts || 0} posts</span>
+                    </div>
+                    {c.description && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.description}</p>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleVerifyCommunity(c.id, !c.isVerified)}
+                      style={{
+                        padding: '8px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        background: c.isVerified ? '#fff' : 'var(--primary)',
+                        color: c.isVerified ? 'var(--danger)' : '#fff',
+                        border: c.isVerified ? '1px solid #fca5a5' : 'none',
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {c.isVerified ? 'Unverify' : 'Verify'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCommunity(c.id)}
+                      style={{
+                        padding: '8px 12px', borderRadius: '10px', fontSize: '13px',
+                        background: 'var(--bg-card)', color: 'var(--danger)', border: '1px solid #fca5a5',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {communityMeta?.totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+                  <button onClick={() => setCommunityPage(Math.max(1, communityPage - 1))} disabled={communityPage <= 1}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Prev
+                  </button>
+                  <span style={{ padding: '6px 12px', fontSize: '13px', color: 'var(--text-muted)' }}>{communityPage} / {communityMeta.totalPages}</span>
+                  <button onClick={() => setCommunityPage(Math.min(communityMeta.totalPages, communityPage + 1))} disabled={communityPage >= communityMeta.totalPages}
                     style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     Next
                   </button>

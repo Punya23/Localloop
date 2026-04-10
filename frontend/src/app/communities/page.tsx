@@ -33,6 +33,7 @@ export default function CommunitiesPage() {
   const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set());
   const [joinedCommunities, setJoinedCommunities] = useState<Set<string>>(new Set());
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [activeDiscussions, setActiveDiscussions] = useState<any[]>([]);
 
   const fetchJoined = () => {
     if (isAuthenticated) {
@@ -49,9 +50,23 @@ export default function CommunitiesPage() {
       if (data?.length > 0) setCommunities(data);
     }).catch(() => {});
     fetchJoined();
+    if (isAuthenticated) {
+      api.getFeedPosts().then((posts) => {
+        if (posts?.length > 0) setActiveDiscussions(posts);
+      }).catch(console.error);
+    }
   }, [isAuthenticated]);
 
   const categories = ['All Discoveries', 'University', 'Tech', 'Relocation', 'Women Only'];
+
+  const filteredCommunities = communities.filter(c => {
+    if (activeCategory === 'All Discoveries') return true;
+    if (activeCategory === 'University') return c.type === 'UNIVERSITY' || c.name.toLowerCase().includes('university');
+    if (activeCategory === 'Tech') return c.type === 'PROFESSIONAL' || c.name.toLowerCase().includes('tech');
+    if (activeCategory === 'Relocation') return c.name.toLowerCase().includes('relocation') || c.type === 'GENERAL';
+    if (activeCategory === 'Women Only') return c.isWomenOnly || c.type === 'WOMEN_ONLY';
+    return true;
+  });
 
   const toggleLike = (id: string) => {
     setLikedPosts((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -165,7 +180,7 @@ export default function CommunitiesPage() {
           <Link href="#" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>See All</Link>
         </div>
         <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '8px' }}>
-          {communities.filter(c => !joinedCommunities.has(c.id)).map((c) => {
+          {filteredCommunities.filter(c => !joinedCommunities.has(c.id)).map((c) => {
             return (
               <div key={c.id} onClick={() => router.push(`/communities/${c.id}`)} style={{
                 minWidth: '210px', maxWidth: '240px', background: 'var(--bg-card)', borderRadius: '18px', padding: '22px 18px',
@@ -219,36 +234,41 @@ export default function CommunitiesPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {([] as any[]).map((disc, idx) => {
+          {activeDiscussions.map((disc, idx) => {
             const isLiked = likedPosts.has(disc.id);
             const isSaved = savedPosts.has(disc.id);
             return (
-              <div key={disc.id} style={{
+              <div key={disc.id} onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('a')) {
+                    router.push(`/communities/${disc.community?.id}`);
+                  }
+                }} style={{
                 background: 'var(--bg-card)', borderRadius: '18px', padding: '20px',
                 border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s', cursor: 'pointer',
               }}
               onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
               onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}
               >
                 {/* Author */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                  <div style={{
-                    width: '42px', height: '42px', borderRadius: '50%', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700,
-                    background: avatarGradients[idx % avatarGradients.length],
-                    color: '#fff', flexShrink: 0,
-                  }}>{disc.avatar}</div>
+                  {disc.user?.avatar ? (
+                     <img src={disc.user.avatar} alt="avatar" style={{
+                      width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover'
+                     }} />
+                  ) : (
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '50%', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700,
+                      background: avatarGradients[idx % avatarGradients.length],
+                      color: '#fff', flexShrink: 0,
+                    }}>{disc.user?.name?.charAt(0) || 'U'}</div>
+                  )}
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{disc.user}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{disc.user?.name || 'User'}</p>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {disc.from ? (
-                        <><span style={{ color: 'var(--text-muted)' }}>{disc.from} to </span></>
-                      ) : (
-                        <span>in </span>
-                      )}
-                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{disc.community}</span>
-                      <span> • {disc.timeAgo}</span>
+                      in <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{disc.community?.name || 'Community'}</span>
+                      <span> • {new Date(disc.createdAt).toLocaleDateString()}</span>
                     </p>
                   </div>
                 </div>
@@ -256,18 +276,18 @@ export default function CommunitiesPage() {
                 {/* Content */}
                 <p style={{
                   fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65',
-                  marginBottom: disc.hasImage ? '14px' : '16px', whiteSpace: 'pre-line',
+                  marginBottom: disc.images?.length > 0 ? '14px' : '16px', whiteSpace: 'pre-line',
                 }}>
-                  {disc.text}
+                  {disc.content}
                 </p>
 
                 {/* Attached Image */}
-                {disc.hasImage && disc.imageUrl && (
+                {disc.images?.length > 0 && (
                   <div style={{
                     borderRadius: '14px', overflow: 'hidden', marginBottom: '16px',
                     height: '200px', position: 'relative',
                   }}>
-                    <img src={disc.imageUrl} alt="" style={{
+                    <img src={disc.images[0]} alt="" style={{
                       width: '100%', height: '100%', objectFit: 'cover', display: 'block',
                     }} />
                     <div style={{
@@ -291,14 +311,14 @@ export default function CommunitiesPage() {
                       }}
                     >
                       <Heart size={16} fill={isLiked ? 'var(--danger)' : 'none'} />
-                      {disc.likes + (isLiked ? 1 : 0)}
+                      {disc.likesCount + (isLiked ? 1 : 0)}
                     </button>
                     <button style={{
                       display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px',
                       fontWeight: 500, color: 'var(--text-muted)', background: 'none', border: 'none',
                       cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
-                      <MessageSquare size={16} /> {disc.comments} new
+                      <MessageSquare size={16} /> {disc.commentsCount} new
                     </button>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>

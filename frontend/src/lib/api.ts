@@ -107,6 +107,13 @@ class ApiClient {
     return this.request<any>('/users/verify/status');
   }
 
+  async applyForMentor(data: { expertise: string[]; experience: string; availability: string }) {
+    return this.request<any>('/users/mentor/apply', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Housing
   async getHousings(params?: Record<string, string | number>) {
     const queryString = params
@@ -181,6 +188,10 @@ class ApiClient {
   async getCommunityPosts(communityId: string, page?: number) {
     const query = page ? `?page=${page}` : '';
     return this.request<any>(`/posts/community/${communityId}${query}`);
+  }
+
+  async getFeedPosts() {
+    return this.request<any>('/posts/feed');
   }
 
   async addComment(postId: string, content: string) {
@@ -389,6 +400,13 @@ class ApiClient {
   async adminDeleteCommunity(communityId: string) {
     return this.request<any>(`/admin/communities/${communityId}`, {
       method: 'DELETE',
+    });
+  }
+
+  async verifyCommunityAdmin(communityId: string, verified: boolean) {
+    return this.request<any>(`/admin/communities/${communityId}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ verified }),
     });
   }
 

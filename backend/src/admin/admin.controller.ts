@@ -126,6 +126,12 @@ export class AdminController {
     return this.adminService.getAllCommunities(req.user.sub, page || 1, limit || 20);
   }
 
+  @Patch('communities/:id/verify')
+  @ApiOperation({ summary: 'Admin verify/unverify a community' })
+  verifyCommunity(@Request() req: any, @Param('id') id: string, @Body() body: { verified: boolean }) {
+    return this.adminService.verifyCommunity(req.user.sub, id, body.verified);
+  }
+
   @Delete('communities/:id')
   @ApiOperation({ summary: 'Admin delete a community' })
   deleteCommunity(@Request() req: any, @Param('id') id: string) {

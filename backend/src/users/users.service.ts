@@ -53,6 +53,7 @@ export class UsersService {
       where: { id: userId },
       include: {
         reputation: true,
+        mentorProfile: true,
         communities: {
           include: {
             community: {
@@ -397,5 +398,27 @@ export class UsersService {
       message: 'Inquiry sent to property owner and admin',
       results,
     };
+  }
+
+  // ════════════ MENTOR APPLICATION ════════════
+
+  async applyForMentor(userId: string, dto: { expertise: string[], experience: string, availability: string }) {
+    const existing = await this.prisma.mentorProfile.findUnique({
+      where: { userId },
+    });
+    if (existing) {
+      throw new ForbiddenException('Already applied for mentor program');
+    }
+
+    const mentorProfile = await this.prisma.mentorProfile.create({
+      data: {
+        userId,
+        expertise: dto.expertise,
+        experience: dto.experience,
+        availability: dto.availability,
+      },
+    });
+
+    return mentorProfile;
   }
 }

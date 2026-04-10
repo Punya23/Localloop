@@ -344,6 +344,14 @@ export class AdminService {
     return { data: communities, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
+  async verifyCommunity(adminId: string, communityId: string, verified: boolean) {
+    await this.assertAdmin(adminId);
+    return this.prisma.community.update({
+      where: { id: communityId },
+      data: { isVerified: verified },
+    });
+  }
+
   async deleteCommunity(adminId: string, communityId: string) {
     await this.assertAdmin(adminId);
     const community = await this.prisma.community.findUnique({ where: { id: communityId } });

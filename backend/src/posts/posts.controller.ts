@@ -9,6 +9,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class PostsController {
   constructor(private postsService: PostsService) {}
 
+  @Get('feed')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get feed of posts from joined communities' })
+  getFeed(@Request() req: any) {
+    return this.postsService.getFeed(req.user.sub);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

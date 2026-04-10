@@ -7,7 +7,8 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import {
   ArrowLeft, Users, Send, MessageCircle, Clock,
-  MessagesSquare, ChevronDown, CheckCircle2, BarChart2, Crown, Image as ImageIcon
+  MessagesSquare, ChevronDown, CheckCircle2, BarChart2, Crown, 
+  Award, Image as ImageIcon
 } from 'lucide-react';
 
 type ViewMode = 'chat' | 'posts' | 'polls' | 'members' | 'media';
@@ -256,8 +257,11 @@ export default function CommunityDetailPage() {
                       {post.user?.name?.charAt(0)}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold">{post.user?.name}</p>
-                      <p className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                      <p className="text-sm font-semibold flex items-center gap-2">
+                        {post.user?.name}
+                        {post.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={10}/> Mentor</span>}
+                      </p>
+                      <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: 'var(--text-muted)' }}>
                         <Clock size={10} /> {new Date(post.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -278,8 +282,11 @@ export default function CommunityDetailPage() {
                           {c.user?.name?.charAt(0)}
                         </div>
                         <div>
-                          <span className="text-xs font-medium">{c.user?.name}</span>
-                          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{c.content}</p>
+                          <span className="text-xs font-medium flex items-center gap-2">
+                            {c.user?.name}
+                            {c.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={8}/> Mentor</span>}
+                          </span>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{c.content}</p>
                         </div>
                       </div>
                     ))}
@@ -355,9 +362,12 @@ export default function CommunityDetailPage() {
                     )}
                     <div style={{ maxWidth: '70%' }}>
                       {!isMe && (
-                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px', marginLeft: '4px' }}>
-                          {msg.user?.name}
-                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px', marginLeft: '4px' }}>
+                          <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--primary)' }}>
+                            {msg.user?.name}
+                          </p>
+                          {msg.user?.isMentor && <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '9px', fontWeight: 700, padding: '2px 4px', borderRadius: '4px', textTransform: 'uppercase' }}>Mentor</span>}
+                        </div>
                       )}
                       <div style={{
                         padding: '10px 16px', fontSize: '14px', lineHeight: 1.5,
@@ -541,6 +551,7 @@ export default function CommunityDetailPage() {
                     <h4 className="text-sm font-semibold text-gray-900 truncate">{member.user.name}</h4>
                     {member.role === 'ADMIN' && <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Crown size={10}/> Admin</span>}
                     {member.role === 'MODERATOR' && <span className="bg-blue-50 text-blue-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full relative">Mod</span>}
+                    {member.user.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Award size={10}/> Mentor</span>}
                   </div>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
                     {member.user.company ? `At ${member.user.company}` : member.user.university ? `Student at ${member.user.university}` : member.user.bio || 'New member'}

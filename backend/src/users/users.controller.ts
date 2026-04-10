@@ -87,4 +87,12 @@ export class UsersController {
   ) {
     return this.usersService.sendHousingInquiry(req.user.sub, housingId, body.message);
   }
+
+  // ════════════ MENTOR APPLICATION ════════════
+
+  @Post('mentor/apply')
+  @ApiOperation({ summary: 'Apply for mentor program' })
+  applyForMentor(@Request() req: any, @Body() body: { expertise: string[], experience: string, availability: string }) {
+    return this.usersService.applyForMentor(req.user.sub, body);
+  }
 }

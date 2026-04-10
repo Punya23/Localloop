@@ -45,6 +45,34 @@ export class PostsService {
     return post;
   }
 
+  async getFeed(userId: string) {
+    // get communities the user is in
+    const memberships = await this.prisma.communityMember.findMany({
+      where: { userId },
+      select: { communityId: true },
+    });
+    const joinedIds = memberships.map(m => m.communityId);
+
+    // If no communities joined, return some popular posts globally or an empty array
+    // Let's just return global latest posts if joinedIds is empty, or only from joined
+    let whereClause = {};
+    if (joinedIds.length > 0) {
+      whereClause = { communityId: { in: joinedIds } };
+    }
+
+    const posts = await this.prisma.post.findMany({
+      where: whereClause,
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+        community: { select: { id: true, name: true } },
+        _count: { select: { comments: true } },
+      },
+    });
+    return posts;
+  }
+
   async findByCommunity(communityId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -55,13 +83,13 @@ export class PostsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { id: true, name: true, avatar: true } },
+          user: { select: { id: true, name: true, avatar: true, isMentor: true } },
           community: { select: { id: true, name: true } },
           comments: {
             take: 3,
             orderBy: { createdAt: 'desc' },
             include: {
-              user: { select: { id: true, name: true, avatar: true } },
+              user: { select: { id: true, name: true, avatar: true, isMentor: true } },
             },
           },
           _count: { select: { comments: true } },
@@ -87,7 +115,7 @@ export class PostsService {
         userId,
       },
       include: {
-        user: { select: { id: true, name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true, isMentor: true } },
       },
     });
 
@@ -108,7 +136,7 @@ export class PostsService {
       where: { postId },
       orderBy: { createdAt: 'asc' },
       include: {
-        user: { select: { id: true, name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true, isMentor: true } },
       },
     });
   }
