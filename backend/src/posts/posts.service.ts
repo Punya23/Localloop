@@ -21,6 +21,7 @@ export class PostsService {
 
     const post = await this.prisma.post.create({
       data: {
+        title: dto.title,
         content: dto.content,
         images: dto.images || [],
         communityId: dto.communityId,

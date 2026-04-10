@@ -40,8 +40,8 @@ const demoNotifications = [
 /* ── Notifications Page ───────────────────────────────── */
 
 export default function NotificationsPage() {
-  const [readIds, setReadIds] = useState<number[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<number[]>([]);
+  const [readIds, setReadIds] = useState<(string | number)[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<(string | number)[]>([]);
   const [filter, setFilter] = useState('All');
   const [mounted, setMounted] = useState(false);
 
@@ -83,7 +83,7 @@ export default function NotificationsPage() {
 
   const filters = ['All', 'Unread', 'Messages', 'Housing', 'Community'];
 
-  const markRead = (id: number) => {
+  const markRead = (id: string | number) => {
     if (!readIds.includes(id)) {
       const updated = [...readIds, id];
       setReadIds(updated);
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const dismiss = (id: number) => {
+  const dismiss = (id: string | number) => {
     if (!dismissedIds.includes(id)) {
       const updated = [...dismissedIds, id];
       setDismissedIds(updated);

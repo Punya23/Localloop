@@ -328,6 +328,7 @@ model PollVote {
 
 model Post {
   id            String    @id @default(cuid())
+  title         String?   // Optional topic title
   content       String
   images        String[]
   communityId   String

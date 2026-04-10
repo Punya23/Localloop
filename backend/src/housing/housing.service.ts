@@ -7,7 +7,24 @@ import { CreateHousingDto, HousingFilterDto, CreateReviewDto } from './dto/housi
 export class HousingService {
   constructor(private prisma: PrismaService, private reputationService: ReputationService) {}
 
+  private async getCoords(address: string, area: string, city: string) {
+    try {
+      const query = `${address}, ${area}, ${city}, India`;
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const response = await fetch(url, { headers: { 'User-Agent': 'LocalLoopApp/1.0' } });
+      const data: any = await response.json();
+      if (data && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      }
+    } catch (err) {
+      console.error('Geocoding failed:', err);
+    }
+    return null;
+  }
+
   async create(userId: string, dto: CreateHousingDto) {
+    const coords = await this.getCoords(dto.address, dto.area, dto.city || 'Pune');
+
     return this.prisma.housing.create({
       data: {
         title: dto.title,
@@ -24,6 +41,8 @@ export class HousingService {
         isWomenFriendly: dto.isWomenFriendly || false,
         contactPhone: dto.contactPhone,
         contactEmail: dto.contactEmail,
+        latitude: coords?.lat,
+        longitude: coords?.lon,
         createdById: userId,
       },
       include: {

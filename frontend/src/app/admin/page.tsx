@@ -428,12 +428,30 @@ export default function AdminPage() {
                     </button>
                   );
                 })}
-                {stats.pendingVerifications === 0 && stats.pendingMentors === 0 && (
-                  <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(16,185,129,0.05)', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
-                    <CheckCircle2 size={24} style={{ color: 'var(--success)', margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>All clear! No pending actions.</p>
+                <button onClick={() => { setPushTitle('System Test'); setPushMessage('This is a test notification from the Admin Dashboard.'); handlePushNotification(); }} style={{
+                  display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 18px',
+                  background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border)',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left', width: '100%',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+                >
+                  <div style={{
+                    width: '42px', height: '42px', borderRadius: '12px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--primary)15', flexShrink: 0,
+                  }}>
+                    <Bell size={20} style={{ color: 'var(--primary)' }} />
                   </div>
-                )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      Test Broadcast
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Send test alert to all users</div>
+                  </div>
+                  <Send size={16} style={{ color: 'var(--text-muted)' }} />
+                </button>
               </div>
             </>
           )}

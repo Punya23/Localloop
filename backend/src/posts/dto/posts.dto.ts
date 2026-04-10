@@ -2,6 +2,11 @@ import { IsString, IsOptional, IsArray, IsUrl } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePostDto {
+  @ApiPropertyOptional({ example: 'Roommate needed' })
+  @IsString()
+  @IsOptional()
+  title?: string;
+
   @ApiProperty({ example: 'Looking for roommate near Hinjewadi!' })
   @IsString()
   content: string;
