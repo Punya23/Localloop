@@ -274,6 +274,14 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Content */}
+                {disc.title && (
+                  <h4 style={{ 
+                    fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', 
+                    marginBottom: '8px', lineHeight: 1.3 
+                  }}>
+                    {disc.title}
+                  </h4>
+                )}
                 <p style={{
                   fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65',
                   marginBottom: disc.images?.length > 0 ? '14px' : '16px', whiteSpace: 'pre-line',
