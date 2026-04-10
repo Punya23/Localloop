@@ -427,7 +427,7 @@ export default function AdminPage() {
             </div>
           ) : stats && (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                 {[
                   { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'var(--primary)' },
                   { label: 'Verified Users', value: stats.verifiedUsers, icon: UserCheck, color: 'var(--success)' },
@@ -461,7 +461,7 @@ export default function AdminPage() {
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ArrowRight size={16} style={{ color: 'var(--primary)' }} /> Quick Actions
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 {[
                   { label: 'Pending Verifications', value: stats.pendingVerifications, tab: 'verifications' as Tab, icon: Shield, color: 'var(--warning)', desc: 'ID proofs awaiting review' },
                   { label: 'Pending Mentor Apps', value: stats.pendingMentors, tab: 'mentors' as Tab, icon: Award, color: 'var(--danger)', desc: 'Mentor applications to process' },
@@ -550,8 +550,8 @@ export default function AdminPage() {
               ))}
             </div>
           ) : (
-            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', fontSize: '14px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-primary)' }}>
                     {['Name', 'Email', 'Role', 'City', 'Verified', 'Status', 'Joined', 'Actions'].map((h) => (
@@ -882,7 +882,7 @@ export default function AdminPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {housings.map((h) => (
                 <div key={h.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px',
                   background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
                   border: '1px solid var(--border)',
                 }}>
@@ -1138,7 +1138,7 @@ export default function AdminPage() {
                 </div>
               ) : communities.map((c) => (
                 <div key={c.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px',
                   background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
                   border: '1px solid var(--border)',
                 }}>
@@ -1418,7 +1418,7 @@ export default function AdminPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {notifHistory.map((n: any, i: number) => (
                 <div key={i} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px',
                   background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
                   border: '1px solid var(--border)',
                 }}>
@@ -1541,8 +1541,8 @@ export default function AdminPage() {
               <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>No audit trail yet. Actions will be logged here automatically.</p>
             </div>
           ) : (
-            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-primary)' }}>
                     {['Admin', 'Action', 'Target', 'Details', 'Time'].map((h) => (
