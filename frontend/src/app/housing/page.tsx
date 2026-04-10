@@ -351,6 +351,21 @@ export default function HousingPage() {
       {/* ══════════ MAIN CONTENT ══════════ */}
       <div style={{ flex: 1, padding: '24px 28px 100px' }}>
 
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h1 className="hidden lg:block" style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {area === 'All' ? 'Showing all properties' : `Properties in ${area}`}
+          </h1>
+          <Link href="/housing/create" style={{ textDecoration: 'none', marginLeft: 'auto' }}>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 12,
+              border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer',
+              fontWeight: 600, fontSize: 13, fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+            }}>
+              + List Property
+            </button>
+          </Link>
+        </div>
+
         {/* ── Mobile Location Bar ── */}
         <div className="lg:hidden" style={{ marginBottom: 16 }}>
           <div style={{
