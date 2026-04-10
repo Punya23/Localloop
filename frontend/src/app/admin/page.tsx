@@ -8,12 +8,13 @@ import {
   Search, ChevronDown, Eye, UserCheck, BarChart3,
   Building2, Award, AlertTriangle, Clock, Plus,
   ArrowRight, RefreshCw, MessageSquare, Trash2, Edit,
-  X, Upload, Mail, Bell, Send,
+  X, Upload, Mail, Bell, Send, Flag, ScrollText,
+  Calendar, MapPin,
 } from 'lucide-react';
 
 /* ── Types ──────────────────────────────────────────────── */
 
-type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'communities' | 'mentors' | 'messages' | 'notifications';
+type Tab = 'overview' | 'users' | 'verifications' | 'housing' | 'communities' | 'mentors' | 'messages' | 'notifications' | 'reports' | 'audit' | 'events';
 
 /* ── Admin Panel ────────────────────────────────────────── */
 
@@ -41,6 +42,21 @@ export default function AdminPage() {
   const [pushTitle, setPushTitle] = useState('');
   const [pushMessage, setPushMessage] = useState('');
   const [pushSending, setPushSending] = useState(false);
+
+  // New feature states
+  const [notifHistory, setNotifHistory] = useState<any[]>([]);
+  const [notifHistoryMeta, setNotifHistoryMeta] = useState<any>({});
+  const [notifHistoryPage, setNotifHistoryPage] = useState(1);
+  const [reports, setReports] = useState<any[]>([]);
+  const [reportMeta, setReportMeta] = useState<any>({});
+  const [reportPage, setReportPage] = useState(1);
+  const [reportFilter, setReportFilter] = useState('');
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditMeta, setAuditMeta] = useState<any>({});
+  const [auditPage, setAuditPage] = useState(1);
+  const [events, setEvents] = useState<any[]>([]);
+  const [eventMeta, setEventMeta] = useState<any>({});
+  const [eventPage, setEventPage] = useState(1);
 
   // Create Housing form state
   const [newHousing, setNewHousing] = useState({
@@ -85,6 +101,22 @@ export default function AdminPage() {
           const c = await api.getAdminCommunities(communityPage, 20);
           setCommunities(c.data || []);
           setCommunityMeta(c.meta || {});
+        } else if (activeTab === 'notifications') {
+          const nh = await api.getNotificationHistory(notifHistoryPage, 20);
+          setNotifHistory(nh.data || []);
+          setNotifHistoryMeta(nh.meta || {});
+        } else if (activeTab === 'reports') {
+          const r = await api.getAdminReports(reportFilter || undefined, reportPage, 20);
+          setReports(r.data || []);
+          setReportMeta(r.meta || {});
+        } else if (activeTab === 'audit') {
+          const a = await api.getAuditLog(auditPage, 30);
+          setAuditLogs(a.data || []);
+          setAuditMeta(a.meta || {});
+        } else if (activeTab === 'events') {
+          const e = await api.getAdminEvents(eventPage, 20);
+          setEvents(e.data || []);
+          setEventMeta(e.meta || {});
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -93,7 +125,7 @@ export default function AdminPage() {
       }
     };
     fetchData();
-  }, [isReady, user, accessDenied, activeTab, userPage, housingPage, search, messagePage, communityPage]);
+  }, [isReady, user, accessDenied, activeTab, userPage, housingPage, search, messagePage, communityPage, notifHistoryPage, reportPage, reportFilter, auditPage, eventPage]);
 
   // Action handlers
   const handleVerifyUser = async (userId: string, approved: boolean) => {
@@ -223,6 +255,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleResolveReport = async (reportId: string, status: string) => {
+    const notes = prompt('Admin notes (optional):');
+    try {
+      await api.resolveReport(reportId, status, notes || undefined);
+      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status, adminNotes: notes } : r));
+    } catch (err) {
+      console.error('Resolve report error:', err);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+    try {
+      await api.adminDeleteEvent(eventId);
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+    } catch (err) {
+      console.error('Delete event error:', err);
+    }
+  };
+
   if (!isReady) {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
@@ -250,8 +302,11 @@ export default function AdminPage() {
     { key: 'housing', label: 'Housing', icon: Building2 },
     { key: 'communities', label: 'Communities', icon: MessageSquare },
     { key: 'mentors', label: 'Mentors', icon: Award },
+    { key: 'events', label: 'Events', icon: Calendar },
+    { key: 'reports', label: 'Reports', icon: Flag },
     { key: 'messages', label: 'Messages', icon: Mail },
-    { key: 'notifications', label: 'Push Notifications', icon: Bell },
+    { key: 'notifications', label: 'Notifications', icon: Bell },
+    { key: 'audit', label: 'Audit Log', icon: ScrollText },
   ];
 
   const inputStyle = {
@@ -334,6 +389,51 @@ export default function AdminPage() {
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>{label}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* ═══ Quick Actions ═══ */}
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ArrowRight size={16} style={{ color: 'var(--primary)' }} /> Quick Actions
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                {[
+                  { label: 'Pending Verifications', value: stats.pendingVerifications, tab: 'verifications' as Tab, icon: Shield, color: 'var(--warning)', desc: 'ID proofs awaiting review' },
+                  { label: 'Pending Mentor Apps', value: stats.pendingMentors, tab: 'mentors' as Tab, icon: Award, color: 'var(--danger)', desc: 'Mentor applications to process' },
+                ].filter(a => a.value > 0).map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button key={action.label} onClick={() => { setActiveTab(action.tab); setLoading(true); }} style={{
+                      display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 18px',
+                      background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border)',
+                      cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left', width: '100%',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+                    >
+                      <div style={{
+                        width: '42px', height: '42px', borderRadius: '12px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: `${action.color}15`, flexShrink: 0,
+                      }}>
+                        <ActionIcon size={20} style={{ color: action.color }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {action.value} {action.label}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{action.desc}</div>
+                      </div>
+                      <ArrowRight size={16} style={{ color: 'var(--text-muted)' }} />
+                    </button>
+                  );
+                })}
+                {stats.pendingVerifications === 0 && stats.pendingMentors === 0 && (
+                  <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(16,185,129,0.05)', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                    <CheckCircle2 size={24} style={{ color: 'var(--success)', margin: '0 auto 8px' }} />
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>All clear! No pending actions.</p>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -995,7 +1095,7 @@ export default function AdminPage() {
           <div style={{
             background: 'var(--bg-card)', borderRadius: '16px', padding: '24px',
             border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-            maxWidth: '600px',
+            maxWidth: '600px', marginBottom: '28px',
           }}>
             <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
               Broadcast a push notification to all LocalLoop users. This will appear in their notifications tab immediately.
@@ -1045,6 +1145,288 @@ export default function AdminPage() {
               </button>
             </div>
           </div>
+
+          {/* ═══ Notification History ═══ */}
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={16} style={{ color: 'var(--text-muted)' }} /> Broadcast History
+          </h3>
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ height: '70px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </div>
+          ) : notifHistory.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <Bell size={32} style={{ color: '#cbd5e1', margin: '0 auto 10px' }} />
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>No broadcasts sent yet</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {notifHistory.map((n: any, i: number) => (
+                <div key={i} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <Bell size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                      <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{n.title}</h4>
+                    </div>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '500px' }}>{n.description}</p>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary)' }}>{n.recipientCount} users</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {new Date(n.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════ REPORTS TAB ══════════ */}
+      {activeTab === 'reports' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Flag size={18} style={{ color: 'var(--danger)' }} /> Flagged Content & Reports
+            </h2>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {['', 'pending', 'resolved', 'dismissed'].map((f) => (
+                <button key={f} onClick={() => { setReportFilter(f); setReportPage(1); }} style={{
+                  padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  border: reportFilter === f ? 'none' : '1px solid var(--border)',
+                  background: reportFilter === f ? 'var(--primary)' : '#fff',
+                  color: reportFilter === f ? '#fff' : '#64748b', transition: 'all 0.15s',
+                }}>{f || 'All'}</button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ height: '80px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </div>
+          ) : reports.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <CheckCircle2 size={36} style={{ color: 'var(--success)', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>No reports</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No flagged content to review</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {reports.map((r: any) => (
+                <div key={r.id} style={{
+                  background: 'var(--bg-card)', borderRadius: '14px', padding: '18px 20px',
+                  border: `1px solid ${r.status === 'pending' ? '#fca5a5' : 'var(--border)'}`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{
+                          fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', textTransform: 'uppercase',
+                          ...(r.status === 'pending' ? { background: '#fef3c7', color: '#92400e' } :
+                            r.status === 'resolved' ? { background: '#d1fae5', color: '#065f46' } :
+                            { background: 'var(--border-light)', color: 'var(--text-muted)' }),
+                        }}>{r.status}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '3px 10px', borderRadius: '12px', background: '#fee2e2', color: '#b91c1c' }}>{r.reason}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{r.targetType} → {r.targetId?.slice(0, 8)}...</span>
+                      </div>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Reported by {r.reporter?.name || 'Unknown'}</p>
+                      {r.description && <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>{r.description}</p>}
+                      {r.adminNotes && <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0 0', fontStyle: 'italic' }}>Admin: {r.adminNotes}</p>}
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  {r.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <button onClick={() => handleResolveReport(r.id, 'resolved')} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 16px', borderRadius: '10px',
+                        fontSize: '12px', fontWeight: 600, background: 'var(--success)', color: '#fff',
+                        border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}><CheckCircle2 size={13} /> Resolve</button>
+                      <button onClick={() => handleResolveReport(r.id, 'dismissed')} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 16px', borderRadius: '10px',
+                        fontSize: '12px', fontWeight: 600, background: 'var(--bg-card)', color: 'var(--text-muted)',
+                        border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}><XCircle size={13} /> Dismiss</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════ AUDIT LOG TAB ══════════ */}
+      {activeTab === 'audit' && (
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ScrollText size={18} style={{ color: '#64748b' }} /> Admin Activity Log
+          </h2>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} style={{ height: '48px', borderRadius: '10px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </div>
+          ) : auditLogs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <ScrollText size={36} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>No audit trail yet. Actions will be logged here automatically.</p>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg-primary)' }}>
+                    {['Admin', 'Action', 'Target', 'Details', 'Time'].map((h) => (
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLogs.map((log: any) => (
+                    <tr key={log.id} style={{ borderTop: '1px solid var(--border-light)' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text-primary)' }}>{log.admin?.name || '—'}</td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{
+                          fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '12px',
+                          background: log.action.includes('delete') ? '#fee2e2' :
+                            log.action.includes('ban') ? '#fef3c7' :
+                            log.action.includes('verify') || log.action.includes('approve') ? '#d1fae5' :
+                            log.action.includes('broadcast') ? '#e0e7ff' : 'var(--border-light)',
+                          color: log.action.includes('delete') ? '#b91c1c' :
+                            log.action.includes('ban') ? '#92400e' :
+                            log.action.includes('verify') || log.action.includes('approve') ? '#065f46' :
+                            log.action.includes('broadcast') ? '#4338ca' : '#64748b',
+                        }}>{log.action.replace(/_/g, ' ')}</span>
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#64748b', fontSize: '12px' }}>
+                        {log.targetType && <span style={{ textTransform: 'capitalize' }}>{log.targetType}</span>}
+                        {log.targetId && <span style={{ color: '#cbd5e1' }}> #{log.targetId.slice(0, 8)}</span>}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {log.details || '—'}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                        {new Date(log.createdAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {auditMeta.totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '16px' }}>
+                  <button onClick={() => setAuditPage(Math.max(1, auditPage - 1))} disabled={auditPage <= 1}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Prev
+                  </button>
+                  <span style={{ padding: '6px 12px', fontSize: '13px', color: 'var(--text-muted)' }}>{auditPage} / {auditMeta.totalPages}</span>
+                  <button onClick={() => setAuditPage(Math.min(auditMeta.totalPages, auditPage + 1))} disabled={auditPage >= auditMeta.totalPages}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════ EVENTS TAB ══════════ */}
+      {activeTab === 'events' && (
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Calendar size={18} style={{ color: '#8b5cf6' }} /> Events Management
+          </h2>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ height: '80px', borderRadius: '12px', background: 'var(--border-light)', animation: 'pulse 1.5s infinite' }} />
+              ))}
+            </div>
+          ) : events.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <Calendar size={36} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>No events</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No events have been created yet</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {events.map((e: any) => {
+                const isPast = new Date(e.date) < new Date();
+                return (
+                  <div key={e.id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'var(--bg-card)', borderRadius: '14px', padding: '16px 20px',
+                    border: '1px solid var(--border)', opacity: isPast ? 0.6 : 1,
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{e.title}</h3>
+                        <span style={{
+                          fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', textTransform: 'uppercase',
+                          background: isPast ? 'var(--border-light)' : '#d1fae5',
+                          color: isPast ? 'var(--text-muted)' : '#065f46',
+                        }}>{isPast ? 'PAST' : e.type}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={12} />
+                          {new Date(e.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={12} /> {e.location}
+                        </span>
+                        <span><Users size={12} style={{ verticalAlign: 'middle' }} /> {e._count?.attendees || 0} attendees</span>
+                        {e.community && <span>Community: {e.community.name}</span>}
+                        <span>by {e.createdBy?.name || 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteEvent(e.id)}
+                      style={{
+                        padding: '8px 12px', borderRadius: '10px', fontSize: '13px',
+                        background: 'var(--bg-card)', color: 'var(--danger)', border: '1px solid #fca5a5',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {eventMeta.totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+                  <button onClick={() => setEventPage(Math.max(1, eventPage - 1))} disabled={eventPage <= 1}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Prev
+                  </button>
+                  <span style={{ padding: '6px 12px', fontSize: '13px', color: 'var(--text-muted)' }}>{eventPage} / {eventMeta.totalPages}</span>
+                  <button onClick={() => setEventPage(Math.min(eventMeta.totalPages, eventPage + 1))} disabled={eventPage >= eventMeta.totalPages}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '13px', background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

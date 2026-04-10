@@ -13,6 +13,13 @@ export class AdminService {
     }
   }
 
+  /** Log an admin action for audit trail */
+  private async logAction(adminId: string, action: string, targetType?: string, targetId?: string, details?: string) {
+    await this.prisma.auditLog.create({
+      data: { adminId, action, targetType, targetId, details },
+    });
+  }
+
   // ════════════ DASHBOARD STATS ════════════
 
   async getDashboardStats(adminId: string) {
@@ -110,6 +117,7 @@ export class AdminService {
       where: { id: targetUserId },
       data: { verificationStatus: newStatus as any, isVerified: false },
     });
+    await this.logAction(adminId, newStatus === 'REJECTED' ? 'ban_user' : 'unban_user', 'user', targetUserId);
     return { message: newStatus === 'REJECTED' ? 'User banned successfully' : 'User unbanned successfully' };
   }
 
@@ -138,7 +146,7 @@ export class AdminService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    return this.prisma.user.update({
+    const result = await this.prisma.user.update({
       where: { id: userId },
       data: {
         verificationStatus: approved ? 'VERIFIED' : 'REJECTED',
@@ -157,6 +165,8 @@ export class AdminService {
         verifiedAt: true,
       },
     });
+    await this.logAction(adminId, approved ? 'verify_user' : 'reject_user', 'user', userId, notes);
+    return result;
   }
 
   // ════════════ HOUSING MANAGEMENT ════════════
@@ -183,10 +193,12 @@ export class AdminService {
 
   async verifyHousing(adminId: string, housingId: string, verified: boolean) {
     await this.assertAdmin(adminId);
-    return this.prisma.housing.update({
+    const result = await this.prisma.housing.update({
       where: { id: housingId },
       data: { isVerified: verified },
     });
+    await this.logAction(adminId, verified ? 'verify_housing' : 'unverify_housing', 'housing', housingId);
+    return result;
   }
 
   async adminCreateHousing(adminId: string, data: any) {
@@ -246,6 +258,7 @@ export class AdminService {
       data: { isMentor: approved },
     });
 
+    await this.logAction(adminId, approved ? 'approve_mentor' : 'reject_mentor', 'mentor', mentorProfileId);
     return { message: approved ? 'Mentor approved' : 'Mentor rejected' };
   }
 
@@ -253,11 +266,13 @@ export class AdminService {
 
   async makeAdmin(adminId: string, targetUserId: string) {
     await this.assertAdmin(adminId);
-    return this.prisma.user.update({
+    const result = await this.prisma.user.update({
       where: { id: targetUserId },
       data: { role: 'ADMIN' },
       select: { id: true, name: true, email: true, role: true },
     });
+    await this.logAction(adminId, 'make_admin', 'user', targetUserId, result.name);
+    return result;
   }
 
   // ════════════ ADMIN MESSAGES (Inquiries) ════════════
@@ -324,6 +339,7 @@ export class AdminService {
     await this.prisma.housingReview.deleteMany({ where: { housingId } });
     await this.prisma.housing.delete({ where: { id: housingId } });
 
+    await this.logAction(adminId, 'delete_housing', 'housing', housingId, housing.title);
     return { message: 'Housing deleted successfully' };
   }
 
@@ -358,6 +374,7 @@ export class AdminService {
     if (!community) throw new NotFoundException('Community not found');
     
     await this.prisma.community.delete({ where: { id: communityId } });
+    await this.logAction(adminId, 'delete_community', 'community', communityId, community.name);
     return { message: 'Community deleted successfully' };
   }
 
@@ -381,7 +398,129 @@ export class AdminService {
       data: notifications,
     });
 
+    await this.logAction(adminId, 'broadcast_notification', 'notification', undefined, `"${title}" → ${users.length} users`);
     return { success: true, message: `Notification broadcasted to ${users.length} users successfully`, timestamp: new Date() };
+  }
+
+  // ════════════ NOTIFICATION HISTORY ════════════
+
+  async getNotificationHistory(adminId: string, page = 1, limit = 20) {
+    await this.assertAdmin(adminId);
+    const skip = (page - 1) * limit;
+
+    // Get distinct admin notifications grouped by title+description (each broadcast)
+    const [broadcasts, total] = await Promise.all([
+      this.prisma.$queryRaw`
+        SELECT title, description, "createdAt", COUNT(*)::int as "recipientCount"
+        FROM notifications
+        WHERE type = 'admin'
+        GROUP BY title, description, "createdAt"
+        ORDER BY "createdAt" DESC
+        LIMIT ${limit} OFFSET ${skip}
+      ` as Promise<any[]>,
+      this.prisma.$queryRaw`
+        SELECT COUNT(DISTINCT (title, description, "createdAt"))::int as count
+        FROM notifications
+        WHERE type = 'admin'
+      ` as Promise<any[]>,
+    ]);
+
+    return {
+      data: broadcasts,
+      meta: { total: total[0]?.count || 0, page, limit, totalPages: Math.ceil((total[0]?.count || 0) / limit) },
+    };
+  }
+
+  // ════════════ REPORTS / FLAGGED CONTENT ════════════
+
+  async getReports(adminId: string, status?: string, page = 1, limit = 20) {
+    await this.assertAdmin(adminId);
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [reports, total] = await Promise.all([
+      this.prisma.report.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          reporter: { select: { id: true, name: true, email: true, avatar: true } },
+        },
+      }),
+      this.prisma.report.count({ where }),
+    ]);
+
+    return { data: reports, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async resolveReport(adminId: string, reportId: string, status: string, adminNotes?: string) {
+    await this.assertAdmin(adminId);
+    const report = await this.prisma.report.findUnique({ where: { id: reportId } });
+    if (!report) throw new NotFoundException('Report not found');
+
+    const result = await this.prisma.report.update({
+      where: { id: reportId },
+      data: { status, adminNotes, resolvedBy: adminId, resolvedAt: new Date() },
+    });
+    await this.logAction(adminId, 'resolve_report', 'report', reportId, `${status}: ${adminNotes || 'No notes'}`);
+    return result;
+  }
+
+  // ════════════ AUDIT LOG ════════════
+
+  async getAuditLog(adminId: string, page = 1, limit = 30) {
+    await this.assertAdmin(adminId);
+    const skip = (page - 1) * limit;
+
+    const [logs, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          admin: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      this.prisma.auditLog.count(),
+    ]);
+
+    return { data: logs, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  // ════════════ EVENTS MANAGEMENT ════════════
+
+  async getAllEvents(adminId: string, page = 1, limit = 20) {
+    await this.assertAdmin(adminId);
+    const skip = (page - 1) * limit;
+
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        skip,
+        take: limit,
+        orderBy: { date: 'desc' },
+        include: {
+          createdBy: { select: { id: true, name: true, email: true } },
+          community: { select: { id: true, name: true } },
+          _count: { select: { attendees: true } },
+        },
+      }),
+      this.prisma.event.count(),
+    ]);
+
+    return { data: events, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async deleteEvent(adminId: string, eventId: string) {
+    await this.assertAdmin(adminId);
+    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) throw new NotFoundException('Event not found');
+
+    await this.prisma.eventAttendee.deleteMany({ where: { eventId } });
+    await this.prisma.event.delete({ where: { id: eventId } });
+    await this.logAction(adminId, 'delete_event', 'event', eventId, event.title);
+    return { message: 'Event deleted successfully' };
   }
 }
 

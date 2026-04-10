@@ -151,4 +151,62 @@ export class AdminController {
   banUser(@Request() req: any, @Param('id') id: string) {
     return this.adminService.toggleBanUser(req.user.sub, id);
   }
+
+  // ── Notification History ──
+  @Get('notification-history')
+  @ApiOperation({ summary: 'Get notification broadcast history' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getNotificationHistory(@Request() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getNotificationHistory(req.user.sub, page || 1, limit || 20);
+  }
+
+  // ── Reports / Flagged Content ──
+  @Get('reports')
+  @ApiOperation({ summary: 'Get reports / flagged content' })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getReports(
+    @Request() req: any,
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.adminService.getReports(req.user.sub, status, page || 1, limit || 20);
+  }
+
+  @Patch('reports/:id')
+  @ApiOperation({ summary: 'Resolve a report' })
+  resolveReport(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: { status: string; adminNotes?: string },
+  ) {
+    return this.adminService.resolveReport(req.user.sub, id, body.status, body.adminNotes);
+  }
+
+  // ── Audit Log ──
+  @Get('audit-log')
+  @ApiOperation({ summary: 'Get admin audit log' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getAuditLog(@Request() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getAuditLog(req.user.sub, page || 1, limit || 30);
+  }
+
+  // ── Events Management ──
+  @Get('events')
+  @ApiOperation({ summary: 'Get all events (admin)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getAllEvents(@Request() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getAllEvents(req.user.sub, page || 1, limit || 20);
+  }
+
+  @Delete('events/:id')
+  @ApiOperation({ summary: 'Admin delete an event' })
+  deleteEvent(@Request() req: any, @Param('id') id: string) {
+    return this.adminService.deleteEvent(req.user.sub, id);
+  }
 }

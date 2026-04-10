@@ -431,6 +431,37 @@ class ApiClient {
     });
   }
 
+  async getNotificationHistory(page = 1, limit = 20) {
+    return this.request<any>(`/admin/notification-history?page=${page}&limit=${limit}`);
+  }
+
+  async getAdminReports(status?: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (status) params.append('status', status);
+    return this.request<any>(`/admin/reports?${params.toString()}`);
+  }
+
+  async resolveReport(reportId: string, status: string, adminNotes?: string) {
+    return this.request<any>(`/admin/reports/${reportId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, adminNotes }),
+    });
+  }
+
+  async getAuditLog(page = 1, limit = 30) {
+    return this.request<any>(`/admin/audit-log?page=${page}&limit=${limit}`);
+  }
+
+  async getAdminEvents(page = 1, limit = 20) {
+    return this.request<any>(`/admin/events?page=${page}&limit=${limit}`);
+  }
+
+  async adminDeleteEvent(eventId: string) {
+    return this.request<any>(`/admin/events/${eventId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ════════════ COMMUNITY GROUP CHAT & POLLS & MEMBERS ════════════
 
   async getCommunityMessages(communityId: string, page = 1) {

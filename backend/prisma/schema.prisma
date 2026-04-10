@@ -116,6 +116,8 @@ model User {
   chatMessages    ChatMessage[]
   housingViews    HousingView[]
   notifications   Notification[]
+  reports         Report[]       @relation("Reporter")
+  auditLogs      AuditLog[]
 
   @@map("users")
 }
@@ -544,4 +546,48 @@ model HousingView {
   @@index([userId])
   @@index([housingId])
   @@map("housing_views")
+}
+
+// ============================================
+// REPORTS / FLAGGED CONTENT
+// ============================================
+
+model Report {
+  id            String   @id @default(cuid())
+  reporterId    String
+  targetType    String   // "user", "housing", "post", "comment", "community"
+  targetId      String
+  reason        String   // "spam", "abuse", "fraud", "inappropriate", "other"
+  description   String?
+  status        String   @default("pending") // "pending", "reviewed", "resolved", "dismissed"
+  adminNotes    String?
+  resolvedBy    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  reporter      User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   // "verify_user", "ban_user", "verify_housing", "delete_housing", "approve_mentor", "broadcast_notification", etc.
+  targetType  String?  // "user", "housing", "community", "mentor", "notification"
+  targetId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, createdAt])
+  @@index([action])
+  @@map("audit_logs")
 }
