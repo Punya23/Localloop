@@ -150,7 +150,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-8">
 
         {/* ── LEFT COLUMN ── */}
-        <div>
+        <div className="min-w-0">
 
           {/* ═══ Recommended For You ═══ */}
           <div style={{ marginBottom: '32px' }}>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     {/* Text */}
-                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                       {post.content}
                     </p>
                     {/* Actions */}

@@ -1,20 +1,21 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import {
   ArrowLeft, Users, Send, MessageCircle, Clock,
-  MessagesSquare, ChevronDown, CheckCircle2, BarChart2, Crown, 
-  Award, Image as ImageIcon
+  MessagesSquare, ChevronDown, CheckCircle2, BarChart2, Crown,
+  Award, Image as ImageIcon, TrendingUp
 } from 'lucide-react';
 
 type ViewMode = 'chat' | 'posts' | 'polls' | 'members' | 'media';
 
 export default function CommunityDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const { isAuthenticated, user } = useAuthStore();
   const [community, setCommunity] = useState<any>(null);
@@ -41,6 +42,7 @@ export default function CommunityDetailPage() {
 
   // Members state
   const [members, setMembers] = useState<any[]>([]);
+  const [isTogglingAction, setIsTogglingAction] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -149,6 +151,38 @@ export default function CommunityDetailPage() {
     } catch (err: any) { alert(err.message); }
   };
 
+  const handleToggleJoin = async () => {
+    if (!isAuthenticated) return router.push('/login');
+    if (isTogglingAction) return;
+    
+    const isMember = members.some((m: any) => m.userId === user?.id || m.user?.id === user?.id);
+    setIsTogglingAction(true);
+    try {
+      if (isMember) {
+        if (confirm('Are you sure you want to leave this community?')) {
+          await api.leaveCommunity(id);
+          setMembers(prev => prev.filter((m: any) => m.userId !== user?.id && m.user?.id !== user?.id));
+          setCommunity((prev: any) => ({
+            ...prev,
+            _count: { ...prev._count, members: Math.max(0, (prev._count?.members || 0) - 1) },
+          }));
+        }
+      } else {
+        await api.joinCommunity(id);
+        const md = await api.getCommunityMembers(id);
+        setMembers(md.data || []);
+        setCommunity((prev: any) => ({
+          ...prev,
+          _count: { ...prev._count, members: (prev._count?.members || 0) + 1 },
+        }));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to update community status');
+    } finally {
+      setIsTogglingAction(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6 lg:p-8"><div className="shimmer h-64 rounded-xl max-w-3xl" /></div>;
   }
@@ -164,22 +198,45 @@ export default function CommunityDetailPage() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
-        <div>
+        <div className="min-w-0">
           {/* Community Header */}
           <div className="glass-card p-6 mb-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
-                   style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
+                style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
                 {community.name?.charAt(0)}
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold">{community.name}</h1>
-                <div className="flex items-center gap-3 mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                  <span className="flex items-center gap-1"><Users size={14} /> {community._count?.members || community.memberCount} members</span>
-                  <span>·</span>
-                  <span>{community._count?.posts || 0} posts</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold">{community.name}</h1>
+                    <div className="flex items-center gap-3 mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                      <span className="flex items-center gap-1"><Users size={14} /> {community._count?.members || community.memberCount} members</span>
+                      <span>·</span>
+                      <span>{community._count?.posts || 0} posts</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleToggleJoin} 
+                    disabled={isTogglingAction}
+                    style={{
+                      padding: '8px 20px', borderRadius: '24px', fontSize: '13px', fontWeight: 600,
+                      cursor: isTogglingAction ? 'default' : 'pointer',
+                      border: members.some((m: any) => m.userId === user?.id || m.user?.id === user?.id) 
+                              ? '1px solid var(--border)' : 'none',
+                      background: members.some((m: any) => m.userId === user?.id || m.user?.id === user?.id) 
+                                  ? 'transparent' : 'var(--primary)',
+                      color: members.some((m: any) => m.userId === user?.id || m.user?.id === user?.id) 
+                             ? 'var(--text-muted)' : '#fff',
+                      opacity: isTogglingAction ? 0.7 : 1,
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {isTogglingAction ? 'Wait...' : 
+                     (members.some((m: any) => m.userId === user?.id || m.user?.id === user?.id) ? 'Leave Community' : 'Join Community')}
+                  </button>
                 </div>
-                {community.description && <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>{community.description}</p>}
+                {community.description && <p className="mt-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{community.description}</p>}
               </div>
             </div>
           </div>
@@ -230,20 +287,20 @@ export default function CommunityDetailPage() {
                     <MessagesSquare size={16} className="text-primary" /> Start a New Topic
                   </h3>
                   <div className="flex flex-col gap-3">
-                    <input 
-                      className="input-field text-sm font-semibold" 
-                      placeholder="Topic Title (optional)..." 
+                    <input
+                      className="input-field text-sm font-semibold"
+                      placeholder="Topic Title (optional)..."
                       value={newPostTitle}
-                      onChange={(e) => setNewPostTitle(e.target.value)} 
+                      onChange={(e) => setNewPostTitle(e.target.value)}
                     />
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                           style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
+                        style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
                         {user?.name?.charAt(0)}
                       </div>
                       <div className="flex-1">
                         <textarea className="input-field text-sm" rows={2} placeholder="What do you want to discuss?" value={newPost}
-                                  onChange={(e) => setNewPost(e.target.value)} required />
+                          onChange={(e) => setNewPost(e.target.value)} required />
                         <div className="flex justify-between items-center mt-3">
                           <div className="flex gap-2">
                             <button type="button" className="p-2 text-muted hover:text-primary transition-colors"><ImageIcon size={18} /></button>
@@ -271,13 +328,13 @@ export default function CommunityDetailPage() {
                       {/* Post Header */}
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
-                             style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
+                          style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
                           {post.user?.name?.charAt(0)}
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold flex items-center gap-2">
                             {post.user?.name}
-                            {post.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={10}/> Mentor</span>}
+                            {post.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={10} /> Mentor</span>}
                           </p>
                           <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: 'var(--text-muted)' }}>
                             <Clock size={10} /> {new Date(post.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -286,8 +343,8 @@ export default function CommunityDetailPage() {
                       </div>
 
                       {/* Post Content */}
-                      {post.title && <h3 className="text-lg font-bold mb-2">{post.title}</h3>}
-                      <p className="text-sm mb-4 whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
+                      {post.title && <h3 className="text-lg font-bold mb-2 break-words">{post.title}</h3>}
+                      <p className="text-sm mb-4 whitespace-pre-wrap break-words" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
 
                       {/* Comments */}
                       <div style={{ borderTop: '1px solid var(--border)' }} className="pt-3">
@@ -297,13 +354,13 @@ export default function CommunityDetailPage() {
                         {post.comments?.slice(0, 3).map((c: any) => (
                           <div key={c.id} className="flex gap-2 mb-2 ml-4">
                             <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                                 style={{ background: 'var(--bg-card)' }}>
+                              style={{ background: 'var(--bg-card)' }}>
                               {c.user?.name?.charAt(0)}
                             </div>
                             <div>
                               <span className="text-xs font-medium flex items-center gap-2">
                                 {c.user?.name}
-                                {c.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={8}/> Mentor</span>}
+                                {c.user?.isMentor && <span className="bg-amber-100 text-amber-700 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><Award size={8} /> Mentor</span>}
                               </span>
                               <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{c.content}</p>
                             </div>
@@ -313,8 +370,8 @@ export default function CommunityDetailPage() {
                         {isAuthenticated && (
                           <div className="flex gap-2 mt-3 bg-gray-50 p-2 rounded-xl">
                             <input className="bg-transparent border-none outline-none text-xs flex-1 px-2" placeholder="Write a comment..."
-                                   value={commentText[post.id] || ''}
-                                   onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })} />
+                              value={commentText[post.id] || ''}
+                              onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })} />
                             <button onClick={() => handleComment(post.id)} className="btn-primary text-xs px-3 py-1.5" disabled={!commentText[post.id]?.trim()}>
                               <Send size={12} />
                             </button>
@@ -446,7 +503,7 @@ export default function CommunityDetailPage() {
               )}
             </div>
           )}
-          
+
           {/* Members/Polls views remain handled similarly... */}
           {/* (Trimming for brevity in this replace call, assuming mode logic) */}
           {viewMode === 'polls' && (
@@ -454,7 +511,7 @@ export default function CommunityDetailPage() {
             <div className="flex flex-col gap-6">
               {isAuthenticated && (
                 <form onSubmit={handleCreatePoll} className="glass-card p-5">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><BarChart2 size={16} className="text-primary"/> Create a Poll</h3>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><BarChart2 size={16} className="text-primary" /> Create a Poll</h3>
                   <input
                     className="input-field w-full text-sm mb-3" placeholder="Ask a question..."
                     value={newPollQ} onChange={e => setNewPollQ(e.target.value)} required />
@@ -462,21 +519,21 @@ export default function CommunityDetailPage() {
                     {newPollOptions.map((opt, i) => (
                       <div key={i} className="flex gap-2">
                         <input className="input-field flex-1 text-sm py-2" placeholder={`Option ${i + 1}`}
-                               value={opt} onChange={e => {
-                                 const newOpts = [...newPollOptions];
-                                 newOpts[i] = e.target.value;
-                                 setNewPollOptions(newOpts);
-                               }} required={i < 2} />
+                          value={opt} onChange={e => {
+                            const newOpts = [...newPollOptions];
+                            newOpts[i] = e.target.value;
+                            setNewPollOptions(newOpts);
+                          }} required={i < 2} />
                         {i >= 2 && (
                           <button type="button" onClick={() => setNewPollOptions(newPollOptions.filter((_, idx) => idx !== i))}
-                                  className="text-red-500 p-2 hover:bg-red-50 rounded">✕</button>
+                            className="text-red-500 p-2 hover:bg-red-50 rounded">✕</button>
                         )}
                       </div>
                     ))}
                   </div>
                   {newPollOptions.length < 5 && (
                     <button type="button" onClick={() => setNewPollOptions([...newPollOptions, ''])}
-                            className="text-xs text-primary font-medium hover:underline block mb-3">+ Add Option</button>
+                      className="text-xs text-primary font-medium hover:underline block mb-3">+ Add Option</button>
                   )}
                   <div className="flex justify-end">
                     <button type="submit" className="btn-primary text-sm px-4" disabled={creatingPoll || !newPollQ.trim()}>
@@ -494,7 +551,7 @@ export default function CommunityDetailPage() {
               ) : (
                 polls.map(poll => {
                   let optsArray: string[] = [];
-                  try { optsArray = Array.isArray(poll.options) ? poll.options : JSON.parse(poll.options); } catch(e) { optsArray = ['Option error']; }
+                  try { optsArray = Array.isArray(poll.options) ? poll.options : JSON.parse(poll.options); } catch (e) { optsArray = ['Option error']; }
                   const totalVotes = poll.votes?.length || 0;
                   const hasVoted = poll.votes?.find((v: any) => v.userId === user?.id);
 
@@ -544,7 +601,7 @@ export default function CommunityDetailPage() {
             <div className="glass-card p-4">
               <div className="p-4 border-b border-gray-100 flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Users size={18} className="text-primary"/> Members ({community._count?.members || community.memberCount})
+                  <Users size={18} className="text-primary" /> Members ({community._count?.members || community.memberCount})
                 </h3>
               </div>
               <div className="grid grid-cols-1 divide-y divide-gray-50">
@@ -556,8 +613,8 @@ export default function CommunityDetailPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold text-gray-900 truncate">{member.user.name}</h4>
-                        {member.role === 'ADMIN' && <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Crown size={10}/> Admin</span>}
-                        {member.user.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Award size={10}/> Mentor</span>}
+                        {member.role === 'ADMIN' && <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Crown size={10} /> Admin</span>}
+                        {member.user.isMentor && <span className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Award size={10} /> Mentor</span>}
                       </div>
                       <p className="text-xs text-gray-500 truncate mt-0.5">{member.user.company ? `At ${member.user.company}` : member.user.university ? `Student at ${member.user.university}` : member.user.bio || 'New member'}</p>
                     </div>
@@ -576,7 +633,7 @@ export default function CommunityDetailPage() {
             </h3>
             <div className="flex flex-col gap-3">
               {/* General Chat Entry */}
-              <div 
+              <div
                 className="group cursor-pointer p-2 rounded-xl hover:bg-indigo-50/50 transition-all"
                 onClick={() => setViewMode('chat')}
               >

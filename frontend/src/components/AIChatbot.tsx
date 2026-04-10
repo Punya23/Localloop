@@ -107,8 +107,13 @@ export default function AIChatbot() {
   };
 
   const formatContent = (content: string) => {
+    // Basic XSS sanitization
+    const sanitized = content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
     // Simple markdown-like formatting
-    return content
+    return sanitized
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br/>')
       .replace(/- /g, '• ');

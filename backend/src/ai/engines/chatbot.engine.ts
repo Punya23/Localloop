@@ -65,18 +65,21 @@ export class ChatbotEngine {
     ]);
 
     // 3. Get area-wise pricing
-    const areaStats = await this.prisma.$queryRawUnsafe<any[]>(`
-      SELECT area, 
-             ROUND(AVG(rent)) as avg_rent, 
-             COUNT(*)::int as listing_count,
-             MIN(rent) as min_rent,
-             MAX(rent) as max_rent
-      FROM housings 
-      WHERE LOWER(city) LIKE LOWER('%${(user?.city || 'Pune').replace(/'/g, "''")}%')
-      GROUP BY area 
-      ORDER BY COUNT(*) DESC 
-      LIMIT 10
-    `).catch(() => []);
+    const cityPattern = `%${user?.city || 'Pune'}%`;
+    const areaStats = await this.prisma.$queryRaw<any[]>(
+      require('@prisma/client').Prisma.sql`
+        SELECT area, 
+               ROUND(AVG(rent)) as avg_rent, 
+               COUNT(*)::int as listing_count,
+               MIN(rent) as min_rent,
+               MAX(rent) as max_rent
+        FROM housings 
+        WHERE LOWER(city) LIKE LOWER(${cityPattern})
+        GROUP BY area 
+        ORDER BY COUNT(*) DESC 
+        LIMIT 10
+      `
+    ).catch(() => []);
 
     // 4. Get conversation history
     const history = await this.prisma.chatMessage.findMany({
