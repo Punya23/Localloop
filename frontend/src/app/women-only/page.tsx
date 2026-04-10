@@ -1,40 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthGuard } from '@/lib/useAuthGuard';
+import { api } from '@/lib/api';
 import {
   Shield, MapPin, Heart, Search, CheckCircle2, BedDouble,
-  Bath, Users, Calendar, Lock, Sparkles,
+  Bath, Users, Calendar, Lock, Sparkles, Loader2,
 } from 'lucide-react';
-
-const womenHousing = [
-  { id: 'w1', title: 'Skyline Residency', area: 'Phase 1, Hinjewadi', rent: 18500, type: '1 BHK', bath: 1, detail: '0.5 km to IT Park', verified: true, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=280&fit=crop', users: 3 },
-  { id: 'w2', title: 'Green Terrace PG', area: 'Marunji, Hinjewadi', rent: 9000, type: 'Twin Sharing', bath: 1, detail: 'Free WiFi', verified: false, available: true, img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=280&fit=crop' },
-  { id: 'w3', title: 'The Heritage Suites', area: 'Phase 3, Hinjewadi', rent: 25000, type: '2 BHK Semi-Furnished', bath: 2, detail: 'Professional Concierge', verified: true, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=280&fit=crop' },
-  { id: 'w4', title: "Serene Women's PG", area: 'Wakad', rent: 8500, type: 'Triple Sharing', bath: 1, detail: '1 km to Metro', verified: true, available: true, img: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400&h=280&fit=crop' },
-];
-
-const womenCommunities = [
-  { id: 'wc1', name: 'Women in Tech Pune', desc: 'Network with women techies, share job leads, and attend meetups.', members: 420 },
-  { id: 'wc2', name: 'Safe Spaces Network', desc: 'Verified women-friendly spaces, safety tips, and community support.', members: 680 },
-  { id: 'wc3', name: 'Women Relocators', desc: 'Support group for women moving to new cities. Share experiences.', members: 310 },
-];
-
-const womenEvents = [
-  { id: 'we1', title: 'Coffee & Connect: Women in Pune', date: '2026-03-25', location: 'Blue Tokai, Baner', attendees: 28 },
-  { id: 'we2', title: 'Self-Defense Workshop', date: '2026-03-28', location: 'Fitness Hub, Kothrud', attendees: 15 },
-  { id: 'we3', title: "Women's Housing Fair", date: '2026-04-02', location: 'Marriott Convention Center', attendees: 120 },
-];
 
 export default function WomenOnlyPage() {
   const { user, isReady, accessDenied, denyReason } = useAuthGuard({
     requireGender: 'FEMALE',
     requireVerified: true,
   });
-  
+
+  const [housings, setHousings] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState('Hinjewadi');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isReady || !user || accessDenied) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [housingRes, communityRes, eventRes] = await Promise.all([
+          api.getHousings({ isWomenFriendly: 'true', limit: 20 }),
+          api.getCommunities(),
+          api.getEvents(true),
+        ]);
+
+        // Housing: take women-friendly listings
+        setHousings(housingRes?.data || []);
+
+        // Communities: filter women-only ones
+        const allCommunities = Array.isArray(communityRes) ? communityRes : communityRes?.data || [];
+        setCommunities(allCommunities.filter((c: any) => c.isWomenOnly));
+
+        // Events: pick all upcoming (in future, can filter by women-only community)
+        const allEvents = Array.isArray(eventRes) ? eventRes : eventRes?.data || [];
+        // Show events linked to women-only communities, or standalone ones
+        const womenCommunityIds = new Set(allCommunities.filter((c: any) => c.isWomenOnly).map((c: any) => c.id));
+        const womenEvents = allEvents.filter((e: any) =>
+          !e.communityId || womenCommunityIds.has(e.communityId)
+        );
+        setEvents(womenEvents);
+      } catch (err) {
+        console.error('Women-only page fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [isReady, user, accessDenied]);
+
+  const filteredHousings = search
+    ? housings.filter((h) =>
+      (h.area || '').toLowerCase().includes(search.toLowerCase()) ||
+      (h.title || '').toLowerCase().includes(search.toLowerCase()) ||
+      (h.city || '').toLowerCase().includes(search.toLowerCase())
+    )
+    : housings;
+
+  const handleSave = async (housingId: string) => {
+    try {
+      await api.saveHousing(housingId);
+      setSavedIds((p) => {
+        const n = new Set(p);
+        n.has(housingId) ? n.delete(housingId) : n.add(housingId);
+        return n;
+      });
+    } catch (err) {
+      console.error('Save error:', err);
+    }
+  };
+
+  const handleJoinCommunity = async (communityId: string) => {
+    try {
+      await api.joinCommunity(communityId);
+      setCommunities((prev) => prev.map((c) => c.id === communityId ? { ...c, isMember: true } : c));
+    } catch (err: any) {
+      alert(err.message || 'Failed to join');
+    }
+  };
+
+  const handleRSVP = async (eventId: string) => {
+    try {
+      await api.attendEvent(eventId);
+      setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, _count: { ...e._count, attendees: (e._count?.attendees || 0) + 1 }, attending: true } : e));
+    } catch (err: any) {
+      alert(err.message || 'Failed to RSVP');
+    }
+  };
+
   // Show loading spinner while checking auth
   if (!isReady) {
     return (
@@ -107,7 +169,7 @@ export default function WomenOnlyPage() {
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <MapPin size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search location..."
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by location or name..."
             style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '14px', outline: 'none', fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
         </div>
         <button style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px', cursor: 'pointer', color: '#64748b' }}>
@@ -115,136 +177,203 @@ export default function WomenOnlyPage() {
         </button>
       </div>
 
-      {/* Housing Section */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Shield size={18} style={{ color: 'var(--success)' }} /> Women-Safe Housing
-      </h2>
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '48px' }}>
+          <Loader2 size={32} style={{ color: 'var(--primary)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Loading curated content...</p>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      ) : (
+        <>
+          {/* Housing Section */}
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Shield size={18} style={{ color: 'var(--success)' }} /> Women-Safe Housing
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '4px' }}>({filteredHousings.length})</span>
+          </h2>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
-        {womenHousing.map((h) => (
-          <div key={h.id} style={{
-            background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden',
-            border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          }}>
-            <div style={{
-              height: '200px', backgroundImage: `url(${h.img})`, backgroundSize: 'cover',
-              backgroundPosition: 'center', position: 'relative',
-            }}>
-              {h.verified && (
-                <div style={{ position: 'absolute', top: '12px', left: '12px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(99,102,241,0.9)', color: '#fff' }}>VERIFIED</div>
-              )}
-              <div style={{
-                position: 'absolute', top: h.verified ? '40px' : '12px', left: '12px', display: 'flex', alignItems: 'center', gap: '4px',
-                background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '6px',
-                fontSize: '11px', fontWeight: 600, color: 'var(--success)',
-              }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }} /> WOMEN SAFE
-              </div>
-              <button onClick={() => setSavedIds((p) => { const n = new Set(p); n.has(h.id) ? n.delete(h.id) : n.add(h.id); return n; })} style={{
-                position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.9)',
-                border: 'none', borderRadius: '8px', width: '32px', height: '32px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                color: savedIds.has(h.id) ? 'var(--primary)' : 'var(--text-muted)',
-              }}>
-                <Heart size={16} fill={savedIds.has(h.id) ? 'var(--primary)' : 'none'} />
-              </button>
-              <div style={{
-                position: 'absolute', bottom: '12px', left: '12px', padding: '4px 10px',
-                borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: '#fff',
-                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-              }}>{h.area}</div>
+          {filteredHousings.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '32px' }}>
+              <Shield size={36} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>No women-safe listings yet</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Check back soon — new verified listings are added daily.</p>
             </div>
-            <div style={{ padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{h.title}</h3>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary)' }}>₹{h.rent?.toLocaleString()}</span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.type?.includes('Sharing') ? ' / sharing' : ' / month'}</span>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
+              {filteredHousings.map((h) => (
+                <div key={h.id} style={{
+                  background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden',
+                  border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}>
+                  <div style={{
+                    height: '200px',
+                    backgroundImage: h.images?.[0] ? `url(${h.images[0]})` : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                    backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
+                  }}>
+                    {h.isVerified && (
+                      <div style={{ position: 'absolute', top: '12px', left: '12px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(99,102,241,0.9)', color: '#fff' }}>VERIFIED</div>
+                    )}
+                    <div style={{
+                      position: 'absolute', top: h.isVerified ? '40px' : '12px', left: '12px', display: 'flex', alignItems: 'center', gap: '4px',
+                      background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: '6px',
+                      fontSize: '11px', fontWeight: 600, color: 'var(--success)',
+                    }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }} /> WOMEN SAFE
+                    </div>
+                    <button onClick={() => handleSave(h.id)} style={{
+                      position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.9)',
+                      border: 'none', borderRadius: '8px', width: '32px', height: '32px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                      color: savedIds.has(h.id) ? 'var(--primary)' : 'var(--text-muted)',
+                    }}>
+                      <Heart size={16} fill={savedIds.has(h.id) ? 'var(--primary)' : 'none'} />
+                    </button>
+                    <div style={{
+                      position: 'absolute', bottom: '12px', left: '12px', padding: '4px 10px',
+                      borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: '#fff',
+                      background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                    }}>{h.area || h.city || 'Pune'}</div>
+                  </div>
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{h.title}</h3>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary)' }}>₹{h.rent?.toLocaleString()}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}> / month</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BedDouble size={14} /> {h.type}</span>
+                      {h.amenities?.length > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Sparkles size={14} /> {h.amenities.slice(0, 2).join(', ')}</span>
+                      )}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> {h.area || h.city}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {h.avgRating && (
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--warning)' }}>
+                          ⭐ {h.avgRating} ({h.reviewCount} reviews)
+                        </span>
+                      )}
+                      <Link href={`/housing/${h.id}`} style={{
+                        padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        background: 'var(--primary)', color: '#fff', textDecoration: 'none', marginLeft: 'auto',
+                      }}>View Details</Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BedDouble size={14} /> {h.type}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Bath size={14} /> {h.bath} Bath</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> {h.detail}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {h.available && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--success)' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }} /> Available Now
-                  </span>
-                )}
-                <Link href={`/housing/${h.id}`} style={{
-                  padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                  background: 'var(--primary)', color: '#fff', textDecoration: 'none',
-                }}>View Details</Link>
-              </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
 
-      {/* Women Communities */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Users size={18} style={{ color: 'var(--primary)' }} /> Women-Only Communities
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-        {womenCommunities.map((c) => (
-          <div key={c.id} style={{
-            display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)',
-            borderRadius: '16px', padding: '16px', border: '1px solid var(--border)',
-          }}>
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '12px', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', background: 'rgba(236,72,153,0.1)', flexShrink: 0,
-            }}>
-              <Shield size={22} style={{ color: '#ec4899' }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</h3>
-                <Lock size={12} style={{ color: 'var(--text-muted)' }} />
-              </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{c.desc}</p>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>{c.members} members</p>
-            </div>
-            <button style={{
-              padding: '8px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
-              background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif', flexShrink: 0,
-            }}>Join</button>
-          </div>
-        ))}
-      </div>
+          {/* Women Communities */}
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Users size={18} style={{ color: 'var(--primary)' }} /> Women-Only Communities
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '4px' }}>({communities.length})</span>
+          </h2>
 
-      {/* Women Events */}
-      <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <Calendar size={18} style={{ color: 'var(--warning)' }} /> Upcoming Women-Only Events
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-        {womenEvents.map((e) => (
-          <div key={e.id} style={{
-            background: 'var(--bg-card)', borderRadius: '16px', padding: '16px',
-            border: '1px solid var(--border)',
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>{e.title}</h3>
-            <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Calendar size={12} /> {new Date(e.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MapPin size={12} /> {e.location}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Users size={12} /> {e.attendees} attending
-              </span>
+          {communities.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '32px' }}>
+              <Users size={36} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>No women-only communities yet</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Be the first to create one from the Communities page!</p>
             </div>
-            <button style={{
-              marginTop: '12px', padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-              background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            }}>RSVP</button>
-          </div>
-        ))}
-      </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              {communities.map((c) => (
+                <div key={c.id} style={{
+                  display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)',
+                  borderRadius: '16px', padding: '16px', border: '1px solid var(--border)',
+                }}>
+                  <div style={{
+                    width: '48px', height: '48px', borderRadius: '12px', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', background: 'rgba(236,72,153,0.1)', flexShrink: 0,
+                  }}>
+                    <Shield size={22} style={{ color: '#ec4899' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</h3>
+                      <Lock size={12} style={{ color: 'var(--text-muted)' }} />
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>{c.memberCount || c._count?.members || 0} members</p>
+                  </div>
+                  {c.isMember ? (
+                    <Link href={`/communities/${c.id}`} style={{
+                      padding: '8px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
+                      background: 'var(--bg-primary)', color: 'var(--primary)', textDecoration: 'none',
+                      border: '1px solid var(--border)', flexShrink: 0,
+                    }}>Open</Link>
+                  ) : (
+                    <button onClick={() => handleJoinCommunity(c.id)} style={{
+                      padding: '8px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
+                      background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer',
+                      fontFamily: 'Inter, sans-serif', flexShrink: 0,
+                    }}>Join</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Women Events */}
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Calendar size={18} style={{ color: 'var(--warning)' }} /> Upcoming Events
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '4px' }}>({events.length})</span>
+          </h2>
+
+          {events.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '32px' }}>
+              <Calendar size={36} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>No upcoming events</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>New women-focused events will appear here.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              {events.map((e) => (
+                <div key={e.id} style={{
+                  background: 'var(--bg-card)', borderRadius: '16px', padding: '16px',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>{e.title}</h3>
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={12} /> {new Date(e.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={12} /> {e.location}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Users size={12} /> {e._count?.attendees || 0} attending
+                        </span>
+                      </div>
+                      {e.community && (
+                        <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '8px', background: 'rgba(236,72,153,0.1)', color: '#ec4899' }}>
+                          {e.community.name}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRSVP(e.id)}
+                      disabled={e.attending}
+                      style={{
+                        padding: '8px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        background: e.attending ? 'var(--bg-primary)' : 'var(--primary)',
+                        color: e.attending ? 'var(--text-muted)' : '#fff',
+                        border: e.attending ? '1px solid var(--border)' : 'none',
+                        cursor: e.attending ? 'default' : 'pointer',
+                        fontFamily: 'Inter, sans-serif', flexShrink: 0,
+                      }}
+                    >{e.attending ? 'Going ✓' : 'RSVP'}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /** Verify that the requesting user is an ADMIN */
   private async assertAdmin(userId: string) {
@@ -109,7 +109,7 @@ export class AdminService {
     await this.assertAdmin(adminId);
     const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
     if (!user) throw new NotFoundException('User not found');
-    
+
     // Toggle isOnboarded or we can just use verificationStatus = 'REJECTED' as a ban. Let's use REJECTED to restrict access.
     // Ideally we would add an `isBanned` field, but since we don't have it in prisma schema, we will set verificationStatus = 'REJECTED'
     const newStatus = user.verificationStatus === 'REJECTED' ? 'UNVERIFIED' : 'REJECTED';
@@ -372,7 +372,7 @@ export class AdminService {
     await this.assertAdmin(adminId);
     const community = await this.prisma.community.findUnique({ where: { id: communityId } });
     if (!community) throw new NotFoundException('Community not found');
-    
+
     await this.prisma.community.delete({ where: { id: communityId } });
     await this.logAction(adminId, 'delete_community', 'community', communityId, community.name);
     return { message: 'Community deleted successfully' };
@@ -382,10 +382,10 @@ export class AdminService {
 
   async sendPushNotification(adminId: string, title: string, message: string) {
     await this.assertAdmin(adminId);
-    
+
     // Create actual notifications for all users
     const users = await this.prisma.user.findMany({ select: { id: true } });
-    
+
     const notifications = users.map(user => ({
       userId: user.id,
       title,
