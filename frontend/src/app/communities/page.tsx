@@ -41,14 +41,14 @@ export default function CommunitiesPage() {
         setMyCommunities(data || []);
         const joinedIds = new Set((data || []).map((c: any) => c.id));
         setJoinedCommunities(joinedIds as any);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
   useEffect(() => {
     api.getCommunities().then((data) => {
       if (data?.length > 0) setCommunities(data);
-    }).catch(() => {});
+    }).catch(() => { });
     fetchJoined();
     if (isAuthenticated) {
       api.getFeedPosts().then((posts) => {
@@ -80,7 +80,7 @@ export default function CommunitiesPage() {
     e.stopPropagation();
     if (!isAuthenticated) return router.push('/login');
     if (loadingAction === id) return;
-    
+
     setLoadingAction(id);
     try {
       if (joinedCommunities.has(id)) {
@@ -149,10 +149,10 @@ export default function CommunitiesPage() {
                 border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                 display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', transition: 'all 0.2s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
               >
-                 <div style={{
+                <div style={{
                   width: '56px', height: '56px', borderRadius: '14px', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: '24px',
                   background: `linear-gradient(135deg, ${c.color || 'var(--primary)'}22, ${c.color || 'var(--primary-dark)'}44)`, flexShrink: 0,
@@ -162,8 +162,8 @@ export default function CommunitiesPage() {
                   <p style={{ fontSize: '13px', color: '#64748b' }}>{c._count?.posts || 0} active posts • {c._count?.members || c.memberCount || 0} members</p>
                 </div>
                 <div style={{
-                   width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-primary)',
-                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)'
+                  width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-primary)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)'
                 }}>
                   <ChevronDown size={18} style={{ transform: 'rotate(-90deg)' }} />
                 </div>
@@ -188,8 +188,8 @@ export default function CommunitiesPage() {
                 flexShrink: 0, display: 'flex', flexDirection: 'column',
                 transition: 'all 0.2s', cursor: 'pointer',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
               >
                 <div style={{
                   width: '50px', height: '50px', borderRadius: '14px', display: 'flex',
@@ -239,23 +239,23 @@ export default function CommunitiesPage() {
             const isSaved = savedPosts.has(disc.id);
             return (
               <div key={disc.id} onClick={(e) => {
-                  if (!(e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('a')) {
-                    router.push(`/communities/${disc.community?.id}`);
-                  }
-                }} style={{
+                if (!(e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('a')) {
+                  router.push(`/communities/${disc.community?.id}`);
+                }
+              }} style={{
                 background: 'var(--bg-card)', borderRadius: '18px', padding: '20px',
                 border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                 transition: 'all 0.2s', cursor: 'pointer',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
-              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}
+                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)'}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'}
               >
                 {/* Author */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
                   {disc.user?.avatar ? (
-                     <img src={disc.user.avatar} alt="avatar" style={{
+                    <img src={disc.user.avatar} alt="avatar" style={{
                       width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover'
-                     }} />
+                    }} />
                   ) : (
                     <div style={{
                       width: '42px', height: '42px', borderRadius: '50%', display: 'flex',
@@ -275,9 +275,9 @@ export default function CommunitiesPage() {
 
                 {/* Content */}
                 {disc.title && (
-                  <h4 style={{ 
-                    fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', 
-                    marginBottom: '8px', lineHeight: 1.3 
+                  <h4 style={{
+                    fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)',
+                    marginBottom: '8px', lineHeight: 1.3
                   }}>
                     {disc.title}
                   </h4>
@@ -351,7 +351,7 @@ export default function CommunitiesPage() {
       </div>
 
       {/* ══════════ Floating New Post FAB ══════════ */}
-      <button 
+      <button
         onClick={() => {
           if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -359,14 +359,14 @@ export default function CommunitiesPage() {
           }
         }}
         style={{
-        position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
-        borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: 'none',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
-        transition: 'transform 0.2s, box-shadow 0.2s',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(99,102,241,0.5)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 16px rgba(99,102,241,0.4)'; }}
+          position: 'fixed', bottom: 84, right: 20, width: 56, height: 56,
+          borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 4px 16px rgba(99,102,241,0.4)', zIndex: 40,
+          transition: 'transform 0.2s, box-shadow 0.2s',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(99,102,241,0.5)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 16px rgba(99,102,241,0.4)'; }}
       >
         <Plus size={24} />
       </button>
