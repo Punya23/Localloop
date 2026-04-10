@@ -462,8 +462,8 @@ export default function ProfilePage() {
           background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }}>
           <div style={{
-            background: 'var(--bg-card)', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '440px',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)'
+            background: 'var(--bg-primary)', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '440px',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.4)', position: 'relative', overflow: 'hidden'
           }}>
             <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Become a Mentor</h2>
             <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>Share your journey, help newcomers find flats, understand city routes, and guide them in Pune.</p>
