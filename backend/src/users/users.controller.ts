@@ -95,4 +95,18 @@ export class UsersController {
   applyForMentor(@Request() req: any, @Body() body: { expertise: string[], experience: string, availability: string }) {
     return this.usersService.applyForMentor(req.user.sub, body);
   }
+
+  // ════════════ NOTIFICATIONS ════════════
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Get user notifications' })
+  getNotifications(@Request() req: any) {
+    return this.usersService.getNotifications(req.user.sub);
+  }
+
+  @Patch('notifications/read')
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  markNotificationsRead(@Request() req: any) {
+    return this.usersService.markNotificationsRead(req.user.sub);
+  }
 }

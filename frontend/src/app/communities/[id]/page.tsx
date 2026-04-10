@@ -25,7 +25,7 @@ export default function CommunityDetailPage() {
   const [commentText, setCommentText] = useState<Record<string, string>>({});
 
   // Chat state
-  const [viewMode, setViewMode] = useState<ViewMode>('chat');
+  const [viewMode, setViewMode] = useState<ViewMode>('posts');
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [newChatMsg, setNewChatMsg] = useState('');
@@ -188,8 +188,8 @@ export default function CommunityDetailPage() {
           overflowX: 'auto', WebkitOverflowScrolling: 'touch',
         }}>
           {[
-            { id: 'chat', label: 'Group Chat', icon: MessagesSquare },
-            { id: 'posts', label: 'Posts', icon: MessageCircle },
+            { id: 'posts', label: 'Discussions', icon: MessageCircle },
+            { id: 'chat', label: 'General Chat', icon: MessagesSquare },
             { id: 'polls', label: 'Polls', icon: BarChart2 },
             { id: 'members', label: 'Members', icon: Users },
           ].map(tab => {
@@ -228,11 +228,11 @@ export default function CommunityDetailPage() {
                   {user?.name?.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <textarea className="input-field text-sm" rows={2} placeholder="Share something with the community..." value={newPost}
+                  <textarea className="input-field text-sm" rows={2} placeholder="Start a new discussion topic..." value={newPost}
                             onChange={(e) => setNewPost(e.target.value)} required />
                   <div className="flex justify-end mt-2">
                     <button type="submit" className="btn-primary text-sm flex items-center gap-2" disabled={posting || !newPost.trim()}>
-                      <Send size={14} /> {posting ? 'Posting...' : 'Post'}
+                      <Send size={14} /> {posting ? 'Starting...' : 'Start Discussion'}
                     </button>
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function CommunityDetailPage() {
             {posts.length === 0 ? (
               <div className="glass-card p-8 text-center">
                 <MessageCircle size={40} className="mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
-                <p style={{ color: 'var(--text-muted)' }}>No posts yet. Start the conversation!</p>
+                <p style={{ color: 'var(--text-muted)' }}>No discussions yet. Start a new topic!</p>
               </div>
             ) : (
               posts.map((post) => (
@@ -319,7 +319,7 @@ export default function CommunityDetailPage() {
           }}>
             <MessagesSquare size={18} style={{ color: 'var(--primary)' }} />
             <div>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Group Chat</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>General Chat</span>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
                 {community._count?.members || community.memberCount} members
               </span>

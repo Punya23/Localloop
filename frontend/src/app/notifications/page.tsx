@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 import {
   Bell, MessageCircle, Building2, Users, Trophy, Heart,
   Shield, ChevronRight, Check, X, Star, Calendar,
@@ -44,6 +45,16 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState('All');
   const [mounted, setMounted] = useState(false);
 
+  const [realNotifications, setRealNotifications] = useState<any[]>([]);
+
+  const typeConfig: Record<string, any> = {
+    admin: { icon: Shield, color: 'var(--danger)' },
+    message: { icon: MessageCircle, color: 'var(--primary)' },
+    housing: { icon: Building2, color: 'var(--success)' },
+    community: { icon: Users, color: 'var(--accent)' },
+    reputation: { icon: Trophy, color: 'var(--warning)' },
+  };
+
   useEffect(() => {
     setMounted(true);
     try {
@@ -52,6 +63,22 @@ export default function NotificationsPage() {
       if (r) setReadIds(JSON.parse(r));
       if (d) setDismissedIds(JSON.parse(d));
     } catch {}
+
+    api.getNotifications().then(data => {
+      if (data && Array.isArray(data)) {
+        setRealNotifications(data.map((n: any) => ({
+          id: n.id,
+          type: n.type || 'admin',
+          icon: typeConfig[n.type]?.icon || Bell,
+          color: typeConfig[n.type]?.color || 'var(--primary)',
+          title: n.title,
+          description: n.description,
+          time: new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          unread: !n.isRead,
+          link: n.link || '#',
+        })));
+      }
+    }).catch(console.error);
   }, []);
 
   const filters = ['All', 'Unread', 'Messages', 'Housing', 'Community'];
@@ -73,16 +100,18 @@ export default function NotificationsPage() {
   };
 
   const markAllRead = () => {
-    const allActiveIds = demoNotifications.map((n) => n.id);
-    setReadIds(allActiveIds);
+    const allActiveIds = [...demoNotifications, ...realNotifications].map((n) => n.id);
+    setReadIds(allActiveIds as any);
     localStorage.setItem('ll_notif_read', JSON.stringify(allActiveIds));
+    api.markNotificationsRead().catch(console.error);
+    setRealNotifications(prev => prev.map(n => ({ ...n, unread: false })));
   };
 
-  const currentNotifications = demoNotifications
-    .filter((n) => !dismissedIds.includes(n.id))
+  const currentNotifications = [...realNotifications, ...demoNotifications]
+    .filter((n) => !dismissedIds.includes(n.id as any))
     .map((n) => ({
       ...n,
-      unread: readIds.includes(n.id) ? false : n.unread,
+      unread: readIds.includes(n.id as any) ? false : n.unread,
     }));
 
   const filtered = currentNotifications.filter((n) => {

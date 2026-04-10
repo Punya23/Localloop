@@ -95,6 +95,14 @@ class ApiClient {
     return this.request<any>('/users/dashboard');
   }
 
+  async getNotifications() {
+    return this.request<any>('/users/notifications');
+  }
+
+  async markNotificationsRead() {
+    return this.request<any>('/users/notifications/read', { method: 'PATCH' });
+  }
+
   // Verification
   async uploadIdProof(data: { idProofUrl: string; idProofType: string }) {
     return this.request<any>('/users/verify/upload', {

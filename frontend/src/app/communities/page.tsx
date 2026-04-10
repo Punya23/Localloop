@@ -139,7 +139,7 @@ export default function CommunitiesPage() {
         <div style={{ marginBottom: '36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageSquare size={18} color="var(--primary)" /> Your Community Chats
+              <Users size={18} color="var(--primary)" /> Your Communities
             </h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

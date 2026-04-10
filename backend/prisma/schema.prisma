@@ -115,6 +115,7 @@ model User {
   pollVotes       PollVote[]
   chatMessages    ChatMessage[]
   housingViews    HousingView[]
+  notifications   Notification[]
 
   @@map("users")
 }
@@ -373,6 +374,26 @@ model Message {
 
   @@index([senderId, receiverId])
   @@map("messages")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   @default("admin") // e.g., "message", "housing", "community", "reputation", "admin"
+  title       String
+  description String
+  link        String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
 
 // ============================================

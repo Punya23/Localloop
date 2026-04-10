@@ -365,9 +365,23 @@ export class AdminService {
 
   async sendPushNotification(adminId: string, title: string, message: string) {
     await this.assertAdmin(adminId);
-    // Real implementation would interface with Firebase Cloud Messaging, OneSignal, or create records in a `Notification` table.
-    // For now, we return success response.
-    return { success: true, message: 'Notification broadcasted to all users successfully', timestamp: new Date() };
+    
+    // Create actual notifications for all users
+    const users = await this.prisma.user.findMany({ select: { id: true } });
+    
+    const notifications = users.map(user => ({
+      userId: user.id,
+      title,
+      description: message,
+      type: 'admin',
+      isRead: false,
+    }));
+
+    await this.prisma.notification.createMany({
+      data: notifications,
+    });
+
+    return { success: true, message: `Notification broadcasted to ${users.length} users successfully`, timestamp: new Date() };
   }
 }
 

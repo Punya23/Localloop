@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import {
@@ -9,6 +10,8 @@ import {
   Wifi, Users, Star, Shield, Map, SlidersHorizontal,
   Sparkles, ArrowRight, Eye,
 } from 'lucide-react';
+
+const HousingMap = dynamic(() => import('@/components/HousingMap'), { ssr: false });
 
 /* ── Badge Component ──────────────────────────────────── */
 
@@ -66,6 +69,7 @@ export default function HousingPage() {
   const [housingType, setHousingType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   // ML Predictor States
   const [mlArea, setMlArea] = useState('Hinjewadi');
@@ -388,17 +392,30 @@ export default function HousingPage() {
               {listings.length} vetted properties matching your criteria
             </p>
           </div>
-          <div className="hidden lg:flex" style={{ display: 'flex' }}>
-            {[{ icon: Grid3X3, m: 'grid' as const }, { icon: List, m: 'list' as const }].map(({ icon: Icon, m }) => (
-              <button key={m} onClick={() => setView(m)} style={{
-                width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1px solid var(--border)', cursor: 'pointer',
-                background: view === m ? 'var(--primary)' : '#fff', color: view === m ? '#fff' : 'var(--text-muted)',
-                borderRadius: m === 'grid' ? '10px 0 0 10px' : '0 10px 10px 0',
-                borderLeft: m === 'list' ? 'none' : undefined,
-                transition: 'all 0.15s',
-              }}><Icon size={16} /></button>
-            ))}
+          <div className="hidden lg:flex" style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex' }}>
+              {[{ icon: Grid3X3, m: 'grid' as const }, { icon: List, m: 'list' as const }].map(({ icon: Icon, m }) => (
+                <button key={m} onClick={() => setView(m)} style={{
+                  width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid var(--border)', cursor: 'pointer',
+                  background: view === m ? 'var(--primary)' : '#fff', color: view === m ? '#fff' : 'var(--text-muted)',
+                  borderRadius: m === 'grid' ? '10px 0 0 10px' : '0 10px 10px 0',
+                  borderLeft: m === 'list' ? 'none' : undefined,
+                  transition: 'all 0.15s',
+                }}><Icon size={16} /></button>
+              ))}
+            </div>
+            <button onClick={() => setShowMap(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '0 18px', height: 38, borderRadius: 10,
+              border: '1px solid var(--border)', cursor: 'pointer',
+              background: '#fff', color: 'var(--text-muted)',
+              fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            ><Map size={15} /> Map View</button>
           </div>
         </div>
 
@@ -550,7 +567,7 @@ export default function HousingPage() {
       </div>
 
       {/* ══════════ Mobile Map View Button ══════════ */}
-      <button className="lg:hidden" style={{
+      <button className="lg:hidden" onClick={() => setShowMap(true)} style={{
         position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', alignItems: 'center', gap: 8, padding: '12px 28px',
         borderRadius: 30, background: 'var(--text-primary)', color: '#fff', border: 'none',
@@ -559,6 +576,9 @@ export default function HousingPage() {
       }}>
         <Map size={16} /> Map View
       </button>
+
+      {/* ══════════ Map Overlay ══════════ */}
+      {showMap && <HousingMap listings={listings} onClose={() => setShowMap(false)} />}
     </div>
   );
 }

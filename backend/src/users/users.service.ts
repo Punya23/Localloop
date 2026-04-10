@@ -421,4 +421,21 @@ export class UsersService {
 
     return mentorProfile;
   }
+
+  // ════════════ NOTIFICATIONS ════════════
+
+  async getNotifications(userId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markNotificationsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+  }
 }
