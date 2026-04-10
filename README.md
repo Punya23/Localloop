@@ -46,10 +46,12 @@
 
 ### 🏠 Housing Discovery
 - Curated PG, hostel, flat, and shared room listings
+- **AI Price Predictor:** Real-time ML models predict if rent is overvalued/undervalued.
+- **Interactive Maps:** LeafletJS integration seamlessly maps local areas.
+- **Rich Media Uploads:** User-driven, optimized high-res property images powered by Cloudinary.
 - Advanced filters: budget range, area, gender preference, amenities
 - Safety ratings and women-friendly tags
 - User reviews & ratings system
-- Save/bookmark favorite listings
 
 ### 👥 Community Groups
 - **University communities** — connect with students from your college
@@ -98,6 +100,13 @@ A dedicated safety layer for female users:
 - Community and event recommendations
 - City insights and statistics
 
+### 🛠️ Admin & Moderation Panel
+- **Analytics & Health:** Centralized dashboard analyzing engagement and usage.
+- **Reporting System:** Track user reports and flagged content in real-time.
+- **Global Broadcasts:** Push system-wide notifications instantly.
+- **Audit Logs:** Full administrative accountability trailing.
+- **Verification & Approvals:** Review ID proofs and mentor applications.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -109,6 +118,7 @@ A dedicated safety layer for female users:
 | **React 19** | UI component library |
 | **Tailwind CSS 4** | Utility-first styling |
 | **Zustand** | Lightweight state management |
+| **LeafletJS** | Interactive geospatial mapping |
 | **Recharts** | Data visualization & charts |
 | **Lucide React** | Modern icon library |
 | **Socket.io Client** | Real-time WebSocket communication |
@@ -119,11 +129,19 @@ A dedicated safety layer for female users:
 | **NestJS 11** | Modular Node.js framework |
 | **Prisma 7** | Type-safe ORM for PostgreSQL |
 | **PostgreSQL** (Supabase) | Relational database |
+| **Cloudinary** | Fast, optimized image hosting & scaling |
 | **Passport + JWT** | Authentication & authorization |
 | **Socket.io** | Real-time messaging server |
 | **Swagger** | Auto-generated API documentation |
-| **bcryptjs** | Secure password hashing |
 | **class-validator** | DTO validation |
+
+### Machine Learning (ML Service)
+| Technology | Purpose |
+|:---|:---|
+| **Python** | Deep analytics & model training |
+| **FastAPI** | High-performance inferencing endpoints |
+| **Scikit-Learn** | Predictive rent models and training logic |
+| **Pandas / NumPy** | Complex data preprocessing |
 
 ---
 
@@ -165,7 +183,11 @@ LocalLoop/
 │   ├── prisma/
 │   │   ├── schema.prisma       # Database schema (14 models)
 │   │   └── migrations/         # Database migrations
-│   └── test/                   # E2E test suite
+│
+├── ml_service/                 # Machine Learning & AI
+│   ├── main.py                 # FastAPI endpoints
+│   ├── model.py                # Model training logic
+│   └── rent_model.pkl          # Serialized scikit-learn model
 │
 └── README.md
 ```
@@ -342,6 +364,9 @@ The backend exposes RESTful APIs organized into domain modules:
 | **Events** | `GET /events`, `POST /events`, `POST /events/:id/attend` | Event management & RSVP |
 | **Chat** | WebSocket via Socket.io | Real-time direct messaging |
 | **Reputation** | `GET /reputation`, `POST /reputation/award` | Points & level management |
+| **Upload** | `POST /upload/image`, `POST /upload/images` | Form-data stream directly connected to Cloudinary storage |
+| **Admin** | `GET /admin/stats`, `POST /admin/resolve-report` | Platform insights, audit logs, and moderation |
+| **AI/ML** | `GET /ml/predict-rent` | FastAPI bridged logic estimating fair market prices |
 
 > 📝 Full API documentation available via **Swagger UI** at `http://localhost:3001/api` when running locally.
 
@@ -371,8 +396,8 @@ The backend exposes RESTful APIs organized into domain modules:
 - [x] Reputation system & leaderboard
 - [x] Women Mode safety features
 - [x] Mentor profiles & matching
+- [x] AI-powered rent & property prediction algorithm
 - [ ] Mobile app (React Native)
-- [ ] AI-powered housing recommendations
 - [ ] Flatmate compatibility matching
 - [ ] Multi-city expansion
 - [ ] Internship & job referral system
