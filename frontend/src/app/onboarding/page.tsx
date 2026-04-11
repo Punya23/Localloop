@@ -32,6 +32,7 @@ const languageOptions = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Kann
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { user, isAuthenticated, updateUser, welcomeMessage, clearWelcomeMessage } = useAuthStore();
   const router = useRouter();
 
@@ -92,14 +93,16 @@ export default function OnboardingPage() {
   };
 
   const handleFinish = async () => {
+    if (loading) return;
     setLoading(true);
+    setErrorMessage('');
     try {
       const userData = await api.completeOnboarding(form);
       updateUser({ ...userData, isOnboarded: true });
       clearWelcomeMessage();
       router.push('/dashboard');
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not complete onboarding. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +140,19 @@ export default function OnboardingPage() {
         </div>
 
         <div className="glass-card p-8">
+          {errorMessage && (
+            <div
+              className="mb-6 rounded-xl border p-3 text-sm"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderColor: 'rgba(239, 68, 68, 0.4)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+
           {/* ═══ Step 1: Role & Gender ═══ */}
           {step === 0 && (
             <div>
