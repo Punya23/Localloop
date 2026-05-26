@@ -36,8 +36,8 @@
 
 | Resource | Link |
 |:---|:---|
-| 📹 **Demo Video** | [Watch on Loom](#) |
-| 🌐 **Live App** | [localloop.vercel.app](#) |
+| 📹 **Demo Video** | [Watch on Loom](https://www.loom.com/share/82748d105655402ba23c0f032b89dc8a) |
+| 🌐 **Live App** | [localloop-red.vercel.app](https://localloop-red.vercel.app/) |
 | 📚 **API Docs (Swagger)** | Available at `/api/docs` when running locally |
 | 🐙 **GitHub** | [github.com/Punya23/Localloop](https://github.com/Punya23/Localloop) |
 
