@@ -136,7 +136,7 @@ function ChatInner() {
     if (!user) return;
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     const baseUrl = url.replace('/api', '');
-    const s = io(`${baseUrl}/chat`, { autoConnect: true });
+    const s = io(`${baseUrl}/chat`, { autoConnect: true, transports: ['websocket'] });
 
     s.on('connect', () => { 
       const token = localStorage.getItem('localloop_token');

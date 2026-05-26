@@ -17,6 +17,7 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
+    maxAge: 86400, // Cache preflight OPTIONS requests for 24 hours
   });
 
   // Global validation pipes (Order matters!)
