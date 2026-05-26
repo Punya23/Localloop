@@ -148,97 +148,114 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Get recommended housing based on user preferences
-    const recommendedHousing = await this.prisma.housing.findMany({
-      where: {
-        city: user.city || 'Pune',
-        ...(user.budgetMax && { rent: { lte: user.budgetMax } }),
-        ...(user.budgetMin && { rent: { gte: user.budgetMin } }),
-        ...(user.preferredArea && { area: { contains: user.preferredArea, mode: 'insensitive' as any } }),
-        ...(user.isWomenMode && { isWomenFriendly: true }),
-      },
-      take: 6,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        reviews: {
-          select: { rating: true },
+    // Execute all 11 independent database queries in parallel to minimize cross-regional network round-trips
+    const [
+      recommendedHousing,
+      suggestedCommunities,
+      myCommunities,
+      upcomingEvents,
+      recentPosts,
+      averageRentAgg,
+      totalListings,
+      totalCommunities,
+      totalUsers,
+      nearbyAlumni,
+      movingWithYou,
+    ] = await Promise.all([
+      // 1. Get recommended housing based on user preferences
+      this.prisma.housing.findMany({
+        where: {
+          city: user.city || 'Pune',
+          ...(user.budgetMax && { rent: { lte: user.budgetMax } }),
+          ...(user.budgetMin && { rent: { gte: user.budgetMin } }),
+          ...(user.preferredArea && { area: { contains: user.preferredArea, mode: 'insensitive' as any } }),
+          ...(user.isWomenMode && { isWomenFriendly: true }),
         },
-      },
-    });
-
-    // Get suggested communities
-    const suggestedCommunities = await this.prisma.community.findMany({
-      where: {
-        city: user.city || 'Pune',
-        ...(user.isWomenMode && { isWomenOnly: true }),
-        members: {
-          none: { userId },
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          reviews: {
+            select: { rating: true },
+          },
         },
-      },
-      take: 5,
-      orderBy: { memberCount: 'desc' },
-    });
+      }),
 
-    // Get user's communities
-    const myCommunities = await this.prisma.communityMember.findMany({
-      where: { userId },
-      include: {
-        community: true,
-      },
-      take: 5,
-    });
-
-    // Get upcoming events
-    const upcomingEvents = await this.prisma.event.findMany({
-      where: {
-        date: { gte: new Date() },
-      },
-      take: 5,
-      orderBy: { date: 'asc' },
-      include: {
-        _count: { select: { attendees: true } },
-      },
-    });
-
-    // Get recent community posts
-    const recentPosts = await this.prisma.post.findMany({
-      where: {
-        community: {
-          members: { some: { userId } },
+      // 2. Get suggested communities
+      this.prisma.community.findMany({
+        where: {
+          city: user.city || 'Pune',
+          ...(user.isWomenMode && { isWomenOnly: true }),
+          members: {
+            none: { userId },
+          },
         },
-      },
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: { id: true, name: true, avatar: true },
-        },
-        community: {
-          select: { id: true, name: true },
-        },
-        _count: { select: { comments: true } },
-      },
-    });
+        take: 5,
+        orderBy: { memberCount: 'desc' },
+      }),
 
-    // City stats
-    const cityStats = {
-      averageRent: await this.prisma.housing.aggregate({
+      // 3. Get user's communities
+      this.prisma.communityMember.findMany({
+        where: { userId },
+        include: {
+          community: true,
+        },
+        take: 5,
+      }),
+
+      // 4. Get upcoming events
+      this.prisma.event.findMany({
+        where: {
+          date: { gte: new Date() },
+        },
+        take: 5,
+        orderBy: { date: 'asc' },
+        include: {
+          _count: { select: { attendees: true } },
+        },
+      }),
+
+      // 5. Get recent community posts
+      this.prisma.post.findMany({
+        where: {
+          community: {
+            members: { some: { userId } },
+          },
+        },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { id: true, name: true, avatar: true },
+          },
+          community: {
+            select: { id: true, name: true },
+          },
+          _count: { select: { comments: true } },
+        },
+      }),
+
+      // 6. City Stats: Average Rent
+      this.prisma.housing.aggregate({
         _avg: { rent: true },
         where: { city: user.city || 'Pune' },
       }),
-      totalListings: await this.prisma.housing.count({
-        where: { city: user.city || 'Pune' },
-      }),
-      totalCommunities: await this.prisma.community.count({
-        where: { city: user.city || 'Pune' },
-      }),
-      totalUsers: await this.prisma.user.count({
-        where: { city: user.city || 'Pune' },
-      }),
-    };
 
-    // Recommended Insights (Alumni/Coworkers & Movers)
-    const [nearbyAlumni, movingWithYou] = await Promise.all([
+      // 7. City Stats: Total Listings
+      this.prisma.housing.count({
+        where: { city: user.city || 'Pune' },
+      }),
+
+      // 8. City Stats: Total Communities
+      this.prisma.community.count({
+        where: { city: user.city || 'Pune' },
+      }),
+
+      // 9. City Stats: Total Users
+      this.prisma.user.count({
+        where: { city: user.city || 'Pune' },
+      }),
+
+      // 10. Recommended Insights: Nearby Alumni/Coworkers
       this.prisma.user.count({
         where: {
           city: user.city,
@@ -249,6 +266,8 @@ export class UsersService {
           ],
         },
       }),
+
+      // 11. Recommended Insights: Movers
       this.prisma.user.count({
         where: {
           city: user.city,
@@ -266,10 +285,10 @@ export class UsersService {
       upcomingEvents,
       recentPosts,
       cityStats: {
-        averageRent: Math.round(cityStats.averageRent._avg.rent || 0),
-        totalListings: cityStats.totalListings,
-        totalCommunities: cityStats.totalCommunities,
-        totalUsers: cityStats.totalUsers,
+        averageRent: Math.round(averageRentAgg._avg.rent || 0),
+        totalListings,
+        totalCommunities,
+        totalUsers,
       },
       insights: {
         nearbyAlumni,
