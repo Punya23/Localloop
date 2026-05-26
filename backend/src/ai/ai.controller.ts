@@ -62,7 +62,8 @@ export class AiController {
   @ApiOperation({ summary: 'Predict rent using Python ML microservice' })
   async predictRent(@Body() data: any) {
     try {
-      const resp = await fetch('http://localhost:8000/predict/rent', {
+      const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+      const resp = await fetch(`${mlServiceUrl}/predict/rent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
