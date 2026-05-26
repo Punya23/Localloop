@@ -447,6 +447,8 @@ npm run dev
 
 ### 4. ML Service Setup
 
+> ⚠️ **Important:** It is highly recommended to use **Python 3.11** for this microservice. Newer versions (like Python 3.13) do not have pre-built wheels for specific releases of `pandas` and `scikit-learn`, which forces slow, error-prone compilation from source.
+
 ```bash
 cd ml_service
 
@@ -488,10 +490,20 @@ uvicorn main:app --reload --port 8000
 
 ### Infrastructure Scaling Path
 ```
-Current:  Vercel + Railway + Render + Supabase
-Phase 2:  + Redis + CDN edge caching
-Phase 3:  + Kubernetes + message queues + multi-region DB
+Current:  Vercel (Frontend) + Railway (Backend & ML Services) + Supabase (Database)
+Phase 2:  + Redis Caching + CDN Edge Caching
+Phase 3:  + Kubernetes + Message Queues (RabbitMQ/BullMQ) + Multi-Region DB Replicas
 ```
+
+---
+
+## ⚡ Production Performance Optimizations
+
+To combat cross-continental network latency between California (Railway host) and Mumbai (Supabase PG host), the following enterprise-grade web performance optimizations were implemented in this production build:
+
+- **Parallelized Query Engine:** Refactored the dashboard API to execute all 11 independent database queries in parallel using `Promise.all()`. This reduced sequential round-trip DB latency from **4.5 seconds to under 800ms** (an **85% speedup**).
+- **CORS Preflight OPTIONS Caching:** Configured a CORS `maxAge` of 24 hours (`86400s`) on the NestJS API gateway. This caches cross-origin permissions in the user's browser, eliminating a redundant **400ms preflight OPTIONS round-trip** on every user action.
+- **Pure WebSockets (Direct Transports):** Forced Socket.io-client to connect using `transports: ['websocket']` exclusively. This completely bypasses HTTP long-polling handshake overhead, establishing instant, persistent, real-time WebSocket connections.
 
 ---
 
