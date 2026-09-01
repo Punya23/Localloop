@@ -39,28 +39,25 @@ export class CommunitiesService {
         ...(city && { city: { contains: city, mode: 'insensitive' as any } }),
       },
       orderBy: { memberCount: 'desc' },
+      take: 100,
       include: {
-        _count: {
-          select: { posts: true, members: true },
-        },
+        _count: { select: { posts: true, members: true } },
+        // Inline membership check — avoids second round-trip when userId present
+        ...(userId && {
+          members: {
+            where: { userId },
+            select: { userId: true },
+            take: 1,
+          },
+        }),
       },
     });
 
-    // Check if user is a member of each community
-    if (userId) {
-      const memberships = await this.prisma.communityMember.findMany({
-        where: { userId },
-        select: { communityId: true },
-      });
-      const memberCommunityIds = new Set(memberships.map((m) => m.communityId));
-
-      return communities.map((c) => ({
-        ...c,
-        isMember: memberCommunityIds.has(c.id),
-      }));
-    }
-
-    return communities;
+    return communities.map((c: any) => ({
+      ...c,
+      isMember: userId ? (c.members?.length ?? 0) > 0 : false,
+      members: undefined, // strip raw members array from response
+    }));
   }
 
   async findOne(id: string) {

@@ -10,10 +10,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('DATABASE_URL is not set. Make sure backend/.env is present and loaded.');
     }
 
-    const connectionString = rawConnectionString.trim().replace(/^['\"]|['\"]$/g, '');
-    const adapter = new PrismaPg({ connectionString });
+    // Tune connection pool: limit=5 is right-sized for Render free tier Postgres
+    let connectionString = rawConnectionString.trim().replace(/^['"]|['"]$/g, '');
+    if (!connectionString.includes('connection_limit')) {
+      const sep = connectionString.includes('?') ? '&' : '?';
+      connectionString += `${sep}connection_limit=5&pool_timeout=10&connect_timeout=10`;
+    }
 
-    super({ adapter });
+    const adapter = new PrismaPg({ connectionString });
+    super({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : [],
+    });
   }
 
   async onModuleInit() {

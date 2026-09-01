@@ -57,27 +57,29 @@ export class UsersService {
         communities: {
           include: {
             community: {
-              select: {
-                id: true,
-                name: true,
-                type: true,
-                memberCount: true,
-                avatar: true,
-              },
+              select: { id: true, name: true, type: true, memberCount: true, avatar: true },
             },
           },
+          take: 10,
         },
         posts: {
           orderBy: { createdAt: 'desc' },
+          take: 10, // paginate — don't dump all posts
           include: { community: { select: { id: true, name: true } } },
         },
         housingReviews: {
           orderBy: { createdAt: 'desc' },
+          take: 10,
           include: { housing: { select: { id: true, title: true } } },
         },
         savedHousings: {
           orderBy: { createdAt: 'desc' },
-          include: { housing: true },
+          take: 10,
+          include: {
+            housing: {
+              select: { id: true, title: true, type: true, rent: true, images: true },
+            },
+          },
         },
         _count: {
           select: {

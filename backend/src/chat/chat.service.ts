@@ -8,11 +8,9 @@ export class ChatService {
   // ════════════ 1-TO-1 CHAT ════════════
 
   async getConversations(userId: string) {
-    // Get all unique conversation partners
+    // Fetch all messages involving this user (ordered desc for last-message-first grouping)
     const messages = await this.prisma.message.findMany({
-      where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
-      },
+      where: { OR: [{ senderId: userId }, { receiverId: userId }] },
       orderBy: { createdAt: 'desc' },
       include: {
         sender: { select: { id: true, name: true, avatar: true } },
@@ -20,21 +18,17 @@ export class ChatService {
       },
     });
 
-    // Group by conversation partner
+    // Collect all partner IDs in one pass
+    const partnerIds: string[] = [];
+    const seenPartners = new Set<string>();
     const conversationMap = new Map<string, any>();
 
     for (const msg of messages) {
       const partnerId = msg.senderId === userId ? msg.receiverId : msg.senderId;
-      if (!conversationMap.has(partnerId)) {
+      if (!seenPartners.has(partnerId)) {
+        seenPartners.add(partnerId);
+        partnerIds.push(partnerId);
         const partner = msg.senderId === userId ? msg.receiver : msg.sender;
-        const unreadCount = await this.prisma.message.count({
-          where: {
-            senderId: partnerId,
-            receiverId: userId,
-            isRead: false,
-          },
-        });
-
         conversationMap.set(partnerId, {
           partner,
           lastMessage: {
@@ -42,8 +36,26 @@ export class ChatService {
             createdAt: msg.createdAt,
             isFromMe: msg.senderId === userId,
           },
-          unreadCount,
+          unreadCount: 0, // populated below
         });
+      }
+    }
+
+    // ONE bulk query for all unread counts — eliminates N+1
+    if (partnerIds.length > 0) {
+      const unreadRows = await this.prisma.message.groupBy({
+        by: ['senderId'],
+        where: {
+          senderId: { in: partnerIds },
+          receiverId: userId,
+          isRead: false,
+        },
+        _count: { id: true },
+      });
+
+      for (const row of unreadRows) {
+        const conv = conversationMap.get(row.senderId);
+        if (conv) conv.unreadCount = row._count.id;
       }
     }
 
