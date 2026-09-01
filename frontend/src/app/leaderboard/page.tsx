@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
   const podium = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 pb-28">
 
       {/* ══════════ Header ══════════ */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>

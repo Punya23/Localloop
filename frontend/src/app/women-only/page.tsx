@@ -136,7 +136,7 @@ export default function WomenOnlyPage() {
   }
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px' }}>
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 pb-28">
       {/* Hero Banner */}
       <div style={{
         borderRadius: '20px', padding: '28px', marginBottom: '24px', position: 'relative', overflow: 'hidden',
@@ -338,7 +338,7 @@ export default function WomenOnlyPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>{e.title}</h3>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <div className="flex flex-wrap gap-2 md:gap-3 text-xs text-[var(--text-muted)]">
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Calendar size={12} /> {new Date(e.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                         </span>

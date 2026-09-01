@@ -128,7 +128,7 @@ export default function NotificationsPage() {
   if (!mounted) return <div style={{ minHeight: '100vh' }} />;
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-6 pb-28">
 
       {/* ══════════ Header ══════════ */}
       <div style={{
