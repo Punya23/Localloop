@@ -8,9 +8,13 @@ node_modules/
 
 # Build outputs
 dist/
+server_dist/
 .next/
 out/
 build/
+
+# Large files
+*.zip
 
 # IDE
 .idea/
