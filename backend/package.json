@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "rm -rf server_dist dist tsconfig.tsbuildinfo && prisma generate && node --max-old-space-size=400 node_modules/.bin/nest build && echo '=== BUILD OUTPUT ===' && ls -la . && echo '--- server_dist ---' && ls server_dist/ 2>/dev/null || echo 'server_dist NOT FOUND' && echo '--- dist ---' && ls dist/ 2>/dev/null || echo 'dist NOT FOUND'",
+    "build": "rm -rf server_dist dist && prisma generate && node --max-old-space-size=400 node_modules/.bin/tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
