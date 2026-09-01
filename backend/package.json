@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "prisma generate && node --max-old-space-size=400 node_modules/.bin/nest build",
+    "build": "rm -rf server_dist tsconfig.tsbuildinfo && prisma generate && node --max-old-space-size=400 node_modules/.bin/nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
