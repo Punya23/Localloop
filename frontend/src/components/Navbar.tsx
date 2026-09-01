@@ -52,7 +52,7 @@ export default function Navbar() {
       {/* ─── Mobile Menu Override Overlay ─── */}
       {isMobileMenuOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/40 z-[55] backdrop-blur-sm transition-all"
+          className="md:hidden fixed inset-0 bg-black/40 z-[55] backdrop-blur-sm transition-all"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -61,9 +61,9 @@ export default function Navbar() {
       <nav style={{
         position: 'fixed', left: 0, top: 0, height: '100%', width: 220,
         background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)', borderRight: '1px solid var(--border-light)', zIndex: 60,
-      }} className={`flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      }} className={`flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         {/* Mobile Close Button */}
-        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden absolute top-4 right-4 p-2 text-slate-500">
+        <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden absolute top-4 right-4 p-2 text-slate-500">
           <X size={20} />
         </button>
 
@@ -141,7 +141,7 @@ export default function Navbar() {
         background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)',
         borderBottom: '1px solid var(--border-light)', zIndex: 40,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px',
-      }} className="hidden lg:!flex">
+      }} className="hidden md:!flex">
         <div style={{ position: 'relative', width: 320 }}>
           <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input placeholder="Search neighborhoods or streets..." style={{
@@ -174,7 +174,7 @@ export default function Navbar() {
         background: 'var(--bg-sidebar)', backdropFilter: 'var(--blur-effect)', WebkitBackdropFilter: 'var(--blur-effect)',
         borderBottom: '1px solid var(--border-light)', zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
-      }} className="lg:!hidden">
+      }} className="md:!hidden">
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-500">
           <Menu size={22} />
         </button>
@@ -195,7 +195,7 @@ export default function Navbar() {
         background: 'var(--bg-card)', borderTop: '1px solid var(--border)', zIndex: 50,
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         paddingBottom: 'env(safe-area-inset-bottom, 4px)',
-      }} className="lg:!hidden">
+      }} className="md:!hidden">
         {mobileNavItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;

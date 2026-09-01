@@ -100,7 +100,7 @@ export default function CommunitiesPage() {
   };
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="max-w-[720px] mx-auto px-4 md:px-6 py-6 pb-28">
 
       {/* ══════════ Header ══════════ */}
       <div style={{ marginBottom: '24px' }}>

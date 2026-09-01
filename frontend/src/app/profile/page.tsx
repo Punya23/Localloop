@@ -338,10 +338,9 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ══════════ Mentor Hub Application ══════════ */}
-      <div style={{
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0" style={{
         background: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)', borderRadius: '18px', padding: '18px 22px', marginBottom: '24px',
-        border: '1px solid #c7d2fe', boxShadow: '0 4px 12px rgba(99,102,241,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        border: '1px solid #c7d2fe', boxShadow: '0 4px 12px rgba(99,102,241,0.1)'
       }}>
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>Want to be a Mentor?</h3>

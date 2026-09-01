@@ -109,7 +109,7 @@ export default function EventsPage() {
       });
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="max-w-[900px] mx-auto px-4 md:px-6 py-6 pb-28">
 
       {/* ══════════ Header ══════════ */}
       <div style={{

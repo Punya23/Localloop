@@ -108,7 +108,7 @@ export default function HousingDetailPage() {
   ];
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 24px 100px' }}>
+    <div className="max-w-[900px] mx-auto px-4 md:px-6 py-6 pb-28">
 
       {/* ══════════ Back Button ══════════ */}
       <button onClick={() => router.back()} style={{
@@ -208,7 +208,7 @@ export default function HousingDetailPage() {
       </div>
 
       {/* ══════════ Main Content Grid ══════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
 
         {/* ── Left Column ── */}
         <div>

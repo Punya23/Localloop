@@ -20,7 +20,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <>
       {showNavbar && <Navbar />}
       <main
-        className={showNavbar ? 'lg:ml-[220px] min-h-screen pt-[56px] pb-[72px] lg:pt-[52px] lg:pb-0' : 'min-h-screen'}
+        className={showNavbar ? 'md:ml-[220px] min-h-screen pt-[56px] pb-[72px] md:pt-[52px] md:pb-0' : 'min-h-screen'}
       >
         {children}
       </main>

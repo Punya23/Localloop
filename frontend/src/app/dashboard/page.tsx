@@ -147,7 +147,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══════════ Main Grid: Content + Sidebar ═══════════ */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
 
         {/* ── LEFT COLUMN ── */}
         <div className="min-w-0">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                       {post.content}
                     </p>
                     {/* Actions */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                       <button
                         onClick={() => toggleLike(post.id)}
                         style={{

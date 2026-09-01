@@ -147,7 +147,7 @@ export default function HousingPage() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
 
       {/* ══════════ DESKTOP FILTER SIDEBAR ══════════ */}
-      <div className="hidden lg:block" style={{
+      <div className="hidden md:block" style={{
         width: 290, padding: '28px 24px', flexShrink: 0,
         borderRight: '1px solid var(--border)', background: 'var(--bg-card)',
         overflowY: 'auto', height: 'calc(100vh - 52px)', position: 'sticky', top: 52,
@@ -349,10 +349,10 @@ export default function HousingPage() {
       </div>
 
       {/* ══════════ MAIN CONTENT ══════════ */}
-      <div style={{ flex: 1, padding: '24px 28px 100px' }}>
+      <div className="flex-1 px-4 md:px-7 py-6 pb-28">
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h1 className="hidden lg:block" style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <h1 className="hidden md:block" style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             {area === 'All' ? 'Showing all properties' : `Properties in ${area}`}
           </h1>
           <Link href="/housing/create" style={{ textDecoration: 'none', marginLeft: 'auto' }}>
@@ -367,7 +367,7 @@ export default function HousingPage() {
         </div>
 
         {/* ── Mobile Location Bar ── */}
-        <div className="lg:hidden" style={{ marginBottom: 16 }}>
+        <div className="md:hidden" style={{ marginBottom: 16 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
             background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border)',
@@ -382,7 +382,7 @@ export default function HousingPage() {
         </div>
 
         {/* ── Mobile Filter Chips ── */}
-        <div className="lg:hidden" style={{
+        <div className="md:hidden" style={{
           display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4,
         }}>
           {['Budget', 'Area', 'Gender', 'Verified'].map((chip) => (
@@ -407,7 +407,7 @@ export default function HousingPage() {
               {listings.length} vetted properties matching your criteria
             </p>
           </div>
-          <div className="hidden lg:flex" style={{ display: 'flex', gap: 8 }}>
+          <div className="hidden md:flex" style={{ display: 'flex', gap: 8 }}>
             <div style={{ display: 'flex' }}>
               {[{ icon: Grid3X3, m: 'grid' as const }, { icon: List, m: 'list' as const }].map(({ icon: Icon, m }) => (
                 <button key={m} onClick={() => setView(m)} style={{
@@ -452,8 +452,7 @@ export default function HousingPage() {
               const badge = h.badge || 'verified';
               const isSaved = saved.has(h.id);
               return (
-                <div key={h.id} style={{
-                  display: view === 'list' ? 'flex' : 'block',
+                <div key={h.id} className={view === 'list' ? 'flex flex-col sm:flex-row' : 'block'} style={{
                   background: 'var(--bg-card)', borderRadius: 18, overflow: 'hidden',
                   border: '1px solid var(--border)', transition: 'all 0.25s',
                   cursor: 'pointer',
@@ -462,8 +461,7 @@ export default function HousingPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
                   {/* Image */}
-                  <div style={{
-                    width: view === 'list' ? 240 : '100%',
+                  <div className={view === 'list' ? 'w-full sm:w-[240px]' : 'w-full'} style={{
                     height: view === 'list' ? '100%' : 200,
                     minHeight: view === 'list' ? 180 : undefined,
                     backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center',
@@ -582,7 +580,7 @@ export default function HousingPage() {
       </div>
 
       {/* ══════════ Mobile Map View Button ══════════ */}
-      <button className="lg:hidden" onClick={() => setShowMap(true)} style={{
+      <button className="md:hidden" onClick={() => setShowMap(true)} style={{
         position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', alignItems: 'center', gap: 8, padding: '12px 28px',
         borderRadius: 30, background: 'var(--text-primary)', color: '#fff', border: 'none',

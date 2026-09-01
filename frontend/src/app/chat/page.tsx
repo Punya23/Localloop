@@ -284,10 +284,10 @@ function ChatInner() {
     <div style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
 
       {/* ══════════ CONVERSATIONS SIDEBAR ══════════ */}
-      <div style={{
-        width: 340, flexShrink: 0, flexDirection: 'column', display: selected ? 'none' : 'flex',
+      <div className="w-full md:w-[340px] flex-shrink-0 flex-col md-always-flex" style={{
+        display: selected ? 'none' : 'flex',
         borderRight: '1px solid var(--border)', background: 'var(--bg-card)',
-      }} className="md-always-flex">
+      }}>
         <div style={{ padding: '20px 18px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Messages</h2>
@@ -358,7 +358,7 @@ function ChatInner() {
       </div>
 
       {/* ══════════ CHAT AREA ══════════ */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', minWidth: 0 }}>
+      <div className={selected ? "flex flex-col flex-1 min-w-0" : "hidden md:flex flex-col flex-1 min-w-0"} style={{ background: 'var(--bg-primary)' }}>
         {activeConv ? (
           <>
             {/* Header */}
