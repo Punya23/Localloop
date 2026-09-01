@@ -23,7 +23,7 @@ async function bootstrap() {
     allowedOrigins.push(process.env.FRONTEND_URL);
   }
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (e.g. curl, mobile apps, Swagger)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
