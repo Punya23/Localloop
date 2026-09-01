@@ -61,19 +61,27 @@ export class AiController {
   @Post('predict-rent')
   @ApiOperation({ summary: 'Predict rent using Python ML microservice' })
   async predictRent(@Body() data: any) {
+    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
     try {
-      const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout for cold-start
       const resp = await fetch(`${mlServiceUrl}/predict/rent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!resp.ok) {
-        throw new Error('ML API failed');
+        const text = await resp.text();
+        throw new Error(`ML API returned ${resp.status}: ${text}`);
       }
       return await resp.json();
-    } catch (e) {
-      return { error: 'ML Service unavailable. Did you start the Python microservice?' };
+    } catch (e: any) {
+      if (e?.name === 'AbortError') {
+        return { error: 'ML Service is waking up (cold start). Please try again in 30 seconds.' };
+      }
+      return { error: `ML Service unavailable (${mlServiceUrl}): ${e?.message}` };
     }
   }
 
