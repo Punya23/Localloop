@@ -4,12 +4,14 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm install && npm run build
-    startCommand: node dist/main.js
+    startCommand: node server_dist/src/main.js
     envVars:
       - key: NODE_VERSION
         value: 22.12.0
       - key: NODE_ENV
         value: production
+      - key: ML_SERVICE_URL
+        value: https://localloop-1.onrender.com
 
   - type: web
     name: localloop-ml
