@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
+import { CacheKeys } from '../../common/cache/cache.keys';
 
 @Injectable()
 export class RecommendationEngine {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   /**
    * Content-based + collaborative housing recommendations
@@ -29,17 +31,23 @@ export class RecommendationEngine {
     const savedIds = new Set(user.savedHousings.map((s) => s.housingId));
     const viewedIds = new Set(user.housingViews.map((v) => v.housingId));
 
-    const housings = await this.prisma.housing.findMany({
-      where: {
-        city: user.city || 'Pune',
-      },
-      include: {
-        reviews: { select: { rating: true } },
-        _count: { select: { reviews: true, savedBy: true } },
-      },
-      take: 100,
-      orderBy: { createdAt: 'desc' },
-    });
+    // The candidate pool depends only on the city, so it is shared across every
+    // user in that city. Scoring below stays per-request and uncached.
+    const city = user.city || 'Pune';
+    const housings = await this.cache.wrap(
+      CacheKeys.housingCandidates(city),
+      () =>
+        this.prisma.housing.findMany({
+          where: { city },
+          include: {
+            reviews: { select: { rating: true } },
+            _count: { select: { reviews: true, savedBy: true } },
+          },
+          take: 100,
+          orderBy: { createdAt: 'desc' },
+        }),
+      CacheService.TTL.LONG,
+    );
 
     // Score each housing
     const scored = housings.map((h) => {
@@ -143,6 +151,14 @@ export class RecommendationEngine {
    * Get similar housings to a given listing
    */
   async getSimilar(housingId: string, limit = 6) {
+    return this.cache.wrap(
+      CacheKeys.similarHousing(housingId, limit),
+      () => this.computeSimilar(housingId, limit),
+      CacheService.TTL.MEDIUM,
+    );
+  }
+
+  private async computeSimilar(housingId: string, limit: number) {
     const housing = await this.prisma.housing.findUnique({
       where: { id: housingId },
     });

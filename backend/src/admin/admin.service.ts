@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private cache: CacheService) { }
 
   /** Verify that the requesting user is an ADMIN */
   private async assertAdmin(userId: string) {
@@ -24,7 +26,14 @@ export class AdminService {
 
   async getDashboardStats(adminId: string) {
     await this.assertAdmin(adminId);
+    return this.cache.wrap(
+      CacheKeys.adminStats,
+      () => this.computeDashboardStats(),
+      CacheService.TTL.SHORT,
+    );
+  }
 
+  private async computeDashboardStats() {
     const [totalUsers, verifiedUsers, pendingVerifications, totalHousings, verifiedHousings, totalCommunities, totalMentors, pendingMentors] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { isVerified: true } }),
@@ -118,6 +127,8 @@ export class AdminService {
       data: { verificationStatus: newStatus as any, isVerified: false },
     });
     await this.logAction(adminId, newStatus === 'REJECTED' ? 'ban_user' : 'unban_user', 'user', targetUserId);
+    this.cache.invalidatePatternAsync(CacheKeys.matchPool);
+    this.cache.invalidatePatternAsync(CacheKeys.admin);
     return { message: newStatus === 'REJECTED' ? 'User banned successfully' : 'User unbanned successfully' };
   }
 
@@ -166,6 +177,8 @@ export class AdminService {
       },
     });
     await this.logAction(adminId, approved ? 'verify_user' : 'reject_user', 'user', userId, notes);
+    this.cache.invalidatePatternAsync(CacheKeys.matchPool);
+    this.cache.invalidatePatternAsync(CacheKeys.admin);
     return result;
   }
 
@@ -198,12 +211,27 @@ export class AdminService {
       data: { isVerified: verified },
     });
     await this.logAction(adminId, verified ? 'verify_housing' : 'unverify_housing', 'housing', housingId);
+    this.invalidateHousing();
     return result;
+  }
+
+  /** Housing aggregates (area prices, deal scores, candidate pools) + admin counters. */
+  private invalidateHousing(): void {
+    this.cache.invalidatePatternAsync(CacheKeys.housing);
+    this.cache.invalidatePatternAsync(CacheKeys.cityStats);
+    this.cache.invalidatePatternAsync(CacheKeys.admin);
+  }
+
+  /** Community lists/details + admin counters. */
+  private invalidateCommunities(): void {
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
+    this.cache.invalidatePatternAsync(CacheKeys.cityStats);
+    this.cache.invalidatePatternAsync(CacheKeys.admin);
   }
 
   async adminCreateHousing(adminId: string, data: any) {
     await this.assertAdmin(adminId);
-    return this.prisma.housing.create({
+    const housing = await this.prisma.housing.create({
       data: {
         title: data.title,
         description: data.description,
@@ -223,6 +251,9 @@ export class AdminService {
         createdById: adminId,
       },
     });
+
+    this.invalidateHousing();
+    return housing;
   }
 
   // ════════════ MENTOR MANAGEMENT ════════════
@@ -259,6 +290,8 @@ export class AdminService {
     });
 
     await this.logAction(adminId, approved ? 'approve_mentor' : 'reject_mentor', 'mentor', mentorProfileId);
+    this.cache.invalidatePatternAsync(CacheKeys.matchPool);
+    this.cache.invalidatePatternAsync(CacheKeys.admin);
     return { message: approved ? 'Mentor approved' : 'Mentor rejected' };
   }
 
@@ -323,10 +356,13 @@ export class AdminService {
     if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
     if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
 
-    return this.prisma.housing.update({
+    const updated = await this.prisma.housing.update({
       where: { id: housingId },
       data: updateData,
     });
+
+    this.invalidateHousing();
+    return updated;
   }
 
   async deleteHousing(adminId: string, housingId: string) {
@@ -340,6 +376,7 @@ export class AdminService {
     await this.prisma.housing.delete({ where: { id: housingId } });
 
     await this.logAction(adminId, 'delete_housing', 'housing', housingId, housing.title);
+    this.invalidateHousing();
     return { message: 'Housing deleted successfully' };
   }
 
@@ -362,10 +399,14 @@ export class AdminService {
 
   async verifyCommunity(adminId: string, communityId: string, verified: boolean) {
     await this.assertAdmin(adminId);
-    return this.prisma.community.update({
+    // `findAll` only returns verified communities — this flips list membership.
+    const updated = await this.prisma.community.update({
       where: { id: communityId },
       data: { isVerified: verified },
     });
+
+    this.invalidateCommunities();
+    return updated;
   }
 
   async deleteCommunity(adminId: string, communityId: string) {
@@ -375,6 +416,7 @@ export class AdminService {
 
     await this.prisma.community.delete({ where: { id: communityId } });
     await this.logAction(adminId, 'delete_community', 'community', communityId, community.name);
+    this.invalidateCommunities();
     return { message: 'Community deleted successfully' };
   }
 
@@ -519,6 +561,7 @@ export class AdminService {
 
     await this.prisma.eventAttendee.deleteMany({ where: { eventId } });
     await this.prisma.event.delete({ where: { id: eventId } });
+    this.cache.invalidatePatternAsync(CacheKeys.events);
     await this.logAction(adminId, 'delete_event', 'event', eventId, event.title);
     return { message: 'Event deleted successfully' };
   }

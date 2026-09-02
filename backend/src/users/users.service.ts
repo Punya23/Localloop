@@ -2,10 +2,39 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { OnboardingDto, UpdateProfileDto, UploadIdProofDto } from './dto/users.dto';
 import { Prisma } from '@prisma/client';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
+
+  /**
+   * City-wide counters shown on every dashboard. Four aggregate queries that
+   * are identical for every user in the city, so they are collapsed into one
+   * cached block instead of running per request.
+   */
+  private getCityStats(city: string) {
+    return this.cache.wrap(
+      CacheKeys.cityStatsFor(city),
+      async () => {
+        const [averageRentAgg, totalListings, totalCommunities, totalUsers] = await Promise.all([
+          this.prisma.housing.aggregate({ _avg: { rent: true }, where: { city } }),
+          this.prisma.housing.count({ where: { city } }),
+          this.prisma.community.count({ where: { city } }),
+          this.prisma.user.count({ where: { city } }),
+        ]);
+
+        return {
+          averageRent: Math.round(averageRentAgg._avg.rent || 0),
+          totalListings,
+          totalCommunities,
+          totalUsers,
+        };
+      },
+      CacheService.TTL.LONG,
+    );
+  }
 
   async completeOnboarding(userId: string, dto: OnboardingDto) {
     const user = await this.prisma.user.update({
@@ -43,6 +72,10 @@ export class UsersService {
         reputation: true,
       },
     });
+
+    // The user just entered (or moved between) a city match pool.
+    this.cache.invalidatePatternAsync(CacheKeys.matchPool);
+    this.cache.invalidatePatternAsync(CacheKeys.cityStats);
 
     const { password, ...result } = user;
     return result;
@@ -107,6 +140,9 @@ export class UsersService {
       include: { reputation: true },
     });
 
+    // Interests, lifestyle, area and city all feed the cached match pool.
+    this.cache.invalidatePatternAsync(CacheKeys.matchPool);
+
     const { password, ...result } = user;
     return result;
   }
@@ -150,24 +186,25 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Execute all 11 independent database queries in parallel to minimize cross-regional network round-trips
+    const city = user.city || 'Pune';
+
+    // Independent queries run in parallel to minimise cross-regional round-trips.
+    // The four city-wide counters are collapsed into one cached block (see
+    // `getCityStats`); everything else here is user-specific and stays live.
     const [
       recommendedHousing,
       suggestedCommunities,
       myCommunities,
       upcomingEvents,
       recentPosts,
-      averageRentAgg,
-      totalListings,
-      totalCommunities,
-      totalUsers,
+      cityStats,
       nearbyAlumni,
       movingWithYou,
     ] = await Promise.all([
       // 1. Get recommended housing based on user preferences
       this.prisma.housing.findMany({
         where: {
-          city: user.city || 'Pune',
+          city,
           ...(user.budgetMax && { rent: { lte: user.budgetMax } }),
           ...(user.budgetMin && { rent: { gte: user.budgetMin } }),
           ...(user.preferredArea && { area: { contains: user.preferredArea, mode: 'insensitive' as any } }),
@@ -185,7 +222,7 @@ export class UsersService {
       // 2. Get suggested communities
       this.prisma.community.findMany({
         where: {
-          city: user.city || 'Pune',
+          city,
           ...(user.isWomenMode && { isWomenOnly: true }),
           members: {
             none: { userId },
@@ -236,28 +273,10 @@ export class UsersService {
         },
       }),
 
-      // 6. City Stats: Average Rent
-      this.prisma.housing.aggregate({
-        _avg: { rent: true },
-        where: { city: user.city || 'Pune' },
-      }),
+      // 6. City-wide stats (cached — identical for every user in the city)
+      this.getCityStats(city),
 
-      // 7. City Stats: Total Listings
-      this.prisma.housing.count({
-        where: { city: user.city || 'Pune' },
-      }),
-
-      // 8. City Stats: Total Communities
-      this.prisma.community.count({
-        where: { city: user.city || 'Pune' },
-      }),
-
-      // 9. City Stats: Total Users
-      this.prisma.user.count({
-        where: { city: user.city || 'Pune' },
-      }),
-
-      // 10. Recommended Insights: Nearby Alumni/Coworkers
+      // 7. Recommended Insights: Nearby Alumni/Coworkers
       this.prisma.user.count({
         where: {
           city: user.city,
@@ -269,7 +288,7 @@ export class UsersService {
         },
       }),
 
-      // 11. Recommended Insights: Movers
+      // 8. Recommended Insights: Movers
       this.prisma.user.count({
         where: {
           city: user.city,
@@ -286,12 +305,7 @@ export class UsersService {
       myCommunities: myCommunities.map((m) => m.community),
       upcomingEvents,
       recentPosts,
-      cityStats: {
-        averageRent: Math.round(averageRentAgg._avg.rent || 0),
-        totalListings,
-        totalCommunities,
-        totalUsers,
-      },
+      cityStats,
       insights: {
         nearbyAlumni,
         movingWithYou,

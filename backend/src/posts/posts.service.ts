@@ -2,10 +2,16 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { ReputationService } from '../reputation/reputation.service';
 import { CreatePostDto, CreateCommentDto } from './dto/posts.dto';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService, private reputationService: ReputationService) {}
+  constructor(
+    private prisma: PrismaService,
+    private reputationService: ReputationService,
+    private cache: CacheService,
+  ) {}
 
   async create(userId: string, dto: CreatePostDto) {
     // Verify user is a member of the community
@@ -42,6 +48,9 @@ export class PostsService {
       where: { id: dto.communityId },
       data: { updatedAt: new Date() },
     });
+
+    // `_count.posts` is part of the cached community list and detail payloads.
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
 
     return post;
   }
@@ -148,6 +157,7 @@ export class PostsService {
     if (post.userId !== userId) throw new ForbiddenException('Cannot delete other user\'s post');
 
     await this.prisma.post.delete({ where: { id: postId } });
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
     return { message: 'Post deleted' };
   }
 }

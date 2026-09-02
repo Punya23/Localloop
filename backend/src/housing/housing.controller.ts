@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { HousingService } from './housing.service';
 import { CreateHousingDto, HousingFilterDto, CreateReviewDto } from './dto/housing.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CacheControl } from '../common/cache/http-cache.interceptor';
 
 @ApiTags('Housing')
 @Controller('housing')
@@ -10,6 +11,7 @@ export class HousingController {
   constructor(private housingService: HousingService) {}
 
   @Get()
+  @CacheControl({ maxAge: 30, staleWhileRevalidate: 120 })
   @ApiOperation({ summary: 'Get all housing listings with filters' })
   findAll(@Query() filters: HousingFilterDto) {
     return this.housingService.findAll(filters);
@@ -24,6 +26,7 @@ export class HousingController {
   }
 
   @Get(':id')
+  @CacheControl({ maxAge: 60, staleWhileRevalidate: 300 })
   @ApiOperation({ summary: 'Get housing listing by ID' })
   findOne(@Param('id') id: string) {
     return this.housingService.findOne(id);

@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class ReputationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   private getLevel(points: number): string {
     if (points >= 1000) return 'LOCAL_MENTOR';
@@ -48,7 +50,20 @@ export class ReputationService {
     };
   }
 
+  /**
+   * Ranking board. Deliberately *not* invalidated by `addPoints` — points move
+   * on almost every post, comment and review, so prefix-busting on every write
+   * would keep the hit rate at zero. A 60s-stale board is the right trade.
+   */
   async getLeaderboard(city?: string, limit: number = 20) {
+    return this.cache.wrap(
+      CacheKeys.leaderboardList(city, limit),
+      () => this.fetchLeaderboard(city, limit),
+      CacheService.TTL.SHORT,
+    );
+  }
+
+  private async fetchLeaderboard(city?: string, limit: number = 20) {
     const leaderboard = await this.prisma.reputation.findMany({
       take: limit,
       orderBy: { points: 'desc' },

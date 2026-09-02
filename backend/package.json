@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "db:migrate": "prisma migrate deploy"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -38,7 +39,9 @@
     "class-validator": "^0.14.4",
     "cloudinary": "^2.9.0",
     "compression": "^1.8.1",
+    "ioredis": "^5.11.1",
     "multer": "^2.1.1",
+    "node-cache": "^5.1.2",
     "nodemailer": "^8.0.4",
     "openai": "^6.33.0",
     "passport": "^0.7.0",

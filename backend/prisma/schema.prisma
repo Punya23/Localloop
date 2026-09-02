@@ -43,107 +43,116 @@ enum VerificationStatus {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String?  @unique
-  password        String
-  name            String
-  avatar          String?
-  role            UserRole  @default(STUDENT)
-  gender          Gender?
-  city            String?
-  preferredArea   String?
-  moveMonth       String?
-  budgetMin       Int?
-  budgetMax       Int?
-  isWomenMode     Boolean   @default(false)
-  isOnboarded     Boolean   @default(false)
-  isMentor        Boolean  @default(false)
-  bio             String?
-  phone           String?  @unique
-  university      String?
-  company         String?
-  isVerified      Boolean   @default(false)
-  inviteCode      String?  @unique
-  invitedBy       String?
-  referralCode    String?  @unique
-  preferences     Json?
+  id               String   @id @default(cuid())
+  email            String?  @unique
+  password         String
+  name             String
+  avatar           String?
+  role             UserRole @default(STUDENT)
+  gender           Gender?
+  city             String?
+  preferredArea    String?
+  moveMonth        String?
+  budgetMin        Int?
+  budgetMax        Int?
+  isWomenMode      Boolean  @default(false)
+  isOnboarded      Boolean  @default(false)
+  isMentor         Boolean  @default(false)
+  bio              String?
+  phone            String?  @unique
+  university       String?
+  company          String?
+  isVerified       Boolean  @default(false)
+  inviteCode       String?  @unique
+  invitedBy        String?
+  referralCode     String?  @unique
+  preferences      Json?
   welcomeEmailSent Boolean  @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // ── ML-Ready Extended Profile Fields ──
-  interests       String[]           // hobbies/interests for friend matching
-  foodPreference  String?            // veg, non-veg, vegan, eggetarian
-  workSchedule    String?            // morning, day, night, flexible
-  languages       String[]           // spoken languages
-  lifestyle       String?            // early_bird, night_owl, social, introvert
-  transportMode   String?            // own_vehicle, public, walking, cab
-  smoking         String?            // yes, no, occasionally
-  drinking        String?            // yes, no, occasionally
-  petFriendly     Boolean?
-  ageRange        String?            // 18-22, 23-27, 28-32, 33+
-  hometown        String?            // for hometown community matching
-  courseOrDept    String?            // course/department for student matching
-  monthlyIncome   String?            // income bracket for expense prediction
+  interests      String[] // hobbies/interests for friend matching
+  foodPreference String? // veg, non-veg, vegan, eggetarian
+  workSchedule   String? // morning, day, night, flexible
+  languages      String[] // spoken languages
+  lifestyle      String? // early_bird, night_owl, social, introvert
+  transportMode  String? // own_vehicle, public, walking, cab
+  smoking        String? // yes, no, occasionally
+  drinking       String? // yes, no, occasionally
+  petFriendly    Boolean?
+  ageRange       String? // 18-22, 23-27, 28-32, 33+
+  hometown       String? // for hometown community matching
+  courseOrDept   String? // course/department for student matching
+  monthlyIncome  String? // income bracket for expense prediction
 
   // ── Verification Fields ──
   verificationStatus VerificationStatus @default(UNVERIFIED)
-  idProofUrl      String?            // uploaded ID proof file URL
-  idProofType     String?            // aadhaar, pan, passport, college_id
-  verificationNotes String?          // admin notes on verification
-  verifiedAt      DateTime?
-  verifiedBy      String?            // admin user ID who verified
+  idProofUrl         String? // uploaded ID proof file URL
+  idProofType        String? // aadhaar, pan, passport, college_id
+  verificationNotes  String? // admin notes on verification
+  verifiedAt         DateTime?
+  verifiedBy         String? // admin user ID who verified
 
   // Relations
-  housings        Housing[]
-  housingReviews  HousingReview[]
-  savedHousings   SavedHousing[]
-  communities     CommunityMember[]
-  posts           Post[]
-  comments        Comment[]
-  sentMessages    Message[]     @relation("SentMessages")
-  receivedMessages Message[]    @relation("ReceivedMessages")
-  reputation      Reputation?
-  createdEvents   Event[]
-  eventAttendees  EventAttendee[]
-  mentorProfile   MentorProfile?
+  housings          Housing[]
+  housingReviews    HousingReview[]
+  savedHousings     SavedHousing[]
+  communities       CommunityMember[]
+  posts             Post[]
+  comments          Comment[]
+  sentMessages      Message[]          @relation("SentMessages")
+  receivedMessages  Message[]          @relation("ReceivedMessages")
+  reputation        Reputation?
+  createdEvents     Event[]
+  eventAttendees    EventAttendee[]
+  mentorProfile     MentorProfile?
   communityMessages CommunityMessage[]
-  bookings        HousingBooking[]
-  mentorships     Mentorship[]      @relation("Mentee")
-  mentoring       Mentorship[]      @relation("Mentor")
-  createdPolls    CommunityPoll[]
-  pollVotes       PollVote[]
-  chatMessages    ChatMessage[]
-  housingViews    HousingView[]
-  notifications   Notification[]
-  reports         Report[]       @relation("Reporter")
-  auditLogs      AuditLog[]
+  bookings          HousingBooking[]
+  mentorships       Mentorship[]       @relation("Mentee")
+  mentoring         Mentorship[]       @relation("Mentor")
+  createdPolls      CommunityPoll[]
+  pollVotes         PollVote[]
+  chatMessages      ChatMessage[]
+  housingViews      HousingView[]
+  notifications     Notification[]
+  reports           Report[]           @relation("Reporter")
+  auditLogs         AuditLog[]
 
+  @@index([city, isOnboarded]) // smart-match: city filter
+  @@index([city, role]) // search: city + role filter
+  @@index([isOnboarded, createdAt]) // dashboard: recently joined
+  @@index([city, moveMonth]) // dashboard: "moving with you" count
+  @@index([role]) // admin lookup + housing-inquiry routing
+  @@index([verificationStatus, createdAt]) // admin pending-verification queue
+  @@index([createdAt]) // admin user list default sort
   @@map("users")
 }
 
 model Reputation {
-  id        String          @id @default(cuid())
-  userId    String          @unique
-  points    Int             @default(0)
-  level     ReputationLevel @default(EXPLORER)
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String          @id @default(cuid())
+  userId String          @unique
+  points Int             @default(0)
+  level  ReputationLevel @default(EXPLORER)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([points]) // leaderboard: ORDER BY points DESC
   @@map("reputations")
 }
 
 model MentorProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  expertise       String[]
-  experience      String?
-  availability    String?
-  isApproved      Boolean  @default(false)
-  menteeCount     Int      @default(0)
-  maxMentees      Int      @default(3)
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  expertise    String[]
+  experience   String?
+  availability String?
+  isApproved   Boolean  @default(false)
+  menteeCount  Int      @default(0)
+  maxMentees   Int      @default(3)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([isApproved, createdAt]) // admin pending/approved mentor queues
   @@map("mentor_profiles")
 }
 
@@ -167,68 +176,77 @@ enum GenderPreference {
 }
 
 model Housing {
-  id                String           @id @default(cuid())
-  title             String
-  description       String
-  address           String
-  area              String
-  city              String           @default("Pune")
-  rent              Int
-  deposit           Int?
-  type              HousingType
-  genderPreference  GenderPreference @default(ANY)
-  amenities         String[]
-  images            String[]
-  isVerified        Boolean          @default(false)
-  isWomenFriendly   Boolean          @default(false)
-  safetyRating      Float?
-  contactPhone      String?
-  contactEmail      String?
-  latitude          Float?
-  longitude         Float?
-  availableFrom     DateTime?
-  createdById       String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id               String           @id @default(cuid())
+  title            String
+  description      String
+  address          String
+  area             String
+  city             String           @default("Pune")
+  rent             Int
+  deposit          Int?
+  type             HousingType
+  genderPreference GenderPreference @default(ANY)
+  amenities        String[]
+  images           String[]
+  isVerified       Boolean          @default(false)
+  isWomenFriendly  Boolean          @default(false)
+  safetyRating     Float?
+  contactPhone     String?
+  contactEmail     String?
+  latitude         Float?
+  longitude        Float?
+  availableFrom    DateTime?
+  createdById      String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   // Relations
-  createdBy         User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  reviews           HousingReview[]
-  savedBy           SavedHousing[]
-  bookings          HousingBooking[]
-  views             HousingView[]
+  createdBy User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  reviews   HousingReview[]
+  savedBy   SavedHousing[]
+  bookings  HousingBooking[]
+  views     HousingView[]
 
   @@index([city, area])
+  @@index([city, isWomenFriendly]) // women-only housing filter
+  @@index([city, type, rent]) // compound filter for listings page
+  @@index([createdAt]) // admin listing table default sort
+  @@index([city, createdAt]) // dashboard recommendations: city + recency
+  @@index([createdById]) // owner's listings + cascade delete
   @@index([rent])
   @@index([type])
   @@map("housings")
 }
 
 model HousingReview {
-  id          String   @id @default(cuid())
-  rating      Int      // 1-5
-  review      String
-  userId      String
-  housingId   String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  rating    Int // 1-5
+  review    String
+  userId    String
+  housingId String
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing Housing @relation(fields: [housingId], references: [id], onDelete: Cascade)
 
   @@unique([userId, housingId])
+  @@index([housingId]) // rating aggregation groupBy
+  @@index([userId, createdAt]) // profile: my reviews, newest first
   @@map("housing_reviews")
 }
 
 model SavedHousing {
-  id          String   @id @default(cuid())
-  userId      String
-  housingId   String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  housingId String
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing Housing @relation(fields: [housingId], references: [id], onDelete: Cascade)
 
   @@unique([userId, housingId])
+  @@index([housingId]) // _count savedBy + cascade cleanup
+  @@index([userId, createdAt]) // saved list, newest first
   @@map("saved_housings")
 }
 
@@ -252,71 +270,77 @@ enum MemberRole {
 }
 
 model Community {
-  id          String         @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
   type        CommunityType
-  city        String         @default("Pune")
+  city        String        @default("Pune")
   avatar      String?
   coverImage  String?
-  isPrivate   Boolean        @default(false)
-  isWomenOnly Boolean        @default(false)
-  memberCount Int            @default(0)
-  isVerified  Boolean        @default(false)
+  isPrivate   Boolean       @default(false)
+  isWomenOnly Boolean       @default(false)
+  memberCount Int           @default(0)
+  isVerified  Boolean       @default(false)
   createdById String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
-  members     CommunityMember[]
-  posts       Post[]
-  events      Event[]
+  members           CommunityMember[]
+  posts             Post[]
+  events            Event[]
   communityMessages CommunityMessage[]
-  polls       CommunityPoll[]
+  polls             CommunityPoll[]
 
   @@index([city, type])
+  @@index([isVerified, memberCount]) // public list: verified + popularity sort
+  @@index([city, memberCount]) // dashboard suggested communities
+  @@index([createdAt]) // admin list default sort
   @@map("communities")
 }
 
 model CommunityMember {
-  id            String     @id @default(cuid())
-  userId        String
-  communityId   String
-  role          MemberRole @default(MEMBER)
-  joinedAt      DateTime   @default(now())
+  id          String     @id @default(cuid())
+  userId      String
+  communityId String
+  role        MemberRole @default(MEMBER)
+  joinedAt    DateTime   @default(now())
 
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  community     Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, communityId])
+  @@index([userId]) // getMyCommunitites lookup
+  @@index([communityId, role, joinedAt]) // member list: role desc, joined asc
   @@map("community_members")
 }
 
 model CommunityPoll {
-  id          String      @id @default(cuid())
+  id          String    @id @default(cuid())
   question    String
-  options     Json        // Array of string options
+  options     Json // Array of string options
   communityId String
   createdById String
   expiresAt   DateTime?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime  @default(now())
 
   // Relations
-  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  votes       PollVote[]
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  createdBy User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  votes     PollVote[]
 
+  @@index([communityId, createdAt]) // poll list, newest first
   @@map("community_polls")
 }
 
 model PollVote {
-  id          String        @id @default(cuid())
+  id          String @id @default(cuid())
   pollId      String
   userId      String
-  optionIndex Int           // The index of the option in CommunityPoll.options
+  optionIndex Int // The index of the option in CommunityPoll.options
 
-  poll        CommunityPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll CommunityPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([pollId, userId]) // 1 vote per user per poll
   @@map("poll_votes")
@@ -327,23 +351,24 @@ model PollVote {
 // ============================================
 
 model Post {
-  id            String    @id @default(cuid())
-  title         String?   // Optional topic title
+  id            String   @id @default(cuid())
+  title         String? // Optional topic title
   content       String
   images        String[]
   communityId   String
   userId        String
-  likesCount    Int       @default(0)
-  commentsCount Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  likesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comments      Comment[]
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  Comment[]
 
-  @@index([communityId])
+  @@index([communityId, createdAt]) // community feed, newest first
+  @@index([userId, createdAt]) // profile: my posts, newest first
   @@map("posts")
 }
 
@@ -354,9 +379,11 @@ model Comment {
   userId    String
   createdAt DateTime @default(now())
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([postId, createdAt]) // comments per post, oldest first
+  @@index([userId]) // cascade delete on user
   @@map("comments")
 }
 
@@ -365,17 +392,20 @@ model Comment {
 // ============================================
 
 model Message {
-  id          String   @id @default(cuid())
-  content     String
-  senderId    String
-  receiverId  String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  content    String
+  senderId   String
+  receiverId String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@index([senderId, receiverId])
+  @@index([receiverId, isRead]) // unread count groupBy query
+  @@index([receiverId, createdAt]) // conversation history ordering
+  @@index([senderId, createdAt]) // conversation list: sender arm of OR + recency
   @@map("messages")
 }
 
@@ -393,9 +423,11 @@ model Notification {
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, isRead]) // unread badge + mark-all-read
+  @@index([type, createdAt]) // admin broadcast history grouping
   @@map("notifications")
 }
 
@@ -413,37 +445,41 @@ enum EventType {
 }
 
 model Event {
-  id            String      @id @default(cuid())
-  title         String
-  description   String
-  type          EventType
-  date          DateTime
-  endDate       DateTime?
-  location      String
-  maxAttendees  Int?
-  communityId   String?
-  createdById   String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  type         EventType
+  date         DateTime
+  endDate      DateTime?
+  location     String
+  maxAttendees Int?
+  communityId  String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  community     Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
-  createdBy     User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  attendees     EventAttendee[]
+  community Community?      @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  createdBy User            @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  attendees EventAttendee[]
 
+  @@index([date]) // upcoming events query
+  @@index([communityId, date]) // community events filter
+  @@index([createdById]) // cascade delete on user
   @@map("events")
 }
 
 model EventAttendee {
-  id        String   @id @default(cuid())
-  userId    String
-  eventId   String
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  eventId  String
+  joinedAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+  @@index([eventId]) // attendee counts + cascade cleanup
   @@map("event_attendees")
 }
 
@@ -452,36 +488,39 @@ model EventAttendee {
 // ============================================
 
 model CommunityMessage {
-  id            String    @id @default(cuid())
-  content       String
-  communityId   String
-  userId        String
-  createdAt     DateTime  @default(now())
+  id          String   @id @default(cuid())
+  content     String
+  communityId String
+  userId      String
+  createdAt   DateTime @default(now())
 
-  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([communityId, createdAt])
+  @@index([userId]) // cascade delete on user
   @@map("community_messages")
 }
 
 // ════════════ HOUSING BOOKINGS ════════════
 
 model HousingBooking {
-  id          String   @id @default(cuid())
-  status      BookingStatus @default(PENDING)
-  moveInDate  DateTime
-  months      Int      @default(1)
-  visitDate   DateTime?
-  message     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String        @id @default(cuid())
+  status     BookingStatus @default(PENDING)
+  moveInDate DateTime
+  months     Int           @default(1)
+  visitDate  DateTime?
+  message    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  housing     Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
-  housingId   String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  housing   Housing @relation(fields: [housingId], references: [id], onDelete: Cascade)
+  housingId String
 
+  @@index([userId, createdAt]) // my bookings, newest first
+  @@index([housingId, status]) // owner's booking queue
   @@map("housing_bookings")
 }
 
@@ -495,17 +534,19 @@ enum BookingStatus {
 // ════════════ MENTORSHIPS ════════════
 
 model Mentorship {
-  id          String   @id @default(cuid())
-  status      MentorshipStatus @default(PENDING)
-  message     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String           @id @default(cuid())
+  status    MentorshipStatus @default(PENDING)
+  message   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
-  mentee      User     @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
-  menteeId    String
-  mentor      User     @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
-  mentorId    String
+  mentee   User   @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
+  menteeId String
+  mentor   User   @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentorId String
 
+  @@index([menteeId, status]) // my mentorship requests
+  @@index([mentorId, status]) // incoming mentorship requests
   @@map("mentorships")
 }
 
@@ -523,12 +564,12 @@ enum MentorshipStatus {
 model ChatMessage {
   id        String   @id @default(cuid())
   userId    String
-  role      String   // "user" or "assistant"
+  role      String // "user" or "assistant"
   content   String
   metadata  Json?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("ai_chat_messages")
@@ -541,10 +582,10 @@ model HousingView {
   viewedAt  DateTime @default(now())
   duration  Int?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  housing   Housing  @relation(fields: [housingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  housing Housing @relation(fields: [housingId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, viewedAt]) // recommendation engine: recent views
   @@index([housingId])
   @@map("housing_views")
 }
@@ -554,22 +595,23 @@ model HousingView {
 // ============================================
 
 model Report {
-  id            String   @id @default(cuid())
-  reporterId    String
-  targetType    String   // "user", "housing", "post", "comment", "community"
-  targetId      String
-  reason        String   // "spam", "abuse", "fraud", "inappropriate", "other"
-  description   String?
-  status        String   @default("pending") // "pending", "reviewed", "resolved", "dismissed"
-  adminNotes    String?
-  resolvedBy    String?
-  resolvedAt    DateTime?
-  createdAt     DateTime @default(now())
+  id          String    @id @default(cuid())
+  reporterId  String
+  targetType  String // "user", "housing", "post", "comment", "community"
+  targetId    String
+  reason      String // "spam", "abuse", "fraud", "inappropriate", "other"
+  description String?
+  status      String    @default("pending") // "pending", "reviewed", "resolved", "dismissed"
+  adminNotes  String?
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
 
-  reporter      User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
   @@index([targetType, targetId])
+  @@index([reporterId]) // cascade delete on user
   @@map("reports")
 }
 
@@ -578,17 +620,18 @@ model Report {
 // ============================================
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  action      String   // "verify_user", "ban_user", "verify_housing", "delete_housing", "approve_mentor", "broadcast_notification", etc.
-  targetType  String?  // "user", "housing", "community", "mentor", "notification"
-  targetId    String?
-  details     String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String // "verify_user", "ban_user", "verify_housing", "delete_housing", "approve_mentor", "broadcast_notification", etc.
+  targetType String? // "user", "housing", "community", "mentor", "notification"
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
 
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([adminId, createdAt])
   @@index([action])
+  @@index([createdAt]) // audit log default sort
   @@map("audit_logs")
 }

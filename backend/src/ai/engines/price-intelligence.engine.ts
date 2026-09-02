@@ -1,14 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
+import { CacheKeys } from '../../common/cache/cache.keys';
 
 @Injectable()
 export class PriceIntelligenceEngine {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   /**
-   * Get area-wise price breakdown for a city
+   * Area-wise price breakdown for a city.
+   *
+   * This scans every listing in the city and rolls it up in memory, so it is by
+   * far the heaviest read in the app — and its output only changes when a
+   * listing is created or edited. Cached for 15 minutes and busted by
+   * `HousingService.invalidateHousingDerived()`.
    */
   async getAreaPrices(city = 'Pune') {
+    return this.cache.wrap(
+      CacheKeys.areaPrices(city),
+      () => this.computeAreaPrices(city),
+      CacheService.TTL.LONG,
+    );
+  }
+
+  private async computeAreaPrices(city: string) {
     const housings = await this.prisma.housing.findMany({
       where: { city: { contains: city, mode: 'insensitive' } },
       select: {
@@ -83,6 +98,14 @@ export class PriceIntelligenceEngine {
    * Deep dive into a single area
    */
   async getAreaDetail(area: string, city = 'Pune') {
+    return this.cache.wrap(
+      CacheKeys.areaDetail(area, city),
+      () => this.computeAreaDetail(area, city),
+      CacheService.TTL.LONG,
+    );
+  }
+
+  private async computeAreaDetail(area: string, city: string) {
     const housings = await this.prisma.housing.findMany({
       where: {
         city: { contains: city, mode: 'insensitive' },
@@ -144,6 +167,14 @@ export class PriceIntelligenceEngine {
    * Returns how good the deal is compared to area average
    */
   async getDealScore(housingId: string) {
+    return this.cache.wrap(
+      CacheKeys.dealScore(housingId),
+      () => this.computeDealScore(housingId),
+      CacheService.TTL.MEDIUM,
+    );
+  }
+
+  private async computeDealScore(housingId: string) {
     const housing = await this.prisma.housing.findUnique({
       where: { id: housingId },
       include: {

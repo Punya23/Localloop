@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
+import { CacheKeys } from '../../common/cache/cache.keys';
 
 @Injectable()
 export class SmartMatchEngine {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   /**
    * Find compatible people using weighted multi-signal scoring
@@ -14,38 +16,16 @@ export class SmartMatchEngine {
     });
     if (!user) return [];
 
-    // Get candidate users in the same city
-    const candidates = await this.prisma.user.findMany({
-      where: {
-        id: { not: userId },
-        isOnboarded: true,
-        city: user.city || 'Pune',
-      },
-      select: {
-        id: true,
-        name: true,
-        avatar: true,
-        role: true,
-        gender: true,
-        interests: true,
-        foodPreference: true,
-        workSchedule: true,
-        lifestyle: true,
-        smoking: true,
-        drinking: true,
-        petFriendly: true,
-        ageRange: true,
-        hometown: true,
-        university: true,
-        company: true,
-        courseOrDept: true,
-        languages: true,
-        preferredArea: true,
-        bio: true,
-        _count: { select: { posts: true, housingReviews: true } },
-      },
-      take: 100,
-    });
+    // The 100-row, 20-column candidate pull is identical for everyone in the
+    // city — cache it and keep only the scoring per-request. Self is filtered
+    // out below rather than in the query, so the pool stays user-agnostic.
+    const city = user.city || 'Pune';
+    const pool = await this.cache.wrap(
+      CacheKeys.matchPoolFor(city),
+      () => this.fetchPool(city),
+      CacheService.TTL.LONG,
+    );
+    const candidates = pool.filter((c) => c.id !== userId);
 
     const scored = candidates.map((c) => {
       let score = 0;
@@ -138,5 +118,36 @@ export class SmartMatchEngine {
 
     scored.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
     return scored.slice(0, limit);
+  }
+
+  /** City-wide candidate pool — shared by every matcher in that city. */
+  private fetchPool(city: string) {
+    return this.prisma.user.findMany({
+      where: { isOnboarded: true, city },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        role: true,
+        gender: true,
+        interests: true,
+        foodPreference: true,
+        workSchedule: true,
+        lifestyle: true,
+        smoking: true,
+        drinking: true,
+        petFriendly: true,
+        ageRange: true,
+        hometown: true,
+        university: true,
+        company: true,
+        courseOrDept: true,
+        languages: true,
+        preferredArea: true,
+        bio: true,
+        _count: { select: { posts: true, housingReviews: true } },
+      },
+      take: 100,
+    });
   }
 }

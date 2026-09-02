@@ -2,10 +2,26 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { ReputationService } from '../reputation/reputation.service';
 import { CreateHousingDto, HousingFilterDto, CreateReviewDto } from './dto/housing.dto';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class HousingService {
-  constructor(private prisma: PrismaService, private reputationService: ReputationService) {}
+  constructor(
+    private prisma: PrismaService,
+    private reputationService: ReputationService,
+    private cache: CacheService,
+  ) {}
+
+  /**
+   * Everything derived from the housing table — area price aggregates, deal
+   * scores, similar listings, recommendation candidate pools — plus the
+   * city-level counters on the dashboard.
+   */
+  private invalidateHousingDerived(): void {
+    this.cache.invalidatePatternAsync(CacheKeys.housing);
+    this.cache.invalidatePatternAsync(CacheKeys.cityStats);
+  }
 
   private async getCoords(address: string, area: string, city: string) {
     try {
@@ -25,7 +41,7 @@ export class HousingService {
   async create(userId: string, dto: CreateHousingDto) {
     const coords = await this.getCoords(dto.address, dto.area, dto.city || 'Pune');
 
-    return this.prisma.housing.create({
+    const housing = await this.prisma.housing.create({
       data: {
         title: dto.title,
         description: dto.description,
@@ -51,6 +67,9 @@ export class HousingService {
         },
       },
     });
+
+    this.invalidateHousingDerived();
+    return housing;
   }
 
   async findAll(filters: HousingFilterDto) {
@@ -178,6 +197,9 @@ export class HousingService {
     // Award reputation points for reviewing
     await this.reputationService.addPoints(userId, 10, 'Review added');
 
+    // Ratings feed avgRating, deal scores and the area rollups.
+    this.invalidateHousingDerived();
+
     return review;
   }
 
@@ -190,16 +212,22 @@ export class HousingService {
       where: { userId_housingId: { userId, housingId } },
     });
 
+    // Either direction moves `_count.savedBy`, which is a ranking signal in the
+    // cached recommendation candidate pool. Nothing else derived from housing
+    // changes, so only that one key is dropped.
     if (existing) {
       await this.prisma.savedHousing.delete({
         where: { id: existing.id },
       });
+      this.cache.invalidatePatternAsync(CacheKeys.housingCandidates(housing.city));
       return { saved: false, message: 'Housing unsaved' };
     }
 
     await this.prisma.savedHousing.create({
       data: { userId, housingId },
     });
+
+    this.cache.invalidatePatternAsync(CacheKeys.housingCandidates(housing.city));
 
     return { saved: true, message: 'Housing saved' };
   }

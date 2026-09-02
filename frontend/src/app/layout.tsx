@@ -3,6 +3,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import AuthProvider from "@/components/AuthProvider";
 import LayoutShell from "@/components/LayoutShell";
+import { Analytics } from "@vercel/analytics/next";
+
 
 export const metadata: Metadata = {
   title: "LocalLoop — Your Relocation Companion",
@@ -26,6 +28,7 @@ export default function RootLayout({
         <AuthProvider>
           <LayoutShell>
             {children}
+            <Analytics />
           </LayoutShell>
         </AuthProvider>
       </body>
