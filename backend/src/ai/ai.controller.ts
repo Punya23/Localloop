@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AiService } from './ai.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CacheControl } from '../common/cache/http-cache.interceptor';
 import { ChatMessageDto, TrackViewDto } from './dto/ai.dto';
 
 @ApiTags('AI')
@@ -33,6 +34,7 @@ export class AiController {
   }
 
   @Get('recommendations/housing/:id/similar')
+  @CacheControl({ maxAge: 300, staleWhileRevalidate: 900 })
   @ApiOperation({ summary: 'Get similar housing listings' })
   getSimilar(@Param('id') id: string, @Query('limit') limit?: string) {
     return this.aiService.getSimilarHousings(id, limit ? parseInt(limit) : 6);
@@ -41,18 +43,21 @@ export class AiController {
   // ════════════ PRICE INTELLIGENCE ════════════
 
   @Get('price-intelligence')
+  @CacheControl({ maxAge: 300, staleWhileRevalidate: 900 })
   @ApiOperation({ summary: 'Get area-wise price breakdown' })
   getPriceIntelligence(@Query('city') city?: string) {
     return this.aiService.getAreaPrices(city || 'Pune');
   }
 
   @Get('price-intelligence/area/:area')
+  @CacheControl({ maxAge: 300, staleWhileRevalidate: 900 })
   @ApiOperation({ summary: 'Get detailed area price analysis' })
   getAreaDetail(@Param('area') area: string, @Query('city') city?: string) {
     return this.aiService.getAreaDetail(area, city || 'Pune');
   }
 
   @Get('price-intelligence/deal-score/:housingId')
+  @CacheControl({ maxAge: 300, staleWhileRevalidate: 900 })
   @ApiOperation({ summary: 'Get deal score for a housing listing' })
   getDealScore(@Param('housingId') housingId: string) {
     return this.aiService.getDealScore(housingId);

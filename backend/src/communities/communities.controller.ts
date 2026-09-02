@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { CommunitiesService } from './communities.service';
 import { CreateCommunityDto } from './dto/communities.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CacheControl } from '../common/cache/http-cache.interceptor';
 
 @ApiTags('Communities')
 @Controller('communities')
@@ -10,6 +11,7 @@ export class CommunitiesController {
   constructor(private communitiesService: CommunitiesService) {}
 
   @Get()
+  @CacheControl({ maxAge: 60, staleWhileRevalidate: 300 })
   @ApiOperation({ summary: 'Get all communities' })
   findAll(@Query('city') city?: string) {
     return this.communitiesService.findAll(undefined, city);
@@ -24,6 +26,7 @@ export class CommunitiesController {
   }
 
   @Get(':id')
+  @CacheControl({ maxAge: 60, staleWhileRevalidate: 300 })
   @ApiOperation({ summary: 'Get community by ID' })
   findOne(@Param('id') id: string) {
     return this.communitiesService.findOne(id);
@@ -56,6 +59,7 @@ export class CommunitiesController {
   // ════════════ MEMBERS ════════════
 
   @Get(':id/members')
+  @CacheControl({ maxAge: 60, staleWhileRevalidate: 300 })
   @ApiOperation({ summary: 'Get community members' })
   getMembers(@Param('id') id: string, @Query('page') page?: string) {
     return this.communitiesService.getMembers(id, page ? parseInt(page, 10) : 1);

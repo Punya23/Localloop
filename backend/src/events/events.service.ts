@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/events.dto';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   async create(userId: string, dto: CreateEventDto) {
-    return this.prisma.event.create({
+    const event = await this.prisma.event.create({
       data: {
         title: dto.title,
         description: dto.description,
@@ -25,9 +27,24 @@ export class EventsService {
         _count: { select: { attendees: true } },
       },
     });
+
+    this.cache.invalidatePatternAsync(CacheKeys.events);
+    return event;
   }
 
+  /**
+   * Unbounded by design upstream — the list is small and identical for every
+   * caller, so one cached copy serves the whole instance.
+   */
   async findAll(upcoming: boolean = true) {
+    return this.cache.wrap(
+      CacheKeys.eventList(upcoming),
+      () => this.fetchAll(upcoming),
+      CacheService.TTL.SHORT,
+    );
+  }
+
+  private async fetchAll(upcoming: boolean) {
     return this.prisma.event.findMany({
       where: upcoming ? { date: { gte: new Date() } } : {},
       orderBy: { date: 'asc' },
@@ -82,6 +99,7 @@ export class EventsService {
       data: { userId, eventId },
     });
 
+    this.cache.invalidatePatternAsync(CacheKeys.events);
     return { message: 'Registered for event successfully' };
   }
 
@@ -98,6 +116,7 @@ export class EventsService {
       where: { id: attendance.id },
     });
 
+    this.cache.invalidatePatternAsync(CacheKeys.events);
     return { message: 'Cancelled attendance' };
   }
 }

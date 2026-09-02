@@ -1,7 +1,52 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+interface CacheEntry {
+  data: unknown;
+  expiresAt: number;
+}
+
 class ApiClient {
   private token: string | null = null;
+
+  /** Short-lived response cache for GETs, keyed by endpoint. */
+  private cache = new Map<string, CacheEntry>();
+  /**
+   * Requests currently in flight, keyed by endpoint. Two components mounting at
+   * once — or React's development double-render — share one network call
+   * instead of racing duplicates.
+   */
+  private inFlight = new Map<string, Promise<unknown>>();
+
+  /**
+   * Client-side TTLs in milliseconds, matched by endpoint prefix (longest wins).
+   * These sit deliberately at or below the server's `Cache-Control: max-age` for
+   * the same routes, so the client is never staler than a shared cache would be.
+   * Anything not listed here is always fetched fresh.
+   */
+  private static readonly GET_TTL: ReadonlyArray<readonly [string, number]> = [
+    ['/ai/price-intelligence', 5 * 60_000],
+    ['/ai/recommendations/housing', 2 * 60_000],
+    ['/ai/match/people', 2 * 60_000],
+    ['/ai/insights', 2 * 60_000],
+    ['/reputation/leaderboard', 60_000],
+    ['/reputation/', 30_000],
+    ['/communities', 60_000],
+    ['/events', 60_000],
+    ['/housing', 30_000],
+    ['/users/dashboard', 30_000],
+    ['/users/search', 30_000],
+  ];
+
+  /**
+   * Writes that cannot invalidate any cached read. Without this list, a
+   * fire-and-forget view-tracking POST would flush the whole cache every time a
+   * listing is opened.
+   */
+  private static readonly NON_INVALIDATING_WRITES: ReadonlyArray<string> = [
+    '/ai/track/view',
+    '/ai/chat',
+    '/users/notifications/read',
+  ];
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -11,6 +56,8 @@ class ApiClient {
 
   setToken(token: string) {
     this.token = token;
+    // Identity changed — nothing cached under the previous session may be reused.
+    this.invalidateCache();
     if (typeof window !== 'undefined') {
       localStorage.setItem('localloop_token', token);
     }
@@ -18,12 +65,67 @@ class ApiClient {
 
   clearToken() {
     this.token = null;
+    this.invalidateCache();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('localloop_token');
     }
   }
 
+  /** Drop every cached GET response. Safe to call at any time. */
+  invalidateCache() {
+    this.cache.clear();
+  }
+
+  private static ttlFor(endpoint: string): number {
+    let ttl = 0;
+    let matched = 0;
+    for (const [prefix, value] of ApiClient.GET_TTL) {
+      if (endpoint.startsWith(prefix) && prefix.length > matched) {
+        matched = prefix.length;
+        ttl = value;
+      }
+    }
+    return ttl;
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const method = (options.method || 'GET').toUpperCase();
+
+    if (method === 'GET') {
+      const ttl = ApiClient.ttlFor(endpoint);
+
+      if (ttl > 0) {
+        const hit = this.cache.get(endpoint);
+        if (hit && hit.expiresAt > Date.now()) return hit.data as T;
+      }
+
+      // Join an identical request that is already on the wire.
+      const pending = this.inFlight.get(endpoint);
+      if (pending) return pending as Promise<T>;
+
+      const task = this.execute<T>(endpoint, options)
+        .then((data) => {
+          if (ttl > 0) this.cache.set(endpoint, { data, expiresAt: Date.now() + ttl });
+          return data;
+        })
+        .finally(() => {
+          this.inFlight.delete(endpoint);
+        });
+
+      this.inFlight.set(endpoint, task);
+      return task;
+    }
+
+    const result = await this.execute<T>(endpoint, options);
+
+    // A write can invalidate almost anything, so flush rather than guess.
+    if (!ApiClient.NON_INVALIDATING_WRITES.some((p) => endpoint.startsWith(p))) {
+      this.invalidateCache();
+    }
+    return result;
+  }
+
+  private async execute<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),

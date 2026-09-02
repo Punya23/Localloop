@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommunityDto } from './dto/communities.dto';
+import { CacheService } from '../common/cache/cache.service';
+import { CacheKeys } from '../common/cache/cache.keys';
 
 @Injectable()
 export class CommunitiesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   async create(userId: string, dto: CreateCommunityDto) {
     const community = await this.prisma.community.create({
@@ -22,45 +24,64 @@ export class CommunitiesService {
 
     // Auto-join creator as admin
     await this.prisma.communityMember.create({
-      data: {
-        userId,
-        communityId: community.id,
-        role: 'ADMIN',
-      },
+      data: { userId, communityId: community.id, role: 'ADMIN' },
     });
+
+    // A new community changes every cached list (any city filter can match it)
+    // and the city-level counts on the dashboard.
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
+    this.cache.invalidatePatternAsync(CacheKeys.cityStats);
 
     return community;
   }
 
   async findAll(userId?: string, city?: string) {
-    const communities = await this.prisma.community.findMany({
-      where: {
-        isVerified: true,
-        ...(city && { city: { contains: city, mode: 'insensitive' as any } }),
-      },
-      orderBy: { memberCount: 'desc' },
-      take: 100,
-      include: {
-        _count: { select: { posts: true, members: true } },
-        // Inline membership check — avoids second round-trip when userId present
-        ...(userId && {
-          members: {
-            where: { userId },
-            select: { userId: true },
-            take: 1,
+    // The list itself is identical for everyone, so it is cached once per city
+    // rather than once per (city, user) — otherwise the keyspace grows with the
+    // user base and the hit rate collapses.
+    const communities = await this.cache.wrap(
+      CacheKeys.communityList(city),
+      async () => {
+        const rows = await this.prisma.community.findMany({
+          where: {
+            isVerified: true,
+            ...(city && { city: { contains: city, mode: 'insensitive' as any } }),
           },
-        }),
+          orderBy: { memberCount: 'desc' },
+          take: 100,
+          include: {
+            _count: { select: { posts: true, members: true } },
+          },
+        });
+        return rows;
       },
-    });
+      CacheService.TTL.MEDIUM,
+    );
 
-    return communities.map((c: any) => ({
-      ...c,
-      isMember: userId ? (c.members?.length ?? 0) > 0 : false,
-      members: undefined, // strip raw members array from response
-    }));
+    if (!userId) {
+      return communities.map((c) => ({ ...c, isMember: false }));
+    }
+
+    // One indexed lookup (community_members.userId) resolves membership for the
+    // whole page — no per-community round-trip, no per-user cache entry.
+    const memberships = await this.prisma.communityMember.findMany({
+      where: { userId, communityId: { in: communities.map((c) => c.id) } },
+      select: { communityId: true },
+    });
+    const joined = new Set(memberships.map((m) => m.communityId));
+
+    return communities.map((c) => ({ ...c, isMember: joined.has(c.id) }));
   }
 
   async findOne(id: string) {
+    return this.cache.wrap(
+      CacheKeys.communityDetail(id),
+      () => this.fetchCommunity(id),
+      CacheService.TTL.MEDIUM,
+    );
+  }
+
+  private async fetchCommunity(id: string) {
     const community = await this.prisma.community.findUnique({
       where: { id },
       include: {
@@ -119,6 +140,9 @@ export class CommunitiesService {
       });
     });
 
+    // memberCount, isMember and the member list are all now stale.
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
+
     return { message: 'Joined community successfully' };
   }
 
@@ -143,10 +167,20 @@ export class CommunitiesService {
       });
     });
 
+    this.cache.invalidatePatternAsync(CacheKeys.communities);
+
     return { message: 'Left community successfully' };
   }
 
   async getMyCommunitites(userId: string) {
+    return this.cache.wrap(
+      `${CacheKeys.communities}:mine:${userId}`,
+      () => this.fetchMyCommunities(userId),
+      CacheService.TTL.SHORT,
+    );
+  }
+
+  private async fetchMyCommunities(userId: string) {
     const memberships = await this.prisma.communityMember.findMany({
       where: { userId },
       include: {

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
+import { CacheKeys } from '../../common/cache/cache.keys';
 import OpenAI from 'openai';
 
 @Injectable()
@@ -11,6 +13,7 @@ export class ChatbotEngine {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private cache: CacheService,
   ) {
     this.client = new OpenAI({
       apiKey: this.config.get('CEREBRAS_API_KEY'),
@@ -46,40 +49,16 @@ export class ChatbotEngine {
       },
     });
 
-    // 2. Get platform context (recent data)
-    const [housingStats, communityCount, recentListings] = await Promise.all([
-      this.prisma.housing.aggregate({
-        _avg: { rent: true },
-        _count: true,
-        _min: { rent: true },
-        _max: { rent: true },
-        where: { city: user?.city || 'Pune' },
-      }),
-      this.prisma.community.count({ where: { city: user?.city || 'Pune' } }),
-      this.prisma.housing.findMany({
-        where: { city: user?.city || 'Pune' },
-        select: { title: true, area: true, rent: true, type: true, amenities: true, isWomenFriendly: true },
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
-
-    // 3. Get area-wise pricing
-    const cityPattern = `%${user?.city || 'Pune'}%`;
-    const areaStats = await this.prisma.$queryRaw<any[]>(
-      require('@prisma/client').Prisma.sql`
-        SELECT area, 
-               ROUND(AVG(rent)) as avg_rent, 
-               COUNT(*)::int as listing_count,
-               MIN(rent) as min_rent,
-               MAX(rent) as max_rent
-        FROM housings 
-        WHERE LOWER(city) LIKE LOWER(${cityPattern})
-        GROUP BY area 
-        ORDER BY COUNT(*) DESC 
-        LIMIT 10
-      `
-    ).catch(() => []);
+    // 2-3. Platform context: five city-scoped queries (aggregate, count, recent
+    // listings and a raw area roll-up) that used to run on *every* chat message
+    // even though they only depend on the city. Cached as one block.
+    const city = user?.city || 'Pune';
+    const { housingStats, communityCount, recentListings, areaStats } =
+      await this.cache.wrap(
+        CacheKeys.chatbotContext(city),
+        () => this.buildCityContext(city),
+        CacheService.TTL.LONG,
+      );
 
     // 4. Get conversation history
     const history = await this.prisma.chatMessage.findMany({
@@ -150,6 +129,44 @@ export class ChatbotEngine {
   /**
    * Get conversation history
    */
+  /** City-scoped platform snapshot fed to the LLM as grounding context. */
+  private async buildCityContext(city: string) {
+    const [housingStats, communityCount, recentListings] = await Promise.all([
+      this.prisma.housing.aggregate({
+        _avg: { rent: true },
+        _count: true,
+        _min: { rent: true },
+        _max: { rent: true },
+        where: { city },
+      }),
+      this.prisma.community.count({ where: { city } }),
+      this.prisma.housing.findMany({
+        where: { city },
+        select: { title: true, area: true, rent: true, type: true, amenities: true, isWomenFriendly: true },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const cityPattern = `%${city}%`;
+    const areaStats = await this.prisma.$queryRaw<any[]>(
+      require('@prisma/client').Prisma.sql`
+        SELECT area,
+               ROUND(AVG(rent)) as avg_rent,
+               COUNT(*)::int as listing_count,
+               MIN(rent) as min_rent,
+               MAX(rent) as max_rent
+        FROM housings
+        WHERE LOWER(city) LIKE LOWER(${cityPattern})
+        GROUP BY area
+        ORDER BY COUNT(*) DESC
+        LIMIT 10
+      `,
+    ).catch(() => []);
+
+    return { housingStats, communityCount, recentListings, areaStats };
+  }
+
   async getHistory(userId: string) {
     return this.prisma.chatMessage.findMany({
       where: { userId },

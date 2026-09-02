@@ -13,6 +13,7 @@ import { EventsModule } from './events/events.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { AiModule } from './ai/ai.module';
+import { AppCacheModule } from './common/cache/cache.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AiModule } from './ai/ai.module';
       isGlobal: true,
       envFilePath: [resolve(__dirname, '../.env'), '.env'],
     }),
+    AppCacheModule,
     PrismaModule,
     AuthModule,
     UsersModule,
