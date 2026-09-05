@@ -78,29 +78,41 @@ export default function HousingPage() {
   const [mlPredictedRent, setMlPredictedRent] = useState<number | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
 
+  // Saved housings don't depend on filters — fetch once instead of on every
+  // slider tick, so a filter change never carries a second request along for
+  // the ride.
   useEffect(() => {
-    setLoading(true);
-    // Pass filter params to API so server-side can narrow
-    const params: Record<string, string | number> = {};
-    if (area && area !== 'All') {
-      params.area = area.split(',')[0]?.trim();
-    }
-    params.budgetMax = budget;
-    if (pref === 'Women Only') params.isWomenFriendly = 'true';
-    if (housingType) params.type = housingType;
-    
-    Promise.all([
-      api.getHousings(params).catch(() => null),
-      api.getSavedHousings().catch(() => null)
-    ]).then(([r, savedRes]) => {
-      if (r?.data?.length) setData(r.data); else setData([]);
-      
+    api.getSavedHousings().then((savedRes) => {
       if (savedRes && Array.isArray(savedRes)) {
         const savedIds = new Set<string>();
         savedRes.forEach((s: any) => savedIds.add(s.id || s.housingId));
         setSaved(savedIds);
       }
-    }).finally(() => setLoading(false));
+    }).catch(() => null);
+  }, []);
+
+  // The budget slider fires on every step of a drag — without debouncing this
+  // effect, each tick was its own uncached network round-trip (a full drag
+  // could fire dozens of requests). 350ms lets a drag settle before the
+  // listing actually refetches; the slider's own value still updates instantly.
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(() => {
+      const params: Record<string, string | number> = {};
+      if (area && area !== 'All') {
+        params.area = area.split(',')[0]?.trim();
+      }
+      params.budgetMax = budget;
+      if (pref === 'Women Only') params.isWomenFriendly = 'true';
+      if (housingType) params.type = housingType;
+
+      api.getHousings(params)
+        .then((r) => setData(r?.data?.length ? r.data : []))
+        .catch(() => setData([]))
+        .finally(() => setLoading(false));
+    }, 350);
+
+    return () => clearTimeout(timer);
   }, [area, budget, pref, housingType]);
 
   // Debounced search
