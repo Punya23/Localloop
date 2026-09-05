@@ -16,6 +16,11 @@ export default function LoginPage() {
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  // The API sleeps after 15min idle (free-tier hosting) — a cold start takes
+  // 20-40s. `warmUp()` in AuthProvider usually absorbs that before the user
+  // finishes typing, but if login is still pending past a few seconds, say so
+  // instead of leaving a bare spinner that looks hung.
+  const [slowLogin, setSlowLogin] = useState(false);
   const { login, isAuthenticated, user, isLoading } = useAuthStore();
   const router = useRouter();
 
@@ -34,6 +39,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setSlowLogin(false);
+    const slowTimer = setTimeout(() => setSlowLogin(true), 4000);
     try {
       await login(email, password);
       const state = useAuthStore.getState();
@@ -47,6 +54,8 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
+      clearTimeout(slowTimer);
+      setSlowLogin(false);
       setLoading(false);
     }
   };
@@ -123,6 +132,11 @@ export default function LoginPage() {
                 <>Sign In <ArrowRight size={18} /></>
               )}
             </button>
+            {loading && slowLogin && (
+              <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                Waking up the server — first login after a while can take up to a minute.
+              </p>
+            )}
           </form>
         </div>
 

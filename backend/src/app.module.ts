@@ -14,6 +14,7 @@ import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { AiModule } from './ai/ai.module';
 import { AppCacheModule } from './common/cache/cache.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AppCacheModule } from './common/cache/cache.module';
       envFilePath: [resolve(__dirname, '../.env'), '.env'],
     }),
     AppCacheModule,
+    HealthModule,
     PrismaModule,
     AuthModule,
     UsersModule,

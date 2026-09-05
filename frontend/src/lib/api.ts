@@ -35,6 +35,17 @@ class ApiClient {
     ['/housing', 30_000],
     ['/users/dashboard', 30_000],
     ['/users/search', 30_000],
+    ['/posts/community', 20_000],
+    ['/posts/feed', 20_000],
+    // Admin panel — every table (users/housings/communities/reports/events/...)
+    // re-fetches with the same params on every tab switch and re-render.
+    // Short TTL absorbs that; any admin write already flushes the whole
+    // client cache (see NON_INVALIDATING_WRITES), so an action's own list
+    // always reflects it immediately.
+    ['/admin', 15_000],
+    // Deliberately NOT caching /chat/* — messages arrive over the socket.io
+    // connection, not through this client, so a cached response here could
+    // serve a stale unread count or message list after a live push.
   ];
 
   /**
@@ -153,6 +164,18 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  /**
+   * Fire-and-forget ping to wake a sleeping Render free-tier dyno. Call this
+   * the moment any page mounts (see AuthProvider) so the ~30-60s cold-start
+   * penalty overlaps with the user reading the page / typing their password,
+   * instead of landing entirely after they hit "Log in". Never throws —
+   * a failed warm-up just means the real request pays the cold-start cost.
+   */
+  warmUp(): void {
+    if (typeof window === 'undefined') return;
+    fetch(`${API_BASE}/health`, { cache: 'no-store' }).catch(() => undefined);
   }
 
   // Auth

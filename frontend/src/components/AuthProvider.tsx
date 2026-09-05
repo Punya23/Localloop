@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 /**
  * AuthProvider — ONLY handles auth state hydration.
@@ -12,6 +13,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const { checkAuth, isLoading } = useAuthStore();
 
   useEffect(() => {
+    // checkAuth() only hits the network when a token exists (an anonymous
+    // visitor on /login returns instantly, without ever waking the API) — so
+    // the warm-up ping runs unconditionally, in parallel, to cover that case.
+    api.warmUp();
     checkAuth();
   }, [checkAuth]);
 
