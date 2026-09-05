@@ -22,8 +22,12 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(dto.password, 12);
+    // Hash password. bcryptjs is a pure-JS implementation (no native
+    // binding), so its cost factor is far more CPU-expensive per round than
+    // native bcrypt at the same number — on a throttled free-tier CPU, cost
+    // 12 measurably adds to request latency. 10 is still well above OWASP's
+    // current minimum.
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     // Generate invite code for the user
     const inviteCode = this.generateInviteCode();
@@ -86,6 +90,17 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Accounts created before the cost-10 change above still carry a cost-12
+    // hash, which keeps paying the old (higher) compare cost on every future
+    // login. Opportunistically re-hash at the new, cheaper cost now that we
+    // have the plaintext — after the response is already on its way out, so
+    // this never adds latency to the login that triggers it.
+    if (bcrypt.getRounds(user.password) > 10) {
+      bcrypt.hash(dto.password, 10)
+        .then((rehashed) => this.prisma.user.update({ where: { id: user.id }, data: { password: rehashed } }))
+        .catch(() => undefined);
     }
 
     // Generate JWT
@@ -151,7 +166,7 @@ export class AuthService {
   async seedDatabase() {
     console.log('[Seeder] Starting database seed...');
     try {
-      const hashedAdminPassword = await bcrypt.hash('admin123', 12);
+      const hashedAdminPassword = await bcrypt.hash('admin123', 10);
       const admin = await this.prisma.user.upsert({
         where: { email: 'admin@localloop.com' },
         update: {
